@@ -15,7 +15,7 @@ remove_bytecode()
 case "$1" in
         remove|remove-in-favour|deconfigure|deconfigure-in-favour|upgrade)
         /opt/fbc/myBridge/init.d/myBridge stop || true
-        remove_bytecode rdb-db-mysql-bridge
+        remove_bytecode fbc-dataBridge
         ;;
     deconfigure)
         ;;
