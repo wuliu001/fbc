@@ -1,0 +1,15 @@
+#!/bin/sh
+
+upfile="/etc/nginx/sites-enabled/upstream.conf"
+if [ ! -f $upfile ]
+then
+    ln -s /etc/nginx/sites-available/upstream.conf /etc/nginx/sites-enabled/upstream.conf
+fi
+
+datafile="/etc/nginx/sites-enabled/blockchain_data_service.conf"
+if [ ! -f $datafile ]
+then
+    ln -s /etc/nginx/sites-available/fbc_data_service.conf /etc/nginx/sites-enabled/fbc_data_service.conf
+fi
+
+exit 0

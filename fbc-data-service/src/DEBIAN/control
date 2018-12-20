@@ -1,0 +1,11 @@
+Package: fbc-data-service
+Priority: optional
+Section: application
+Description: fbc data service package
+Maintainer: Shijun Tao <wuliu050688@hotmail.com>
+Depends: nginx-common (>= 1.8), nginx-extras (>= 1.8)
+Installed-Size: 1024
+Version: 1.0
+Architecture: amd64
+Source: fbc
+
