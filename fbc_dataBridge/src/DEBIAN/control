@@ -1,0 +1,9 @@
+Package: fbc-dataBridge
+Priority: optional
+Section: application
+Description: FBC dataBridge service package
+Maintainer: Shijun Tao <wuliu050688@hotmail.com>
+Depends: uwsgi, uwsgi-plugin-python, mysql-connector-python
+Version: 1.0
+Architecture: amd64
+Source: FBC

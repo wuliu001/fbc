@@ -1,0 +1,60 @@
+#!/bin/bash  
+### BEGIN INIT INFO  
+#  
+# Provides:  location_server  
+# Required-Start:   $local_fs  $remote_fs  
+# Required-Stop:    $local_fs  $remote_fs  
+# Default-Start:    2 3 4 5  
+# Default-Stop:     0 1 6  
+# Short-Description:    initscript  
+# Description:  This file should be used to construct scripts to be placed in /etc/init.d, it is for service mysqlBridge 
+#  
+### END INIT INFO  
+
+##load myBridge.config
+LOCAL=$(dirname `readlink -f $0`) 
+source $LOCAL/myBridge.conf
+
+start() {
+    service uwsgi start
+    /opt/roadDB/myBridge/lib/service_init.py "http://$IP1:$PORT1/mysql/proc?n=blockchain.\`test\`&i=1&i=Fighter&o=code&o=message" 300 > /dev/null
+    echo "myBridge started"
+}  
+
+stop() {  
+    service uwsgi stop
+    echo "myBridge stopped"
+}  
+
+status() {
+    pc=`ps -ef | grep /usr/bin/uwsgi | grep -v grep | wc -l`
+    if [ $pc -gt 1 ]; then
+        echo "myBridge is processing..."
+    else
+        echo "myBridge stopped"
+    fi
+}
+
+case "$1" in  
+    start)  
+        start  
+        exit 0  
+    ;;  
+    stop)  
+        stop  
+        exit 0  
+    ;;
+    status)
+        status
+        exit 0
+    ;;
+    reload|restart|force-reload)  
+        stop  
+        start  
+        exit 0  
+    ;;  
+    **)  
+        echo "Usage: $0 {start|stop|status|reload}" 1>&2  
+        exit 1  
+    ;;  
+esac

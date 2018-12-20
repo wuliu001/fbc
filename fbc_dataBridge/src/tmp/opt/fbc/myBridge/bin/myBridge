@@ -1,0 +1,51 @@
+# -*- coding: utf8 -*-
+
+import sys
+import myBridge.p_mysql_proc
+
+# Process/Work Create Connection Pool
+host = sys.argv[1]
+port = int(sys.argv[2])
+user = sys.argv[3]
+pwd  = sys.argv[4]
+db_n = sys.argv[5]
+pool_size = int(sys.argv[6])
+#g_data_service_host = sys.argv[7]
+
+g_retry_cnt = 1000
+
+#g_t21_path = "/sections/waiting/fgdb_updater"
+#g_section_md5 = ''
+#g_section_dict = {}
+#g_from_node_dict = {}
+#g_to_node_dict = {}
+#g_node_dict = {}
+
+dbconnect = myBridge.p_mysql_proc.mysql_connection(host, port, user, pwd, db_n, pool_size)
+
+dbconn_cnt = 0
+while dbconnect is None and dbconn_cnt < g_retry_cnt:
+    dbconnect = myBridge.p_mysql_proc.mysql_connection(host, port, user, pwd, db_n, pool_size)
+    dbconn_cnt = dbconn_cnt + 1
+    print "Retry dbconnect number:"+str(dbconn_cnt)
+
+# Callable
+def application(env, start_response):
+    global dbconnect
+    #global g_section_dict
+    #global g_from_node_dict
+    #global g_to_node_dict
+    #global g_section_md5
+
+    method = env['REQUEST_METHOD']
+    query_string = env['QUERY_STRING']
+    path_info = env['PATH_INFO']
+
+
+    if path_info == '/mysql/proc':
+        h_code, h_header, h_rtn = myBridge.p_mysql_proc.main(env, dbconnect, method, query_string, host, port, user, pwd, db_n, pool_size)
+        start_response(h_code, h_header)
+        return h_rtn
+    else:
+        start_response('404 Not Found', [('Content-Type','text/html')])
+        return ["404 Not Found" + '\n']

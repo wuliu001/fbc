@@ -1,0 +1,137 @@
+#!/bin/bash
+
+USER=tao
+GROUP=tao
+
+:'
+mysqlconfigfile="/etc/mysql/mysql.conf.d/mysqld.cnf"
+version=0
+
+if [ -f $mysqlconfigfile ]
+then
+    if echo "`mysql --version`" | grep "5\.7" >/dev/null; then
+       version=7
+    elif echo "`mysql --version`" | grep "8\." >/dev/null; then
+       version=8
+    else
+       echo "mysql does not support less than 7."
+       exit 1;
+    fi
+
+    chown $USER:$GROUP $mysqlconfigfile
+    
+    result0=0
+    grep "default-authentication-plugin" $mysqlconfigfile > /dev/null
+    result=$?
+    if [ $result -ne 0 ]; then
+        echo "default-authentication-plugin=mysql_native_password" >> $mysqlconfigfile
+        result0=$(($result0+$result))
+    fi
+
+    grep "character_set_server" $mysqlconfigfile > /dev/null
+    result=$?
+    if [ $result -ne 0 ]; then
+        if [ $version -eq 7 ];then
+           echo "character_set_server=utf8" >> $mysqlconfigfile
+        else
+           echo "character_set_server=utf8mb4" >> $mysqlconfigfile
+        fi
+        result0=$(($result0+$result))
+    fi
+
+    grep "collation_server" $mysqlconfigfile > /dev/null
+    result=$?
+    if [ $result -ne 0 ]; then
+        if [ $version -eq 7 ];then
+           echo "collation_server=utf8_general_ci" >> $mysqlconfigfile
+        else
+           echo "collation_server=utf8mb4_general_ci" >> $mysqlconfigfile
+        fi
+        result0=$(($result0+$result))
+    fi
+
+    grep "character-set-client-handshake" $mysqlconfigfile > /dev/null
+    result=$?
+    if [ $result -ne 0 ]; then
+        echo "character-set-client-handshake=FALSE" >> $mysqlconfigfile
+        result0=$(($result0+$result))
+    fi
+
+    grep "skip-log-bin" $mysqlconfigfile > /dev/null
+    result=$?
+    if [ $result -ne 0 -a $version -eq 8 ]; then
+        echo "skip-log-bin" >> $mysqlconfigfile
+        result0=$(($result0+$result))
+    fi
+
+    grep "max_allowed_packet=500M" $mysqlconfigfile > /dev/null
+    result1=$?
+    if [ $result1 -ne 0 ]; then
+        echo "max_allowed_packet=500M" >> $mysqlconfigfile
+    fi
+
+    grep "event_scheduler=1" $mysqlconfigfile > /dev/null
+    result2=$?
+    if [ $result2 -ne 0 ]; then
+        echo "event_scheduler=1" >> $mysqlconfigfile
+    fi
+
+    grep "0.0.0.0" $mysqlconfigfile > /dev/null
+    result3=$?
+    if [ $result3 -ne 0 ]; then
+        sed -i 's/127.0.0.1/0.0.0.0/' $mysqlconfigfile
+    fi
+
+    grep "group_concat_max_len=4294967295" $mysqlconfigfile > /dev/null
+    result4=$?
+    if [ $result4 -ne 0 ]; then
+        echo "group_concat_max_len=4294967295" >> $mysqlconfigfile
+    fi
+    
+    result5=0
+    cnf_files=`mysql --help | grep cnf|sed -n '2p'`
+    cnf_array=($cnf_files)
+    for cnf_file in ${cnf_array[*]}
+    do
+        if [ -f $cnf_file ]; then
+            if [ $cnf_file = '/etc/my.cnf' ]; then
+                sudo rm -f $cnf_file
+            else
+                grep '!includedir /etc/mysql/mysql.conf.d/' $cnf_file > /dev/null
+                result5=$?
+                if [ $result5 -ne 0 ]; then
+                    sudo service mysql stop
+                    echo '!includedir /etc/mysql/mysql.conf.d/' >> $cnf_file
+                fi
+                break
+            fi
+        fi
+    done
+
+    result=$[ $result0+$result1+$result2+$result3+$result4+$result5 ]
+    if [ $result -gt 0 ]
+    then
+        sudo service mysql restart
+    fi
+fi
+'
+
+cp -R /tmp/opt /
+
+rm -rf /tmp/opt
+
+cp -R /tmp/uwsgi_config/default.ini              /usr/share/uwsgi/conf/default.ini
+cp -R /tmp/uwsgi_config/app/myBridge.ini         /etc/uwsgi/apps-available/myBridge.ini
+ln -fs /etc/uwsgi/apps-available/myBridge.ini    /etc/uwsgi/apps-enabled/myBridge.ini
+rm -rf /tmp/uwsgi_config
+
+chown -R $USER:$GROUP /opt/fbc/myBridge
+
+if [ ! -d "/var/log/fbc/server/pids" ]; then
+	mkdir -p /var/log/fbc/server/pids
+fi
+chown -R $USER:$GROUP /var/log/fbc/server
+
+returnCode=$?
+
+exit $returnCode

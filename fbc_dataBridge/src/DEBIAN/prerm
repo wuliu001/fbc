@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+remove_bytecode()
+{
+    pkg=$1
+
+    for file in `dpkg -L $pkg`;
+    do
+        if [ ! -d $file ]; then rm -rf $file; fi
+    done
+}
+
+case "$1" in
+        remove|remove-in-favour|deconfigure|deconfigure-in-favour|upgrade)
+        /opt/fbc/myBridge/init.d/myBridge stop || true
+        remove_bytecode rdb-db-mysql-bridge
+        ;;
+    deconfigure)
+        ;;
+    failed-upgrade)
+        ;;
+    *)
+        echo "prerm called with unknown argument '$1'" >&2
+        exit 1
+    ;;
+esac

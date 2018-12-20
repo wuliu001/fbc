@@ -1,0 +1,21 @@
+#!/bin/bash
+
+USER=tao
+GROUP=tao
+
+# create group
+if ! getent group $GROUP >/dev/null; then
+        addgroup --system $GROUP
+fi
+
+# create user
+if ! getent passwd $USER >/dev/null; then
+        adduser --system \
+                --no-create-home \
+                --disabled-login \
+                --ingroup $GROUP $USER
+fi
+
+if [ -f /opt/fbc/myBridge/init.d/myBridge ]; then /opt/fbc/myBridge/init.d/myBridge stop; fi
+
+exit 0
