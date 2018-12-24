@@ -1,0 +1,19 @@
+# -*- coding: utf8 -*-
+
+#import sys
+import userManager
+
+# Callable
+def application(env, start_response):
+    method = env['REQUEST_METHOD']
+    query_string = env['QUERY_STRING']
+    path_info = env['PATH_INFO']
+    body = env['wsgi.input'].read()
+
+    if (path_info == '/users/register') and (method == 'POST'):
+        h_code, h_header, h_rtn = userManager.register(body)
+        start_response(h_code, h_header)
+        return h_rtn
+    else:
+        start_response('404 Not Found', [('Content-Type','text/html')])
+        return ["404 Not Found" + '\n']
