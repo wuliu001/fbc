@@ -1,0 +1,10 @@
+Package: fbc-syncService
+Priority: optional
+Section: application
+Description: fbc sync data service package
+Maintainer: Shiliu Liu <liushiliu163@163.com>
+Depends: python (>= 2.7)
+Version: BUILD_VERSION
+Architecture: amd64
+Source: fbc
+

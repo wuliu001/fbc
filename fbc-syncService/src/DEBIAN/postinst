@@ -1,0 +1,23 @@
+#!/bin/bash
+
+USER=tao
+GROUP=tao
+
+cp -R /tmp/opt /
+rm -rf /tmp/opt
+
+chown -R $USER:$GROUP /opt/fbc/syncService
+
+if [ ! -d "/opt/fbc/syncService/bin" ]; then
+    mkdir -p /opt/fbc/syncService/bin
+fi
+
+ln -fs /opt/fbc/syncService/lib/syncService-0.0.1/syncService_2pc.py /opt/fbc/syncService/bin/syncService_2pc
+
+if [ ! -d "/var/log/fbc/server" ]; then
+    mkdir -p /var/log/fbc/server
+fi
+chown -R $USER:$GROUP /var/log/fbc/server
+returnCode=$?
+
+exit $returnCode

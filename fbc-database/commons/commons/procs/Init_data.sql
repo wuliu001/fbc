@@ -23,7 +23,6 @@ LL:BEGIN
 
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT('Workflow commons.Init_data command Error: ',IFNULL(returnMsg_o,''),' | ',v_returnMsg);
-        CALL `commons`.`log.e`(user_i,v_procname,v_params_body,returnMsg_o,v_returnCode,v_returnMsg);
     END;
 
     SET returnCode_o = 400; 
@@ -71,7 +70,6 @@ LL:BEGIN
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
-    CALL `commons`.`log.i`(user_i,v_procname,v_params_body,returnMsg_o,v_returnCode,v_returnMsg);
 
 END
 $$
