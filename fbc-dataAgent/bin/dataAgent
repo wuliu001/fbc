@@ -1,7 +1,9 @@
 # -*- coding: utf8 -*-
 
-#import sys
+import sys
 import userManager
+
+g_data_service_host = sys.argv[1]
 
 # Callable
 def application(env, start_response):
@@ -11,7 +13,7 @@ def application(env, start_response):
     body = env['wsgi.input'].read()
 
     if (path_info == '/users/register') and (method == 'POST'):
-        h_code, h_header, h_rtn = userManager.register(body)
+        h_code, h_header, h_rtn = userManager.register(g_data_service_host, body)
         start_response(h_code, h_header)
         return h_rtn
     else:
