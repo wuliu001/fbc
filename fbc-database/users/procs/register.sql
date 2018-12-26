@@ -21,6 +21,7 @@ ll:BEGIN
     DECLARE v_json                   INT;
     DECLARE v_username               VARCHAR(50);
     DECLARE v_password               VARCHAR(50);
+    DECLARE v_corporation_name       VARCHAR(100);
     DECLARE v_owner                  VARCHAR(50);
     DECLARE v_address                VARCHAR(1600);
     DECLARE v_company_register_date  VARCHAR(50);
@@ -63,6 +64,7 @@ ll:BEGIN
 
     SELECT TRIM(BOTH '"' FROM body_i->"$.userAccount"),
            TRIM(BOTH '"' FROM body_i->"$.password"),
+           TRIM(BOTH '"' FROM body_i->"$.corporationName"),
            TRIM(BOTH '"' FROM body_i->"$.owner"),
            TRIM(BOTH '"' FROM body_i->"$.address"),
            TRIM(BOTH '"' FROM body_i->"$.companyRegisterDate"),
@@ -72,6 +74,7 @@ ll:BEGIN
            TRIM(BOTH '"' FROM body_i->"$.email")
 	  INTO v_username,
            v_password,
+           v_corporation_name,
            v_owner,
            v_address,
            v_company_register_date,
@@ -80,9 +83,9 @@ ll:BEGIN
            v_tel_num,
            v_email;
     
-    IF v_username IS NULL OR v_password IS NULL OR v_owner IS NULL OR v_address IS NULL OR v_company_register_date IS NULL OR v_registered_capital IS NULL OR v_annual_income IS NULL OR v_tel_num IS NULL OR v_email IS NULL THEN
+    IF v_username IS NULL OR v_password IS NULL OR v_corporation_name IS NULL OR v_owner IS NULL OR v_address IS NULL OR v_company_register_date IS NULL OR v_registered_capital IS NULL OR v_annual_income IS NULL OR v_tel_num IS NULL OR v_email IS NULL THEN
         SET returnCode_o = 512;
-        SET returnMsg_o = 'Body format is mismatch for change password.';
+        SET returnMsg_o = 'Body format is mismatch for register.';
         SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
         LEAVE ll;
     END IF;
@@ -102,6 +105,13 @@ ll:BEGIN
     IF v_checker > 0 THEN
         SET returnCode_o = 513;
         SET returnMsg_o = 'This user account exist in this node, please change another user account and try again.';
+        SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
+        LEAVE ll;
+    END IF;
+    
+    IF TRIM(v_corporation_name) = '' THEN
+        SET returnCode_o = 513;
+        SET returnMsg_o = 'The corporation name filed can''t be null, please fill it and try again.';
         SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
         LEAVE ll;
     END IF;
@@ -175,10 +185,10 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SET v_id = MD5(CONCAT(v_owner,v_address));
+    SET v_id = MD5(CONCAT(v_username,v_owner,v_address));
            
-    INSERT INTO `users`.`public_info`(`id`, `username`, `password`, `owner`, `address`, `company_register_date`, `registered_capital`, `annual_income`, `tel_num`, `email`, `create_time`, `last_update_time`, `last_login_time`)
-         VALUES (v_id, v_username, v_password, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
+    INSERT INTO `users`.`public_info`(`id`, `username`, `password`, `corporation_name`, `owner`, `address`, `company_register_date`, `registered_capital`, `annual_income`, `tel_num`, `email`, `create_time`, `last_update_time`, `last_login_time`)
+         VALUES (v_id, v_username, v_password, v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
     
     INSERT INTO `users`.`public_keys`(`id`, `public_key`, `create_time`, `is_sync`, `last_be_sync_time`)
          VALUES (v_id, public_key_i, UTC_TIMESTAMP(), 0, UTC_TIMESTAMP());

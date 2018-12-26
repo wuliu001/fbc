@@ -8,6 +8,7 @@ CREATE TABLE `public_info` (
   `id` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
+  `corporation_name` varchar(100) NOT NULL,
   `owner` varchar(50) NOT NULL,
   `address` varchar(1600) NOT NULL,
   `company_register_date` datetime NOT NULL,
