@@ -60,7 +60,7 @@ def restful_runner(url, method, header = None, body = None):
         if method == 'GET' or method == 'POST' or method == 'PUT' or method == 'DELETE':
             http_return_code, return_json, api_return_code = http_json_handles(url, method, body, header)
         else:
-            return -1, json.loads('{"error_msg":"invaild method input"}')
+            return -1, -1, json.loads('{"error_msg":"invaild method input"}')
         
         if http_return_code == 200 and api_return_code != 400:
             break
@@ -69,4 +69,4 @@ def restful_runner(url, method, header = None, body = None):
             if attempts > g_retry_cnt:
                break
 
-    return http_return_code, return_json
+    return http_return_code, api_return_code return_json

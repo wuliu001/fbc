@@ -7,172 +7,192 @@ import json
 import re
 
 
-def bodyChecker(body_list_len,goods_body):
+def bodyChecker(body):
+    goods_body = body[0]
+    body_list_len = len(body)
+
     # check body list number cnt
     if body_list_len < 2 or body_list_len > 3:
         check_result = 'body format error'
         return False, check_result
 
     # check goods contents
-    user = ''
-    if 'User' in goods_body and isinstance(goods_body['User'],str):
+    if 'User' not in goods_body or isinstance(goods_body['User'],str) is False:
         check_result = 'check User fail'
-        return False, check_result, '', ''
-    user = goods_body['User']
+        return False, check_result
 
-    if 'Type' in goods_body and isinstance(goods_body['Type'],str):
+    if 'Type' not in goods_body or isinstance(goods_body['Type'],str) is False or goods_body['Type'] != 'goodsRegister':
         check_result = 'check Type fail'
-        return False, check_result, user, ''
-    else:
-        type = goods_body['Type']
-        if type != 'goodsRegister':
-            check_result = 'transaction type mis-match'
-            return False, check_result, user, type
+        return False, check_result
 
-    if 'Varieties' in goods_body and isinstance(goods_body['Varieties'],str):
+    if 'Varieties' not in goods_body or isinstance(goods_body['Varieties'],str) is False:
         check_result = 'check Varieties fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'placeOfProduction' in goods_body and isinstance(goods_body['placeOfProduction'],str):
+    if 'placeOfProduction' not in goods_body or isinstance(goods_body['placeOfProduction'],str) is False:
         check_result = 'check placeOfProduction fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'dateOfProduction' in goods_body and isinstance(goods_body['dateOfProduction'],str):
+    if 'dateOfProduction' not in goods_body or isinstance(goods_body['dateOfProduction'],str) is False:
         check_result = 'check dateOfProduction fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'sizeRating' in goods_body and isinstance(goods_body['sizeRating'],int):
+    if 'sizeRating' not in goods_body or isinstance(goods_body['sizeRating'],int) is False:
         check_result = 'check sizeRating fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'sweetnessRating' in goods_body and isinstance(goods_body['sweetnessRating'],int):
+    if 'sweetnessRating' not in goods_body or isinstance(goods_body['sweetnessRating'],int) is False:
         check_result = 'check sweetnessRating fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'Quantity' in goods_body and isinstance(goods_body['Quantity'],float):
+    if 'Quantity' not in goods_body or isinstance(goods_body['Quantity'],float) is False:
         check_result = 'check Quantity fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'Price' in goods_body and isinstance(goods_body['Price'],float):
+    if 'Price' not in goods_body or isinstance(goods_body['Price'],float) is False:
         check_result = 'check Price fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'country' in goods_body and isinstance(goods_body['country'],str):
+    if 'country' not in goods_body or isinstance(goods_body['country'],str) is False:
         check_result = 'check country fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'province' in goods_body and isinstance(goods_body['province'],str):
+    if 'province' not in goods_body or isinstance(goods_body['province'],str) is False:
         check_result = 'check province fail'
-        return False, check_result, type
+        return False, check_result
 
-    if 'city' in goods_body and isinstance(goods_body['city'],str):
+    if 'city' not in goods_body or isinstance(goods_body['city'],str) is False:
         check_result = 'check city fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'zone' in goods_body and isinstance(goods_body['zone'],str):
+    if 'zone' not in goods_body or isinstance(goods_body['zone'],str) is False:
         check_result = 'check zone fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'address' in goods_body and isinstance(goods_body['address'],str):
+    if 'address' not in goods_body or isinstance(goods_body['address'],str) is False:
         check_result = 'check address fail'
-        return False, check_result, user, type
+        return False, check_result
 
-    if 'request_timestemp' in goods_body and isinstance(goods_body['request_timestemp'],str):
+    if 'request_timestemp' not in goods_body or isinstance(goods_body['request_timestemp'],str) is False:
         check_result = 'check request_timestemp fail'
-        return False, check_result, user, type
+        return False, check_result
 
     return True, ''
 
 
 # get user public key
-def get_public_key(dns, uri, method, body):
-    ds_url = dns + uri
-    code, json_obj = restful_utility.restful_runner(ds_url, method, None, body)
-    restful_result = json.dumps(json_obj)
-    restful_code = restful_result["ops"]["code"]
-    restful_data = restful_result["ops"]["data"]
-    return restful_code, restful_data
+def api_execution(url, method, body):
+    http_code, api_code, json_obj = restful_utility.restful_runner(url, method, None, body)
+    return http_code, api_code, json_obj
 
 
-def goodsRegister(server_url, body, method):
-    body_list_len = len(body)
-    goods_info = body[0]
-
+def goodsRegister(data_service_host, body):
     # body check
-    check_result, check_msg, user, transType = bodyChecker(body_list_len, goods_info)
+    check_result, check_msg = bodyChecker(body)
+
     # body check success
     if check_result:
+        body_list_len = len(body)
+        goods_info = body[0]
+        user = goods_info['User']
+        transType = goods_info['Type']
+
         # check private key
         if body_list_len == 2:
             private_key = body[1]
             if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
                 # get user public key
-                code, data = get_public_key(server_url, '/users/sync/'+user, 'GET', None, '')
-                if code != 200:
-                    data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "get public key error", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [data + '\n']
-                public_key = data[0]["public_key"]
+
+                server_url = data_service_host + '/users/sync/' + user
+                http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+                if http_code != 200:
+                    return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
+                if api_code != 200:
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+                api_json_result = json.loads(api_result)
+                public_key = api_json_result["data"][0]["public_key"]
 
                 cipher = crypto_utility.rsa_encode(goods_info, public_key)
                 msg = crypto_utility.rsa_decode(cipher, private_key)
                 if msg != goods_info:
-                    data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [data + '\n']
+                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
                 goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
                 goods_info_hash = crypto_utility.sign_encode(goods_info_md5, private_key)
                 is_create = 0
 
             else:
-                data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
-                return '200 OK', [('Content-Type', 'text/html')], [data + '\n']
+                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
 
-        # check public key
+        # check md5 signature
         else:
             hash_code = body[1]
             node_dns = body[2]
 
             # get user public key
-            code, data = get_public_key(server_url, '/users/sync/' + user, 'GET', None, '')
-            if code == 200:
-                public_key = data[0]["public_key"]
-                if crypto_utility.sign_check(goods_info, hash_code, public_key):
+            server_url = data_service_host + '/users/sync/' + user
+            http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+            if http_code != 200:
+                return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            if api_code == 200:
+                api_json_result = json.loads(api_result)
+                public_key = api_json_result["data"][0]["public_key"]
+                goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
+                if crypto_utility.sign_check(goods_info_md5, hash_code, public_key):
                     goods_info_hash = hash_code
                     is_create = 0
                 else:
-                    data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [data + '\n']
+                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-            elif code == 511:
+            elif api_code == 511:
                 # get user public key
-                code, data = get_public_key(node_dns, '/users/sync/' + user, 'GET', None, '')
-                if code == 200:
-                    public_key = data[0]["public_key"]
-                    if crypto_utility.sign_check(goods_info, hash_code, public_key):
-                        goods_info_hash = hash_code
-                        is_create = 0
+                server_url = node_dns + '/users/sync/' + user
+                http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+                if http_code != 200:
+                    return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
+                if api_code != 200:
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-                        # create user in current node
-                        url = server_url + '/users/sync/' + user
-                        code, data = restful_utility.restful_runner(url, 'POST', None, public_key)
-                        # ...
+                api_json_result = json.loads(api_result)
+                public_key = api_json_result["data"][0]["public_key"]
+                goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
+                if crypto_utility.sign_check(goods_info_md5, hash_code, public_key):
+                    goods_info_hash = hash_code
+                    is_create = 1
 
-                    else:
-                        data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
-                        return '200 OK', [('Content-Type', 'text/html')], [data + '\n']
+                    # create user in current node
+                    server_url = data_service_host + '/users/sync/' + user
+                    http_code, api_code, api_result = api_execution(server_url, 'POST', public_key)
+                    if http_code != 200:
+                        return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
+                    if api_code != 200:
+                        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
+                else:
+                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
             else:
-                pass
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
 
         # call api
-        # ...
-
+        # parameter: user, transType, goods_info_hash, is_create
+        # body: goods_info
+        server_url = data_service_host + 'xxx' + user + '?....'
+        http_code, api_code, api_result = api_execution(server_url, 'POST', public_key)
+        if http_code != 200:
+            return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        else:
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
     # body check fail
     else:
-        data = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s", "goods_batch_id": ""}}' % check_msg
-    
-    return '200 OK', [('Content-Type','text/html')], [data + '\n']
+        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s", "goods_batch_id": ""}}' % check_msg
+        return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
 

@@ -13,6 +13,6 @@ def register(server_url, body):
     body_list.append(private_key)
     final_body = '|$|'.join(body_list)
     ds_url = server_url + '/users/insert'
-    code, json_obj = restful_utility.restful_runner(ds_url, "POST", None, final_body)
+    http_code, api_code, json_obj = restful_utility.restful_runner(ds_url, "POST", None, final_body)
     data = json.dumps(json_obj)
     return '200 OK', [('Content-Type','text/html')], [data + '\n']
