@@ -13,7 +13,7 @@
 #         NOTES: ---
 #        AUTHOR: ---
 #  ORGANIZATION: BLOCKCHAIN
-#       CREATED: 2018-12-16
+#       CREATED: 2018-12-26
 #      REVISION:  ---
 #===============================================================================
 set -o nounset                              # Treat unset variables as an error
