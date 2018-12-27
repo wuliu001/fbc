@@ -65,6 +65,8 @@ ll:BEGIN
         TRUNCATE TABLE msg_queues.`temp_gusq_sync_service_cfg`;
         TRUNCATE TABLE msg_queues.`temp_gusq_last_sync_id`;
         TRUNCATE TABLE msg_queues.`temp_gusq_begin_unsync_id`;
+        TRUNCATE TABLE msg_queues.`temp_gusq_final_queue`;
+        DROP TABLE IF EXISTS msg_queues.`temp_gusq_final_queue`;        
         DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue`;
         DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit`;
         DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit2`;
@@ -87,6 +89,7 @@ ll:BEGIN
     IF v_syncService_id_i IS NULL OR v_syncService_id_i = '' THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'syncService_id_i should not be null.';
+        CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -98,12 +101,14 @@ ll:BEGIN
     IF v_sync_id IS NULL THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'syncService_id_i is wrong.';
+        CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
     IF cur_weight_after_selected_i IS NULL THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'cur_weight_after_selected_i should not be null.';
+        CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -125,6 +130,7 @@ ll:BEGIN
         IF v_cnt > 0 THEN
             SET returnCode_o = 651;
             SET returnMsg_o = CONCAT(v_queue_type, ' ,one side need config service_parameters.');
+            CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
             LEAVE ll;
         END IF;
 
@@ -134,6 +140,7 @@ ll:BEGIN
     IF v_unsynced_sys_lock <> 1 THEN
         SET returnCode_o = 652;
         SET returnMsg_o = 'get lock timeout.';
+        CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
         CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
@@ -208,6 +215,20 @@ ll:BEGIN
     ) ENGINE=InnoDB;
     TRUNCATE TABLE msg_queues.`temp_gusq_last_receive_info`;
 
+    CREATE TEMPORARY TABLE IF NOT EXISTS  msg_queues.`temp_gusq_final_queue` (
+      `uri`                    VARCHAR(100),
+      `msgs`                   LONGTEXT,
+      `method`                 VARCHAR(50),
+      `last_synced_id`         BIGINT(20),
+      `current_check_list`     LONGTEXT,
+      `source_queue_type`      VARCHAR(50),
+      `dst_queue_type`         VARCHAR(50),
+      `dst_queue_step`         INT(11),
+      `dst_endpoint_info`      VARCHAR(100),
+      `double_side`            INT(11)
+    ) ENGINE=InnoDB;
+    TRUNCATE TABLE msg_queues.`temp_gusq_final_queue`;
+
     SET returnMsg_o = 'update temp_gusq_sync_service_cfg.';
     SET v_sql = CONCAT('INSERT INTO msg_queues.`temp_gusq_sync_service_cfg`(syncService_id,endpoint_id,endpoint_ip,endpoint_port,queue_type,cur_weight_after_selected) VALUES ', cur_weight_after_selected_i);
     CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
@@ -250,12 +271,15 @@ ll:BEGIN
             TRUNCATE TABLE msg_queues.`temp_gusq_sync_service_cfg`;
             TRUNCATE TABLE msg_queues.`temp_gusq_last_sync_id`;
             TRUNCATE TABLE msg_queues.`temp_gusq_begin_unsync_id`;
+            TRUNCATE TABLE msg_queues.`temp_gusq_final_queue`;
+            DROP TABLE IF EXISTS msg_queues.`temp_gusq_final_queue`;            
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue`;
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit`;
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit2`;
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_sync_service_cfg`;
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_last_sync_id`;
             DROP TABLE IF EXISTS msg_queues.`temp_gusq_begin_unsync_id`;
+            CALL `commons`.`log_module.e`(user_i,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
             LEAVE ll;
         END IF;
 
@@ -379,6 +403,8 @@ ll:BEGIN
                 TRUNCATE TABLE msg_queues.`temp_gusq_sync_service_cfg`;
                 TRUNCATE TABLE msg_queues.`temp_gusq_last_sync_id`;
                 TRUNCATE TABLE msg_queues.`temp_gusq_begin_unsync_id`;
+                TRUNCATE TABLE msg_queues.`temp_gusq_final_queue`;
+                DROP TABLE IF EXISTS msg_queues.`temp_gusq_final_queue`;               
                 DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue`;
                 DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit`;
                 DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit2`;
@@ -456,9 +482,7 @@ ll:BEGIN
     INSERT INTO msg_queues.`temp_gusq_unsync_queue_limit2` SELECT * FROM msg_queues.temp_gusq_unsync_queue_limit;
     COMMIT;
 
-
-    SET returnMsg_o = 'select unsync info.';
-
+    INSERT INTO msg_queues.`temp_gusq_final_queue`(uri,msgs,method,last_synced_id,current_check_list,source_queue_type,dst_queue_type,dst_queue_step,dst_endpoint_info,double_side)
     SELECT t.uri,GROUP_CONCAT(msgs) AS msgs,MAX(method) AS method,MAX(last_sync_queue_id) AS last_synced_id,GROUP_CONCAT(queue_id) AS current_check_list ,
            source_queue_type,MAX(dst_queue_type) AS dst_queue_type, MAX(dst_queue_step) AS dst_queue_step, dst_endpoint_info, MAX(double_side) AS double_side
     FROM
@@ -470,8 +494,9 @@ ll:BEGIN
            AND a.queue_step = c.queue_step
            AND a.double_side = 1
     ) t
-    GROUP BY t.uri,t.dst_endpoint_info,t.source_queue_type
-    UNION ALL
+    GROUP BY t.uri,t.dst_endpoint_info,t.source_queue_type;
+    
+    INSERT INTO msg_queues.`temp_gusq_final_queue`(uri,msgs,method,last_synced_id,current_check_list,source_queue_type,dst_queue_type,dst_queue_step,dst_endpoint_info,double_side)
     SELECT t.uri,GROUP_CONCAT(msgs) AS msgs,MAX(method) AS method,MAX(last_sync_queue_id) AS last_synced_id,GROUP_CONCAT(queue_id) AS current_check_list ,
            source_queue_type,MAX(dst_queue_type) AS dst_queue_type, MAX(dst_queue_step) AS dst_queue_step, dst_endpoint_info, MAX(double_side) AS double_side
     FROM
@@ -484,6 +509,9 @@ ll:BEGIN
            AND a.double_side = 0
     ) t
     GROUP BY t.uri,t.dst_endpoint_info,t.source_queue_type;
+    
+    SELECT DISTINCT uri,msgs,method,last_synced_id,current_check_list,source_queue_type,dst_queue_type,dst_queue_step,dst_endpoint_info,double_side
+      FROM msg_queues.`temp_gusq_final_queue`;
 
     SET v_unsynced_sys_lock = RELEASE_LOCK(v_lock_name);
     TRUNCATE TABLE msg_queues.`temp_gusq_unsync_queue`;
@@ -492,6 +520,8 @@ ll:BEGIN
     TRUNCATE TABLE msg_queues.`temp_gusq_sync_service_cfg`;
     TRUNCATE TABLE msg_queues.`temp_gusq_last_sync_id`;
     TRUNCATE TABLE msg_queues.`temp_gusq_begin_unsync_id`;
+    TRUNCATE TABLE msg_queues.`temp_gusq_final_queue`;
+    DROP TABLE IF EXISTS msg_queues.`temp_gusq_final_queue`;
     DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue`;
     DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit`;
     DROP TABLE IF EXISTS msg_queues.`temp_gusq_unsync_queue_limit2`;
