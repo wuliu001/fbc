@@ -45,20 +45,20 @@ then
     rm commons_tables.sql
 fi
 
-cd $LOCAL/commons/data
+cd $LOCAL/commons/datas
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >commons_data.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >commons_datas.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
-        cat $FN >> commons_data.sql
+        cat $FN >> commons_datas.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> commons_data.sql
-    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT commons < commons_data.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> commons_datas.sql
+    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT commons < commons_datas.sql
     returnCode=$[ $returnCode+$? ]
-    rm commons_data.sql
+    rm commons_datas.sql
 fi
 
 cd $LOCAL/commons/funcs
