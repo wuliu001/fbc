@@ -14,5 +14,4 @@ CREATE TABLE `table_proc_rel` (
   `table_is_deprecated` tinyint(4) DEFAULT NULL,
   `routine_is_deprecated` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

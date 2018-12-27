@@ -24,4 +24,4 @@ CREATE TABLE `queues` (
   KEY `idx_source_endpoint_info` (`source_endpoint_info`),
   KEY `idx_dst_endpoint_info` (`dst_endpoint_info`),
   UNIQUE KEY `un_que_type`(`queue_id`,`queue_type`,`dst_endpoint_info`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

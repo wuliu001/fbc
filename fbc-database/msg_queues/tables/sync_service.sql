@@ -9,4 +9,4 @@ CREATE TABLE `sync_service` (
   `last_sync_time` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uni_syncService_id` (`syncService_id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

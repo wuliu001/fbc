@@ -10,5 +10,4 @@ CREATE TABLE `post_body_cache` (
   `body_cache` longtext COLLATE utf8mb4_general_ci NOT NULL,
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`uuid`,`ord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

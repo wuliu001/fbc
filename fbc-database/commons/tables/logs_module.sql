@@ -19,5 +19,4 @@ CREATE TABLE `logs_module` (
   KEY `log_userid_idx` (`user_id`),
   KEY `log_schema_idx` (`module`),
   KEY `log_name_idx` (`proc_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

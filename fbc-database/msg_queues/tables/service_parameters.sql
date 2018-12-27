@@ -12,4 +12,4 @@ CREATE TABLE `service_parameters` (
   PRIMARY KEY (`id`),
   KEY `idx_queue_type` (`queue_type`),
   KEY `idx_queue_step` (`queue_step`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
