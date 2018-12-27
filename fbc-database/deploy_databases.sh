@@ -212,6 +212,23 @@ then
         returnCode=$[ $returnCode+$? ]
     done
 fi
+
+cd $LOCAL/msg_queues/datas
+if [ $? -eq 0 ]
+then
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >msg_queues_datas.sql
+
+    for FN in `ls`
+    do
+        echo "  Compile $FN"
+        cat $FN >> msg_queues_datas.sql
+    done
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> msg_queues_datas.sql
+    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT msg_queues < msg_queues_datas.sql
+    returnCode=$[ $returnCode+$? ]
+    rm msg_queues_datas.sql
+fi
+
 echo "Schema msg_queues Compile End"
 
 echo "Schema users Compile Begin"
