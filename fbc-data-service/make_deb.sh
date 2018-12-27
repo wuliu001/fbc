@@ -3,20 +3,19 @@
 #
 #          FILE: make_deb.sh
 #
-#         USAGE: ./make_deb.sh -i roadDB.deb
+#         USAGE: ./make_deb.sh -i fbc.deb
 #
-#   DESCRIPTION: To make deb file for roadDB
+#   DESCRIPTION: To make deb file for fbc
 #
 #       OPTIONS: ---
 #  REQUIREMENTS: ---
 #          BUGS: ---
 #         NOTES: ---
-#        AUTHOR: Ken Chen, <Ken.Chen@ygomi.com>
-#  ORGANIZATION: YGOMI
-#       CREATED: 2016-03-07
+#        AUTHOR: ---
+#  ORGANIZATION: BLOCKCHAIN
+#       CREATED: 2018-12-26
 #      REVISION:  ---
 #===============================================================================
-
 set -o nounset                              # Treat unset variables as an error
 
 SCRIPT_VER="0.1.0"

@@ -1,3 +1,0 @@
-DROP DATABASE IF EXISTS `msg_queues`;
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/`msg_queues`;

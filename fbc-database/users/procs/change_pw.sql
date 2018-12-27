@@ -6,7 +6,7 @@ DROP PROCEDURE IF EXISTS `change_pw`;
 
 DELIMITER $$
 CREATE DEFINER=`dba`@`%` PROCEDURE `change_pw`(user_i                INT,
-                              username_i            VARCHAR(50),
+                              id_i                  VARCHAR(50),
                               body_i                TEXT,
                               OUT returnCode_o      INT,
 							  OUT returnMsg_o       LONGTEXT)
@@ -50,7 +50,7 @@ ll:BEGIN
     SELECT COUNT(*)
       INTO v_is_valid
       FROM users.public_info
-	 WHERE username = username_i
+	 WHERE id = id_i
        AND `password` = MD5(v_org_pw);
 	
     IF v_is_valid = 0 THEN
@@ -62,7 +62,7 @@ ll:BEGIN
     UPDATE users.public_info
        SET `password` = MD5(v_new_pw),
 	       last_update_time = UTC_TIMESTAMP()
-	 WHERE username = username_i;
+	 WHERE username = id_i;
 	
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
