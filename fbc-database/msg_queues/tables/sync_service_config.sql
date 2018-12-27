@@ -17,4 +17,4 @@ CREATE TABLE `sync_service_config` (
   KEY `idx_endpoint_id` (`endpoint_id`),
   KEY `idx_sync_id` (`sync_id`),
   UNIQUE KEY `uni_sync_endpoint_id`(`sync_id`,`endpoint_id`,`endpoint_ip`,`endpoint_port`,`queue_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB;

@@ -11,4 +11,4 @@ CREATE TABLE `block` (
   `hashSign` varchar(256) NOT NULL,
   `timestamp` bigint(20) NOT NULL,
   `comfirmedTimes` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB;

@@ -22,4 +22,4 @@ CREATE TABLE `queue_workflows` (
   UNIQUE KEY `u_idx_ts` (`queue_type`,`queue_step`),
   KEY `idx_queue_type` (`queue_type`),
   KEY `idx_queue_step` (`queue_step`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB;
