@@ -331,7 +331,7 @@ def sync_queue(endpoint,weight_info):
                         utils_2pc.logD('[sync_queue] get unsynced queue data with last_receive_info [%s] from endpoint [%s] success.' % (last_receive_info, ip))
                         queue_info = api_return_dataSet[0]
                     else:
-                        utils_2pc.logE('[sync_queue] get unsynced queue data with last_receive_info [%s] from endpoint [%s] fail.' % last_receive_info, ip)
+                        utils_2pc.logE('[sync_queue] get unsynced queue data with last_receive_info [%s] from endpoint [%s] fail.' % (last_receive_info, ip))
                         err_flag = 1
                         break
 
