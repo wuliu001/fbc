@@ -6,8 +6,6 @@ DROP PROCEDURE IF EXISTS `register`;
 
 DELIMITER $$
 CREATE DEFINER=`dba`@`%` PROCEDURE `register`( user_i                INT,
-                              public_key_i          TEXT,
-                              private_key_i         TEXT,
                               body_i                TEXT,
                               OUT returnCode_o      INT,
 							  OUT returnMsg_o       LONGTEXT )
@@ -17,6 +15,10 @@ ll:BEGIN
     DECLARE v_returnCode             INT;
     DECLARE v_returnMsg              TEXT;
     DECLARE v_userReg_sys_lock       INT;
+    
+    DECLARE v_info                   TEXT;
+    DECLARE v_public_key             TEXT;
+    DECLARE v_private_key            TEXT;
     
     DECLARE v_json                   INT;
     DECLARE v_username               VARCHAR(50);
@@ -52,7 +54,13 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SELECT JSON_VALID(body_i)
+    SET returnMsg_o = 'Get body.';
+    SET v_info = commons.`Util.getField`(body_i, '|$|', 1);
+    SET v_public_key = commons.`Util.getField`(body_i, '|$|', 2);
+    SET v_private_key = commons.`Util.getField`(body_i, '|$|', 3);
+    
+    SET returnMsg_o = 'Body validation.';
+    SELECT JSON_VALID(v_info)
       INTO v_json;
     
     IF v_json = 0 THEN
@@ -62,16 +70,16 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT TRIM(BOTH '"' FROM body_i->"$.userAccount"),
-           TRIM(BOTH '"' FROM body_i->"$.password"),
-           TRIM(BOTH '"' FROM body_i->"$.corporationName"),
-           TRIM(BOTH '"' FROM body_i->"$.owner"),
-           TRIM(BOTH '"' FROM body_i->"$.address"),
-           TRIM(BOTH '"' FROM body_i->"$.companyRegisterDate"),
-           TRIM(BOTH '"' FROM body_i->"$.registeredCapital")+0,
-           TRIM(BOTH '"' FROM body_i->"$.annualIncome")+0,
-           TRIM(BOTH '"' FROM body_i->"$.telNum"),
-           TRIM(BOTH '"' FROM body_i->"$.email")
+    SELECT TRIM(BOTH '"' FROM v_info->"$.userAccount"),
+           TRIM(BOTH '"' FROM v_info->"$.password"),
+           TRIM(BOTH '"' FROM v_info->"$.corporationName"),
+           TRIM(BOTH '"' FROM v_info->"$.owner"),
+           TRIM(BOTH '"' FROM v_info->"$.address"),
+           TRIM(BOTH '"' FROM v_info->"$.companyRegisterDate"),
+           TRIM(BOTH '"' FROM v_info->"$.registeredCapital")+0,
+           TRIM(BOTH '"' FROM v_info->"$.annualIncome")+0,
+           TRIM(BOTH '"' FROM v_info->"$.telNum"),
+           TRIM(BOTH '"' FROM v_info->"$.email")
 	  INTO v_username,
            v_password,
            v_corporation_name,
@@ -165,7 +173,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SELECT public_key_i REGEXP '^-----BEGIN PUBLIC KEY-----' AND public_key_i REGEXP '-----END PUBLIC KEY-----$'
+    SELECT v_public_key REGEXP '^-----BEGIN PUBLIC KEY-----' AND v_public_key REGEXP '-----END PUBLIC KEY-----$'
       INTO v_checker;
 	
     IF v_checker = 0 THEN
@@ -175,7 +183,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SELECT private_key_i REGEXP '^-----BEGIN RSA PRIVATE KEY-----' AND private_key_i REGEXP '-----END RSA PRIVATE KEY-----$'
+    SELECT v_private_key REGEXP '^-----BEGIN RSA PRIVATE KEY-----' AND v_private_key REGEXP '-----END RSA PRIVATE KEY-----$'
       INTO v_checker;
     
     IF v_checker = 0 THEN
@@ -191,14 +199,14 @@ ll:BEGIN
          VALUES (v_id, v_username, v_password, v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
     
     INSERT INTO `users`.`public_keys`(`id`, `public_key`, `create_time`, `is_sync`, `last_be_sync_time`)
-         VALUES (v_id, public_key_i, UTC_TIMESTAMP(), 0, UTC_TIMESTAMP());
+         VALUES (v_id, v_public_key, UTC_TIMESTAMP(), 0, UTC_TIMESTAMP());
 	
     INSERT INTO `users`.`private_keys`(`id`, `private_key`)
-         VALUES (v_id, private_key_i);
+         VALUES (v_id, v_private_key);
     
     SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
     
-    SELECT private_key_i 'private_key';
+    SELECT v_private_key 'private_key';
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
