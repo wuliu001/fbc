@@ -40,6 +40,10 @@ BEGIN
            SET last_login_time = UTC_TIMESTAMP()
 		 WHERE username = username_i;
 		
+        SELECT id
+          FROM users.public_info
+		 WHERE username = username_i;
+		
         SET returnCode_o = 200;
         SET returnMsg_o = 'OK';
     END IF;
