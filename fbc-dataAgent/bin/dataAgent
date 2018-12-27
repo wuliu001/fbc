@@ -16,6 +16,10 @@ def application(env, start_response):
         h_code, h_header, h_rtn = userManager.register(g_data_service_host, body)
         start_response(h_code, h_header)
         return h_rtn
+    elif (path_info == '/goods') and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.goodsRegister(g_data_service_host, body, method)
+        start_response(h_code, h_header)
+        return h_rtn
     else:
         start_response('404 Not Found', [('Content-Type','text/html')])
         return ["404 Not Found" + '\n']
