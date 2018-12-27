@@ -196,7 +196,7 @@ ll:BEGIN
     SET v_id = MD5(CONCAT(v_username,v_owner,v_address));
            
     INSERT INTO `users`.`public_info`(`id`, `username`, `password`, `corporation_name`, `owner`, `address`, `company_register_date`, `registered_capital`, `annual_income`, `tel_num`, `email`, `create_time`, `last_update_time`, `last_login_time`)
-         VALUES (v_id, v_username, v_password, v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
+         VALUES (v_id, v_username, MD5(v_password), v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
     
     INSERT INTO `users`.`public_keys`(`id`, `public_key`, `create_time`, `is_sync`, `last_be_sync_time`)
          VALUES (v_id, v_public_key, UTC_TIMESTAMP(), 0, UTC_TIMESTAMP());
