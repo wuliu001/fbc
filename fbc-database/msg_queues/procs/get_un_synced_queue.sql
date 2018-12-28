@@ -76,7 +76,7 @@ ll:BEGIN
 
 
     SET returnCode_o = 400;
-    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');;
+    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"syncService_id_i":"',IFNULL(syncService_id_i,''), '","last_receive_info_i":"', IFNULL(REPLACE(last_receive_info_i,'"',''),''), '"}');
     SET v_body = IFNULL(cur_weight_after_selected_i,'');
     SET SESSION group_concat_max_len = 4294967295;
