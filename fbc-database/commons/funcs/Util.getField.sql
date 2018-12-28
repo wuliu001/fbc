@@ -5,7 +5,7 @@ USE `commons`;
 DROP FUNCTION IF EXISTS `Util.getField`;
 
 DELIMITER $$
-CREATE DEFINER=`dba`@`%` FUNCTION `Util.getField`(in_string LONGTEXT, in_separator TEXT, in_index INT) RETURNS text CHARSET utf8mb4
+CREATE DEFINER=`dba`@`%` FUNCTION `Util.getField`(in_string LONGTEXT, in_separator TEXT, in_index INT) RETURNS TEXT
 BEGIN
 
     DECLARE v_tmp1 LONGTEXT;

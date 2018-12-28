@@ -14,7 +14,5 @@ CREATE TABLE `sync_service_config` (
   `last_update_time` datetime NOT NULL,
   `cur_weight_after_selected` int NOT NULL default 0,
   PRIMARY KEY (`id`),
-  KEY `idx_endpoint_id` (`endpoint_id`),
-  KEY `idx_sync_id` (`sync_id`),
   UNIQUE KEY `uni_sync_endpoint_id`(`sync_id`,`endpoint_id`,`endpoint_ip`,`endpoint_port`,`queue_type`)
 ) ENGINE=InnoDB;

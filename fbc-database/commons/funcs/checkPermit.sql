@@ -6,7 +6,7 @@ DROP function IF EXISTS `checkPermit`;
 DELIMITER $$
 USE `commons`$$
 CREATE FUNCTION `checkPermit`(user_i            INT,
-                              roleCode_i        varchar(100)) RETURNS VARCHAR(100)
+                              roleCode_i        VARCHAR(100)) RETURNS VARCHAR(100)
 BEGIN
     RETURN TRUE; 
 END$$

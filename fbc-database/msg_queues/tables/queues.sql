@@ -18,7 +18,6 @@ CREATE TABLE `queues` (
   `is_re_assign_endpoint` tinyint default 1 comment '0:not allow re_assign, 1:allow re_assign',
   `remark`   longtext,
   PRIMARY KEY (`id`),
-  KEY `idx_queue_id` (`queue_id`),
   KEY `idx_queue_type` (`queue_type`),
   KEY `idx_queue_step` (`queue_step`),
   KEY `idx_source_endpoint_info` (`source_endpoint_info`),
