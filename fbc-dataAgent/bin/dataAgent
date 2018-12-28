@@ -1,7 +1,9 @@
 # -*- coding: utf8 -*-
 
 import sys
+import re
 import userManager
+import transManager
 
 g_data_service_host = sys.argv[1]
 
@@ -20,6 +22,44 @@ def application(env, start_response):
         h_code, h_header, h_rtn = transManager.goodsRegister(g_data_service_host, body)
         start_response(h_code, h_header)
         return h_rtn
+    elif (re.match('^/goods/.+/price$', path_info)) and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.goodsPriceModify(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/goods/.+/quantity$', path_info)) and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.goodsQuantityModify(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/transactions/purchase/(fruit|seed)$', path_info)) and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.goodsPurchaseRequest(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/transactions/(purchase|sell)/(fruit|seed)/.+$', path_info)) and (method == 'DELETE'):
+        h_code, h_header, h_rtn = transManager.goodsPurchaseDelete(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/transactions/(purchase|sell)/(fruit|seed)/.+$', path_info)) and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.goodsPurchaseModify(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/goods/.+/logistics$', path_info)) and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.goodsLogisticsRegister(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/goods/.+/logistics/.+$', path_info)) and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.goodsComments(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/goods/.+/logistics/.+$', path_info)) and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.goodsLogisticsSalerConfirm(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (re.match('^/goods/.+/logistics/.+/confirmation$', path_info)) and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.goodsLogisticsBuyerConfirm(g_data_service_host, body)
+        start_response(h_code, h_header)
+        return h_rtn
     else:
         start_response('404 Not Found', [('Content-Type','text/html')])
         return ["404 Not Found" + '\n']
+
+

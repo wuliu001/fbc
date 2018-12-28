@@ -8,7 +8,7 @@ import re
 
 
 def bodyChecker(body):
-    goods_body = body[0]
+    goods_body = json.loads(body[0])
     body_list_len = len(body)
 
     # check body list number cnt
@@ -80,10 +80,97 @@ def bodyChecker(body):
     return True, ''
 
 
-# get user public key
+# execute api
 def api_execution(url, method, body):
     http_code, api_code, json_obj = restful_utility.restful_runner(url, method, None, body)
     return http_code, api_code, json_obj
+
+
+# verify private key
+def verify_private_key(user, private_key, data_service_host, data_service_uri, goods_info):
+    flag = True
+    md5 = ''
+    hash_code = ''
+    is_create = 0
+    verify_message = ''
+
+    if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
+        # get user public key
+        server_url = data_service_host + data_service_uri + user
+        http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+        if http_code != 200 or api_code != 200:
+            verify_message = api_result
+            return False, md5, hash_code, is_create, verify_message
+
+        api_json_result = json.loads(api_result)
+        public_key = api_json_result["data"][0]["public_key"]
+
+        cipher = crypto_utility.rsa_encode(goods_info, public_key)
+        msg = crypto_utility.rsa_decode(cipher, private_key)
+        if msg != goods_info:
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
+            return False, md5, hash_code, is_create, verify_message
+
+        md5 = crypto_utility.encrypt_md5(goods_info)
+        hash_code = crypto_utility.sign_encode(md5, private_key)
+        is_create = 0
+        flag = True
+
+    else:
+        verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
+
+    return flag, md5, hash_code, is_create, verify_message
+
+
+
+# verify md5 signature
+def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, node_dns, goods_info):
+    flag = True
+    is_create = 0
+    verify_message = ''
+
+    server_url = data_service_host + data_service_uri + user
+    http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+    if http_code != 200 or (api_code != 200 and api_code != 511):
+        verify_message = api_result
+        return flag, is_create, verify_message
+
+    if api_code == 200:
+        api_json_result = json.loads(api_result)
+        public_key = api_json_result["data"][0]["public_key"]
+        md5 = crypto_utility.encrypt_md5(goods_info)
+        if crypto_utility.sign_check(md5, hash_code, public_key) is False:
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+            return flag, is_create, verify_message
+
+    if api_code == 511:
+        # get user public key
+        server_url = node_dns + data_service_uri + user
+        http_code, api_code, api_result = api_execution(server_url, 'GET', None)
+        if http_code != 200 or api_code != 200:
+            verify_message = api_result
+            return flag, is_create, verify_message
+
+        api_json_result = json.loads(api_result)
+        public_key = api_json_result["data"][0]["public_key"]
+        goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
+        if crypto_utility.sign_check(goods_info_md5, hash_code, public_key):
+            # create user in current node
+            server_url = data_service_host + data_service_uri + user
+            http_code, api_code, api_result = api_execution(server_url, 'POST', public_key)
+            if http_code != 200 or api_code != 200:
+                verify_message = api_result
+                return flag, is_create, verify_message
+
+            flag = True
+            is_create = 1
+
+        else:
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+            return flag, is_create, verify_message
+
+    return flag, is_create, verify_message
+
 
 
 def goodsRegister(data_service_host, body):
@@ -94,105 +181,76 @@ def goodsRegister(data_service_host, body):
     if check_result:
         body_list_len = len(body)
         goods_info = body[0]
-        user = goods_info['User']
-        transType = goods_info['Type']
+        goods_info_json = json.loads(goods_info)
+        user = goods_info_json['User']
+        transType = goods_info_json['Type']
 
         # check private key
         if body_list_len == 2:
             private_key = body[1]
-            if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
-                # get user public key
 
-                server_url = data_service_host + '/users/sync/' + user
-                http_code, api_code, api_result = api_execution(server_url, 'GET', None)
-                if http_code != 200:
-                    return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
-                if api_code != 200:
-                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-                api_json_result = json.loads(api_result)
-                public_key = api_json_result["data"][0]["public_key"]
-
-                cipher = crypto_utility.rsa_encode(goods_info, public_key)
-                msg = crypto_utility.rsa_decode(cipher, private_key)
-                if msg != goods_info:
-                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-                goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
-                goods_info_hash = crypto_utility.sign_encode(goods_info_md5, private_key)
-                is_create = 0
-
-            else:
-                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
+            flag, goods_info_md5, goods_info_hash, is_create, verify_message = verify_private_key(user, private_key, data_service_host, '/users/sync/', goods_info)
+            if flag:
+                api_result = verify_message
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
 
         # check md5 signature
         else:
-            hash_code = body[1]
+            goods_info_hash = body[1]
             node_dns = body[2]
 
-            # get user public key
-            server_url = data_service_host + '/users/sync/' + user
-            http_code, api_code, api_result = api_execution(server_url, 'GET', None)
-            if http_code != 200:
-                return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-            if api_code == 200:
-                api_json_result = json.loads(api_result)
-                public_key = api_json_result["data"][0]["public_key"]
-                goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
-                if crypto_utility.sign_check(goods_info_md5, hash_code, public_key):
-                    goods_info_hash = hash_code
-                    is_create = 0
-                else:
-                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-            elif api_code == 511:
-                # get user public key
-                server_url = node_dns + '/users/sync/' + user
-                http_code, api_code, api_result = api_execution(server_url, 'GET', None)
-                if http_code != 200:
-                    return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
-                if api_code != 200:
-                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-                api_json_result = json.loads(api_result)
-                public_key = api_json_result["data"][0]["public_key"]
-                goods_info_md5 = crypto_utility.encrypt_md5(goods_info)
-                if crypto_utility.sign_check(goods_info_md5, hash_code, public_key):
-                    goods_info_hash = hash_code
-                    is_create = 1
-
-                    # create user in current node
-                    server_url = data_service_host + '/users/sync/' + user
-                    http_code, api_code, api_result = api_execution(server_url, 'POST', public_key)
-                    if http_code != 200:
-                        return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
-                    if api_code != 200:
-                        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
-                else:
-                    api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
-                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-            else:
+            flag, is_create, verify_message = verify_md5_signature(user, goods_info_hash, data_service_host, '/users/sync/', node_dns, goods_info)
+            if flag:
+                api_result = verify_message
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
 
         # call api
         # parameter: user, transType, goods_info_hash, is_create
-        # body: goods_info
+        #
         server_url = data_service_host + 'xxx' + user + '?....'
-        http_code, api_code, api_result = api_execution(server_url, 'POST', public_key)
-        if http_code != 200:
-            return str(http_code) + ' OK', [('Content-Type', 'text/html')], [api_result + '\n']
-        else:
-            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        http_code, api_code, api_result = api_execution(server_url, 'POST', goods_info)
+        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
     # body check fail
     else:
         api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s", "goods_batch_id": ""}}' % check_msg
         return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
+
+
+def goodsPriceModify(data_service_host, body):
+    pass
+
+
+def goodsQuantityModify(data_service_host, body):
+    pass
+
+
+def goodsPurchaseRequest(data_service_host, body):
+    pass
+
+
+def goodsPurchaseDelete(data_service_host, body):
+    pass
+
+
+def goodsPurchaseModify(data_service_host, body):
+    pass
+
+
+def goodsLogisticsRegister(data_service_host, body):
+    pass
+
+
+def goodsComments(data_service_host, body):
+    pass
+
+
+def goodsLogisticsSalerConfirm(data_service_host, body):
+    pass
+
+
+def goodsLogisticsBuyerConfirm(data_service_host, body):
+    pass
 
