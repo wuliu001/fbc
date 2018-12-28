@@ -34,7 +34,7 @@ ll:BEGIN
     END;
 
     SET returnCode_o = 400;
-    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');;
+    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');
 
     SELECT MAX(a.id)
       INTO v_sync_id
