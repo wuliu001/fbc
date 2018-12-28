@@ -43,7 +43,7 @@ ll:BEGIN
     
     SET SESSION group_concat_max_len = 4294967295;
     SET returnCode_o = 400;
-    SET returnMsg_o =  'Workflow Manager sync_service.insert Command Error.';
+    SET returnMsg_o =  CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"user_i":"',user_i,'","syncService_id_i":"',IFNULL(syncService_id_i,''),'"}'); 
     SET syncService_id_i = TRIM(syncService_id_i);
     SET v_body = TRIM(body_i);

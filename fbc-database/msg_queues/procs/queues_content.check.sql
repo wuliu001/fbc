@@ -33,7 +33,7 @@ ll:BEGIN
     
     SET SESSION group_concat_max_len = 4294967295;
     SET returnCode_o = 400;
-    SET returnMsg_o =  'Workflow Manager queues_content.check Command Error.';
+    SET returnMsg_o =  CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"user_i":"',user_i,'"}'); 
 
     SET returnMsg_o = 'fail to check input body irregular data.';

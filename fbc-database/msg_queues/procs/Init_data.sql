@@ -32,7 +32,7 @@ LL:BEGIN
     END;
 
     SET returnCode_o = 400; 
-    SET returnMsg_o = 'Workflow msg_queues.Init_data command Error.';
+    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"user_i":"',IFNULL(user_i,''),'"}');
     SET SESSION group_concat_max_len = 4294967295;
 

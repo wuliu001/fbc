@@ -47,7 +47,7 @@ ll:BEGIN
 
     SET SESSION group_concat_max_len = 4294967295;
     SET returnCode_o = 400;
-    SET returnMsg_o = 'Workflow Manager queues_status.update command Error.';
+    SET returnMsg_o = CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"user_i":"',user_i,'","dst_queue_type_i":"',dst_queue_type_i,'","source_queue_type_i":"',source_queue_type_i,'","dst_endpoint_info_i":"',dst_endpoint_info_i,'"}');
     SET v_body = TRIM(body_i);
     SET source_queue_type_i = IFNULL(TRIM(source_queue_type_i),'');

@@ -35,7 +35,7 @@ ll:BEGIN
     
     SET SESSION group_concat_max_len = 4294967295;
     SET returnCode_o = 400;
-    SET returnMsg_o =  'Workflow Manager last_sync_queue.get Command Error.';
+    SET returnMsg_o =  CONCAT(v_modulename,v_procname,' command Error.');
     SET v_params_body = CONCAT('{"user_i":"',user_i,'","dst_queue_step_i":"',IFNULL(dst_queue_step_i,''),'","endpoint_info_i":"',IFNULL(endpoint_info_i,''),'","dst_queue_type_i":"',IFNULL(dst_queue_type_i,''),'"}');
     SET endpoint_info_i = TRIM(endpoint_info_i);
     SET dst_queue_step_i = TRIM(dst_queue_step_i);
