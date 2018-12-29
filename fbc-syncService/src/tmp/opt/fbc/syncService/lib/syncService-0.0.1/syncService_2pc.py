@@ -286,10 +286,9 @@ def update_queue_status(endpoint_info,source_queue_type,dst_queue_type,dst_endpo
 # check queue data is valid or not
 def check_queue_valid(msgs,current_queue_id_list):
     # get queue id list from queue data
-    try:
+    try: 
         msg_tuple = eval(msgs + ',')
         queue_id_list = ','.join([str(msg_tuple[x][0]) for x in range(len(msg_tuple))])
-
         utils_2pc.logD('[check_queue_valid] current_queue_id_list is: %s, queue_id_list in msgs is: %s' % (current_queue_id_list, queue_id_list))
 
         if current_queue_id_list == queue_id_list:
@@ -297,7 +296,7 @@ def check_queue_valid(msgs,current_queue_id_list):
         else:
             return False
     except Exception, e:
-        utils_2pc.logE('[check_queue_valid] check queue valid fail, exception info is: [%s], queue_info is: [%s]' % (e,queue_info))
+        utils_2pc.logE('[check_queue_valid] check queue valid fail, exception info is: [%s], current_queue_id_list is: [%s], msg is: [%s]' % (e,current_queue_id_list,msgs))
         return False
 
 
@@ -341,7 +340,7 @@ def sync_queue(endpoint,weight_info):
                     queue_http_uri = queue_info['uri']
                     http_method = queue_info['method']
                     http_body = queue_info['msgs']
-                    current_queue_id_list = queue_info['current_check_list']
+                    current_queue_id_list = str(queue_info['current_check_list'])
                     last_synced_id = queue_info['last_synced_id']
                     double_side = queue_info['double_side']
                     source_queue_type = queue_info['source_queue_type']
@@ -424,11 +423,11 @@ def sync_queue(endpoint,weight_info):
 
                 if double_side is 0:
                     if len(api_return_dataSet['data']) == 1:
-                        success_handled_tids = api_return_dataSet['data'][0]['success_handled_tids'].split(',')
-                        fail_handled_tids = api_return_dataSet['data'][0]['fail_handled_tids'].split(',')
+                        success_handled_tids = str(api_return_dataSet['data'][0]['success_handled_tids']).split(',')
+                        fail_handled_tids = str(api_return_dataSet['data'][0]['fail_handled_tids']).split(',')
                     else:
-                        success_handled_tids = api_return_dataSet['moreResults'][0][0]['success_handled_tids'].split(',')
-                        fail_handled_tids = api_return_dataSet['moreResults'][0][0]['fail_handled_tids'].split(',')
+                        success_handled_tids = str(api_return_dataSet['moreResults'][0][0]['success_handled_tids']).split(',')
+                        fail_handled_tids = str(api_return_dataSet['moreResults'][0][0]['fail_handled_tids']).split(',')
 
                     success_queue_ids_list = [] if success_handled_tids == [''] else [queue_id_map[rid] for rid in success_handled_tids]
                     fail_queue_ids_list = [] if fail_handled_tids == [''] else [queue_id_map[rid] for rid in fail_handled_tids]

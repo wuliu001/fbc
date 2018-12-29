@@ -6,8 +6,8 @@ DROP TABLE IF EXISTS `config`;
 
 CREATE TABLE `config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `value` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `code` varchar(50) NOT NULL,
+  `value` varchar(100)  NOT NULL,
+  `description` text ,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
