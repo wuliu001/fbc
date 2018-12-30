@@ -71,7 +71,8 @@ ll:BEGIN
      `queue_step`                      TINYINT(4),
      `next_queue_step`                 TINYINT(4),
      `source_endpoint_info`            VARCHAR(100),
-     `dst_endpoint_info`               VARCHAR(100)
+     `dst_endpoint_info`               VARCHAR(100),
+     `is_re_assign_endpoint`           TINYINT(4)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE msg_queues.temp_qi_queues;
 
@@ -85,7 +86,8 @@ ll:BEGIN
        SET `queue_type` = queue_type_i,
            `queue_step` = queue_step_i,
            `source_endpoint_info` = (CASE WHEN IFNULL(dst_endpoint_info_i ,'') = '' THEN 'default' ELSE dst_endpoint_info_i END),
-           `dst_endpoint_info` = dst_endpoint_info_i;
+           `dst_endpoint_info` = dst_endpoint_info_i,
+           `is_re_assign_endpoint` = (CASE WHEN IFNULL(dst_endpoint_info_i ,'') = '' THEN 1 ELSE 0 END);
 
     SET returnMsg_o = 'input body info check failed.';
     CALL msg_queues.`queues_content.check`(user_i,v_returnCode_check,v_returnMsg_check);
@@ -110,13 +112,14 @@ ll:BEGIN
        SET a.next_queue_step = (CASE WHEN b.id IS NULL THEN a.queue_step ELSE msg_queues.`getNextStep`(b.queue_type,b.queue_step,a.`status`) END);
 
     SET returnMsg_o = 'failed to input data into queues.';
-    INSERT INTO msg_queues.queues(`queue_id`,`queue_type`, `queue_step`, queues, source_endpoint_info,dst_endpoint_info,cycle_cnt,create_time, last_update_time)
-         SELECT a.queue_id,a.queue_type,a.next_queue_step,a.queue_msg,a.source_endpoint_info,a.dst_endpoint_info ,0,UTC_TIMESTAMP(),UTC_TIMESTAMP()
+    INSERT INTO msg_queues.queues(`queue_id`,`queue_type`, `queue_step`, queues, source_endpoint_info,dst_endpoint_info,cycle_cnt,create_time, last_update_time,is_re_assign_endpoint)
+         SELECT a.queue_id,a.queue_type,a.next_queue_step,a.queue_msg,a.source_endpoint_info,a.dst_endpoint_info ,0,UTC_TIMESTAMP(),UTC_TIMESTAMP(),a.is_re_assign_endpoint
            FROM msg_queues.temp_qi_queues a
              ON DUPLICATE KEY UPDATE queue_step = a.next_queue_step,
                                      queues = a.queue_msg,
                                      cycle_cnt = 0,
-                                     last_update_time = UTC_TIMESTAMP();
+                                     last_update_time = UTC_TIMESTAMP(),
+                                     is_re_assign_endpoint = a.is_re_assign_endpoint;
     UPDATE msg_queues.queues SET queue_id = id WHERE queue_id IS NULL;
 
     COMMIT;
