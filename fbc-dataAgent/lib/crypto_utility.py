@@ -5,9 +5,12 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
+import restful_utility
 import hashlib
 import base64
 import sys
+import json
+import re
 
 # unify the sys defult encoding
 def unify_encoding():
@@ -65,6 +68,83 @@ def sign_check(message, signature, public_key):
     digest.update(encrypt_md5(message))
     is_verify = verifier.verify(digest, base64.b64decode(signature))
     return is_verify
+
+# verify private key
+def verify_private_key(user, private_key, data_service_host, data_service_uri, goods_info):
+    flag = False
+    hash_code = ''
+    verify_message = ''
+
+    if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
+        # get user public key
+        server_url = data_service_host + data_service_uri + user
+        http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
+        if http_code != 200 or api_code != 200:
+            verify_message = api_result
+        else:
+            api_json_result = json.loads(api_result)
+            public_key = api_json_result["data"][0]["public_key"]
+
+            cipher = rsa_encode(goods_info, public_key)
+            msg = rsa_decode(cipher, private_key)
+            if msg != goods_info:
+                verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
+            else:
+                md5 = encrypt_md5(goods_info)
+                hash_code = sign_encode(md5, private_key)
+                flag = True
+    else:
+        verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
+
+    return flag, hash_code, verify_message
+
+
+# verify md5 signature
+def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, node_dns, goods_info):
+    flag = False
+    verify_message = ''
+
+    server_url = data_service_host + data_service_uri + user
+    http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
+    if http_code != 200 or (api_code != 200 and api_code != 511):
+        verify_message = api_result
+        return flag, verify_message
+
+    if api_code == 200:
+        api_json_result = json.loads(api_result)
+        public_key = api_json_result["data"][0]["public_key"]
+        md5 = encrypt_md5(goods_info)
+        if sign_check(md5, hash_code, public_key) is False:
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+            return flag, verify_message
+
+    if api_code == 511:
+        # get user public key
+        server_url = node_dns + data_service_uri + user
+        http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
+        if http_code != 200 or api_code != 200:
+            verify_message = api_result
+            return flag, verify_message
+
+        api_json_result = json.loads(api_result)
+        public_key = api_json_result["data"][0]["public_key"]
+        goods_info_md5 = encrypt_md5(goods_info)
+        if sign_check(goods_info_md5, hash_code, public_key):
+            # create user in current node
+            server_url = data_service_host + data_service_uri + user
+            http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, public_key)
+            if http_code != 200 or api_code != 200:
+                verify_message = api_result
+                return flag, verify_message
+
+            flag = True
+
+        else:
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
+            return flag, verify_message
+
+    return flag, verify_message
+
 
 if __name__ == '__main__':
     unify_encoding()
