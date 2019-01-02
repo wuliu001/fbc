@@ -62,7 +62,7 @@ ll:BEGIN
     UPDATE users.public_info
        SET `password` = MD5(v_new_pw),
 	       last_update_time = UTC_TIMESTAMP()
-	 WHERE username = id_i;
+	 WHERE id = id_i;
 	
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

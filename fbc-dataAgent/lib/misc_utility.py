@@ -1,19 +1,34 @@
 # -*- coding: utf-8 -*-
 
-import json
 import urlparse
 
 # check body
 def bodyChecker(body, body_key_check_dict):
-    goods_body = json.loads(body[0])
-    body_list_len = len(body)
     return_flag = True
     check_result = ''
+    tuple_body = {}
+    list_body = []
+
+    formated_body = eval(body)
+    if isinstance(formated_body,list):
+        list_body = formated_body
+        tuple_body = ('null', formated_body)
+    elif isinstance(formated_body,tuple):
+        list_body = formated_body[1]
+        tuple_body = formated_body
+    else:
+        return_flag = False
+        check_result = 'body format error'
+        return return_flag, check_result, tuple_body
+
+    goods_body = list_body[0]
+    goods_body_list_len = len(list_body)
 
     # check body list number cnt
-    if body_list_len < 2 or body_list_len > 3:
+    if goods_body_list_len < 2 or goods_body_list_len > 3:
         return_flag = False
         check_result = 'body member count error'
+        return return_flag, check_result, tuple_body
     else:
         # check goods contents
         for key in body_key_check_dict:
@@ -24,7 +39,7 @@ def bodyChecker(body, body_key_check_dict):
                 check_result = 'check %s fail' % key
                 break
 
-    return return_flag, check_result
+        return return_flag, check_result, tuple_body
 
 
 # parse url parameters
