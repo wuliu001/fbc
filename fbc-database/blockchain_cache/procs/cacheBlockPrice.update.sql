@@ -39,19 +39,10 @@ ll:BEGIN
     DECLARE v_goods_user                       VARCHAR(50);
     DECLARE v_sql                              LONGTEXT;
     DECLARE v_blockobject                      LONGTEXT;
-    DECLARE done                               INT DEFAULT 0;
     DECLARE v_dst_endpoint_info                VARCHAR(100);
     DECLARE v_user                             VARCHAR(50);
     DECLARE v_is_create                        TINYINT(4);
     DECLARE v_node_dns                         VARCHAR(100);
-
-    #send to other nodes
-    DECLARE cur_next_serv CURSOR FOR SELECT DISTINCT CONCAT(endpoint_ip,':',endpoint_port)
-                                       FROM msg_queues.sync_service_config 
-                                      WHERE queue_type = 'syncBlockCache'
-                                        AND CONCAT(endpoint_ip,':',endpoint_port) <> v_node_dns;
-                                        
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;    
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -267,25 +258,18 @@ ll:BEGIN
     SET v_queue_body = CONCAT('(null,','''','[',v_blockobject,',"',v_hashsign,'","',v_node_dns,'"]','''',',0)');
     
     SELECT COUNT(1)  INTO v_count FROM blockchain_cache.`block` WHERE `hashsign` = v_hashsign;
-    IF v_count = 0 THEN 
+    IF v_count = 0 THEN   
         ##insert into queueu
         SET returnMsg_o = 'fail to insert data into queue.';
-        OPEN cur_next_serv;
-        S:REPEAT
-            FETCH cur_next_serv INTO v_dst_endpoint_info;
-            IF NOT done THEN
-                CALL `msg_queues`.`queues.insert`(0, v_queue_body, 'syncBlockCache', 0, v_dst_endpoint_info, v_returnCode,v_returnMsg);
-                IF v_returnCode <> 200 THEN
-                    SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbu_body;
-                    TRUNCATE TABLE blockchain_cache.temp_cbu_body;
-                    DROP TABLE IF EXISTS blockchain_cache.temp_cbu_body;                
-                    CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
-                    LEAVE ll;
-                END IF;        
-           END IF;
-        UNTIL done END REPEAT;
-        CLOSE cur_next_serv;
-        
+        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns,v_dst_endpoint_info, v_returnCode,v_returnMsg);
+        IF v_returnCode <> 200 THEN
+            SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbu_body;
+            TRUNCATE TABLE blockchain_cache.temp_cbi_body;
+            DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;                
+            CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+            LEAVE ll;
+        END IF;    
+    
         #sync msg
         SET returnMsg_o = 'fail to insert data into cache block.';
         INSERT INTO blockchain_cache.`block`(`user`,`transactionType`,`blockObject`,`hashsign`,`timestamp`,`comfirmedTimes`)
@@ -297,24 +281,17 @@ ll:BEGIN
                a.last_update_time = UTC_TIMESTAMP()
          WHERE a.queue_type = 'syncBlockCache' AND a.queue_step = 0;
         
-    ELSEIF v_count > 0 AND v_is_create = 0 THEN           
+    ELSEIF v_count > 0 AND v_is_create = 0 THEN   
         ##insert into queueu
         SET returnMsg_o = 'fail to send confirm msg into queue.';
-        OPEN cur_next_serv;
-        S:REPEAT
-            FETCH cur_next_serv INTO v_dst_endpoint_info;
-            IF NOT done THEN
-                CALL `msg_queues`.`queues.insert`(0, v_queue_body, 'syncBlockCache', 0, v_dst_endpoint_info, v_returnCode,v_returnMsg);
-                IF v_returnCode <> 200 THEN
-                    SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbu_body;
-                    TRUNCATE TABLE blockchain_cache.temp_cbu_body;
-                    DROP TABLE IF EXISTS blockchain_cache.temp_cbu_body;                
-                    CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
-                    LEAVE ll;
-                END IF;        
-           END IF;
-        UNTIL done END REPEAT;
-        CLOSE cur_next_serv;
+        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns,v_dst_endpoint_info, v_returnCode,v_returnMsg);
+        IF v_returnCode <> 200 THEN
+            SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbu_body;
+            TRUNCATE TABLE blockchain_cache.temp_cbi_body;
+            DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;                
+            CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+            LEAVE ll;
+        END IF;
 
        SET returnMsg_o = 'fail to update cache block.';
         UPDATE blockchain_cache.`block` 
