@@ -12,7 +12,6 @@ CREATE PROCEDURE `cacheQueue.insert`(
     queuetype_i                      VARCHAR(32),
     queue_body_i                     LONGTEXT,
     node_dns_i                       VARCHAR(100),
-    dst_endpoint_info_i              VARCHAR(100),
     OUT returnCode_o                 INT,
     OUT returnMsg_o                  LONGTEXT
     )
@@ -26,7 +25,7 @@ ll:BEGIN
     DECLARE v_queuetype                 VARCHAR(32) DEFAULT TRIM(queuetype_i);
     DECLARE v_queue_body                LONGTEXT DEFAULT TRIM(queue_body_i);
     DECLARE v_node_dns                  VARCHAR(100) DEFAULT TRIM(node_dns_i);
-    DECLARE v_dst_endpoint_info         VARCHAR(100) DEFAULT TRIM(dst_endpoint_info_i);
+    DECLARE v_dst_endpoint_info         VARCHAR(100);
     DECLARE done                        INT DEFAULT 0;
     
     #send to other nodes
@@ -45,7 +44,7 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_queue_body,returnMsg_o,v_returnCode,v_returnMsg);
     END;
     
-    SET v_params_body = CONCAT('{"queuetype_i":"',IFNULL(queuetype_i,''),'","node_dns_i":"',IFNULL(node_dns_i,''),'","dst_endpoint_info_i":"',IFNULL(dst_endpoint_info_i,''),'"}');
+    SET v_params_body = CONCAT('{"queuetype_i":"',IFNULL(queuetype_i,''),'","node_dns_i":"',IFNULL(node_dns_i,''),'"}');
     
     SET returnMsg_o = 'fail to insert data into queues';
     OPEN cur_next_serv;
