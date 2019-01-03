@@ -69,4 +69,4 @@ def restful_runner(url, method, header = None, body = None):
             if attempts > g_retry_cnt:
                break
 
-    return http_return_code, api_return_code return_json
+    return http_return_code, api_return_code, return_json
