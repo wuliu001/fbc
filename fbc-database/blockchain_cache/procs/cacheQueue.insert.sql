@@ -62,6 +62,12 @@ ll:BEGIN
     UNTIL done END REPEAT;
     CLOSE cur_next_serv;
 
+    UPDATE msg_queues.queues a
+       SET a.queues = CONCAT(a.queue_id,'|$|',a.queues),
+           a.queue_step = msg_queues.`getNextStep`(v_queuetype, 0, 0),
+           a.last_update_time = UTC_TIMESTAMP()
+     WHERE a.queue_type = v_queuetype AND a.queue_step = 0;    
+
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
     CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,v_queue_body,returnMsg_o,v_returnCode,v_returnMsg);
