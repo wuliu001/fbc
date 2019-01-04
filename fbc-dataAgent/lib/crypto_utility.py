@@ -83,15 +83,6 @@ def verify_private_key(user, private_key, data_service_host, data_service_uri, g
             verify_message = json.dumps(api_result)
         else:
             public_key = api_result["data"][0]["public_key"]
-            
-            """goods_info_md5 = encrypt_md5(goods_info)
-            cipher = rsa_encode(goods_info_md5, public_key)
-            decipher = rsa_decode(cipher, private_key)
-            if decipher != goods_info_md5:
-                verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
-            else:
-                hash_code = sign_encode(goods_info_md5, private_key)
-                flag = True"""
             hashSign = sign_encode(goods_info, private_key)
             is_verify = sign_check(goods_info, hashSign, public_key)
             if is_verify:
@@ -120,6 +111,8 @@ def verify_md5_signature(user, hashSign, data_service_host, data_service_uri, no
         if sign_check(goods_info, hashSign, public_key) is False:
             verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
             return flag, verify_message
+        else:
+            flag = True
 
     if api_code == 511:
         # get user public key
