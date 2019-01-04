@@ -162,7 +162,7 @@ def goodsQuantityModify(data_service_host, query_string, body):
         query_string_dict = misc_utility.parse_url('?' + query_string)
         goods_batch_id = misc_utility.get_parameter(query_string_dict, 'goods_batch_id')
 
-        goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0])）
+        goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0]))
 
         # call api
         server_url = data_service_host + '/goods/cache/' + goods_batch_id + '/quantity?user=' + user + '&hashSign=' + goods_info_hash + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
