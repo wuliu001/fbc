@@ -80,7 +80,7 @@ def verify_private_key(user, private_key, data_service_host, data_service_uri, g
         server_url = data_service_host + data_service_uri + user
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
         if http_code != 200 or api_code != 200:
-            verify_message = api_result
+            verify_message = json.dumps(api_result)
         else:
             #api_json_result = json.loads(api_result)
             #public_key = api_json_result["data"][0]["public_key"]
@@ -108,7 +108,7 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
     server_url = data_service_host + data_service_uri + user
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code != 200 or (api_code != 200 and api_code != 511):
-        verify_message = api_result
+        verify_message = json.dumps(api_result)
         return flag, verify_message
 
     if api_code == 200:
@@ -125,7 +125,7 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
         server_url = node_dns + data_service_uri + user
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
         if http_code != 200 or api_code != 200:
-            verify_message = api_result
+            verify_message = json.dumps(api_result)
             return flag, verify_message
 
         #api_json_result = json.loads(api_result)
@@ -137,7 +137,7 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
             server_url = data_service_host + data_service_uri + user
             http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, public_key)
             if http_code != 200 or api_code != 200:
-                verify_message = api_result
+                verify_message = json.dumps(api_result)
                 return flag, verify_message
 
             flag = True
