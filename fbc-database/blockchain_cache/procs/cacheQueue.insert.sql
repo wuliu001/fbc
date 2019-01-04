@@ -29,7 +29,7 @@ ll:BEGIN
     DECLARE done                        INT DEFAULT 0;
     
     #send to other nodes
-    DECLARE cur_next_serv CURSOR FOR SELECT DISTINCT CONCAT(endpoint_ip,':',endpoint_port)
+    DECLARE cur_next_serv CURSOR FOR SELECT DISTINCT CONCAT('http://',endpoint_ip,':',endpoint_port)
                                        FROM msg_queues.sync_service_config 
                                       WHERE queue_type = v_queuetype
                                         AND CONCAT(endpoint_ip,':',endpoint_port) <> v_node_dns;
