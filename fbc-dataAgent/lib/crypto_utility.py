@@ -72,7 +72,7 @@ def sign_check(message, signature, public_key):
 # verify private key
 def verify_private_key(user, private_key, data_service_host, data_service_uri, goods_info):
     flag = False
-    hash_code = ''
+    hashSign = ''
     verify_message = ''
 
     if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
@@ -82,26 +82,30 @@ def verify_private_key(user, private_key, data_service_host, data_service_uri, g
         if http_code != 200 or api_code != 200:
             verify_message = json.dumps(api_result)
         else:
-            #api_json_result = json.loads(api_result)
-            #public_key = api_json_result["data"][0]["public_key"]
             public_key = api_result["data"][0]["public_key"]
-
-            goods_info_md5 = encrypt_md5(goods_info)
+            
+            """goods_info_md5 = encrypt_md5(goods_info)
             cipher = rsa_encode(goods_info_md5, public_key)
             decipher = rsa_decode(cipher, private_key)
             if decipher != goods_info_md5:
                 verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
             else:
                 hash_code = sign_encode(goods_info_md5, private_key)
+                flag = True"""
+            hashSign = sign_encode(goods_info, private_key)
+            is_verify = sign_check(goods_info, hashSign, public_key)
+            if is_verify:
                 flag = True
+            else:
+                verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
     else:
         verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
 
-    return flag, hash_code, verify_message
+    return flag, hashSign, verify_message
 
 
 # verify md5 signature
-def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, node_dns, goods_info):
+def verify_md5_signature(user, hashSign, data_service_host, data_service_uri, node_dns, goods_info):
     flag = False
     verify_message = ''
 
@@ -112,11 +116,8 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
         return flag, verify_message
 
     if api_code == 200:
-        #api_json_result = json.loads(api_result)
-        #public_key = api_json_result["data"][0]["public_key"]
         public_key = api_result["data"][0]["public_key"]
-        goods_info_md5 = encrypt_md5(goods_info)
-        if sign_check(goods_info_md5, hash_code, public_key) is False:
+        if sign_check(goods_info, hashSign, public_key) is False:
             verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
             return flag, verify_message
 
@@ -128,11 +129,8 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
             verify_message = json.dumps(api_result)
             return flag, verify_message
 
-        #api_json_result = json.loads(api_result)
-        #public_key = api_json_result["data"][0]["public_key"]
         public_key = api_result["data"][0]["public_key"]
-        goods_info_md5 = encrypt_md5(goods_info)
-        if sign_check(goods_info_md5, hash_code, public_key):
+        if sign_check(goods_info, hashSign, public_key):
             # create user in current node
             server_url = data_service_host + data_service_uri + user
             http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, public_key)
