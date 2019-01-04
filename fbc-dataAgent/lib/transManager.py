@@ -23,7 +23,7 @@ def goodsRegister(data_service_host, body):
         goods_info_str = json.dumps(goods_info)
         user = goods_info['User']
         transType = goods_info['Type']
-        node_dns = ''
+        node_dns = data_service_host
 
         # check private key
         if body_item_len == 2:
@@ -76,7 +76,7 @@ def goodsPriceModify(data_service_host, query_string, body):
         goods_info = list_body[0]
         goods_info_str = json.dumps(goods_info)
         user = goods_info['User']
-        node_dns = ''
+        node_dns = data_service_host
 
         # check private key
         if body_item_len == 2:
@@ -135,7 +135,7 @@ def goodsQuantityModify(data_service_host, query_string, body):
         goods_info = list_body[0]
         goods_info_str = json.dumps(goods_info)
         user = goods_info['User']
-        node_dns = ''
+        node_dns = data_service_host
 
         # check private key
         if body_item_len == 2:
