@@ -204,21 +204,7 @@ ll:BEGIN
         IF v_is_create = 1 THEN 
             SET goods_batch_id_o = v_hashsign;
         END IF;
-    ELSEIF v_count > 0 AND v_is_create = 0 THEN           
-        ##insert into queueu
-        SET returnMsg_o = 'fail to send confirm msg into queue.';
-        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns, v_returnCode,v_returnMsg);
-        IF v_returnCode <> 200 THEN
-            COMMIT;
-            SET returnCode_o = v_returnCode;
-            SET returnMsg_o = v_returnMsg;
-            SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
-            TRUNCATE TABLE blockchain_cache.temp_cbi_body;
-            DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;                
-            CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
-            LEAVE ll;
-        END IF;
-
+    ELSEIF v_count > 0 AND v_is_create = 0 THEN
        SET returnMsg_o = 'fail to update cache block.';
         UPDATE blockchain_cache.`block` 
            SET `comfirmedTimes` = `comfirmedTimes` + 1 
