@@ -92,7 +92,7 @@ def verify_private_key(user, private_key, data_service_host, data_service_uri, g
             if decipher != goods_info_md5:
                 verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
             else:
-                hash_code = sign_encode(md5, private_key)
+                hash_code = sign_encode(goods_info_md5, private_key)
                 flag = True
     else:
         verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error", "goods_batch_id": ""}}'
