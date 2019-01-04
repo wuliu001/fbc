@@ -17,7 +17,7 @@ source $LOCAL/myBridge.conf
 
 start() {
     service uwsgi start
-    /opt/roadDB/myBridge/lib/service_init.py "http://$IP1:$PORT1/mysql/proc?n=blockchain.\`test\`&i=1&i=Fighter&o=code&o=message" 300 > /dev/null
+    /opt/fbc/myBridge/lib/service_init.py "http://$IP1:$PORT1/mysql/proc?n=blockchain.\`test\`&i=1&i=Fighter&o=code&o=message" 300 > /dev/null
     echo "myBridge started"
 }  
 

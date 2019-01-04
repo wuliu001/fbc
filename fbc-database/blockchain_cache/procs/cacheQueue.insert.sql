@@ -66,7 +66,7 @@ ll:BEGIN
        SET a.queues = CONCAT(a.queue_id,'|$|',a.queues),
            a.queue_step = msg_queues.`getNextStep`(v_queuetype, 0, 0),
            a.last_update_time = UTC_TIMESTAMP()
-     WHERE a.queue_type = v_queuetype AND a.queue_step = 0;    
+     WHERE a.queue_type = v_queuetype AND a.queue_step = 0;
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
