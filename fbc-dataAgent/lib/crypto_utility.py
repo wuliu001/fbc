@@ -82,15 +82,16 @@ def verify_private_key(user, private_key, data_service_host, data_service_uri, g
         if http_code != 200 or api_code != 200:
             verify_message = api_result
         else:
-            api_json_result = json.loads(api_result)
-            public_key = api_json_result["data"][0]["public_key"]
+            #api_json_result = json.loads(api_result)
+            #public_key = api_json_result["data"][0]["public_key"]
+            public_key = api_result["data"][0]["public_key"]
 
-            cipher = rsa_encode(goods_info, public_key)
+            md5 = encrypt_md5(goods_info)
+            cipher = rsa_encode(md5, public_key)
             msg = rsa_decode(cipher, private_key)
-            if msg != goods_info:
+            if msg != md5:
                 verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match", "goods_batch_id": ""}}'
             else:
-                md5 = encrypt_md5(goods_info)
                 hash_code = sign_encode(md5, private_key)
                 flag = True
     else:
@@ -111,8 +112,9 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
         return flag, verify_message
 
     if api_code == 200:
-        api_json_result = json.loads(api_result)
-        public_key = api_json_result["data"][0]["public_key"]
+        #api_json_result = json.loads(api_result)
+        #public_key = api_json_result["data"][0]["public_key"]
+        public_key = api_result["data"][0]["public_key"]
         md5 = encrypt_md5(goods_info)
         if sign_check(md5, hash_code, public_key) is False:
             verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match", "goods_batch_id": ""}}'
@@ -126,8 +128,9 @@ def verify_md5_signature(user, hash_code, data_service_host, data_service_uri, n
             verify_message = api_result
             return flag, verify_message
 
-        api_json_result = json.loads(api_result)
-        public_key = api_json_result["data"][0]["public_key"]
+        #api_json_result = json.loads(api_result)
+        #public_key = api_json_result["data"][0]["public_key"]
+        public_key = api_result["data"][0]["public_key"]
         goods_info_md5 = encrypt_md5(goods_info)
         if sign_check(goods_info_md5, hash_code, public_key):
             # create user in current node
