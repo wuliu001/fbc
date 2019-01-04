@@ -41,6 +41,7 @@ ll:BEGIN
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;        
@@ -49,6 +50,8 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
     END;
     
+    SET returnCode_o = 400;
+    SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{"user_i":"',IFNULL(user_i,''),'","type_i":"',IFNULL(type_i,''),'","hashsign_i":"',IFNULL(hashsign_i,'')
                                  ,'","is_create_i":"',IFNULL(is_create_i,''),'","node_dns_i":"',IFNULL(node_dns_i,''),'"}');
     SET v_user = TRIM(user_i);
@@ -66,8 +69,12 @@ ll:BEGIN
     ) ENGINE=InnoDB;
     TRUNCATE TABLE blockchain_cache.temp_cbi_body;
 
+    START TRANSACTION;
+    SET SESSION innodb_lock_wait_timeout = 30;
+
     SET returnMsg_o = 'check body null data error.';
     IF IFNULL(v_body,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;
@@ -82,6 +89,7 @@ ll:BEGIN
     SET returnMsg_o = 'check blockObject null data error.';
     SELECT MAX(`body`) INTO v_blockobject FROM blockchain_cache.temp_cbi_body;
     IF IFNULL(v_blockobject,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -92,6 +100,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'check user null data error.';
     IF IFNULL(v_user,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -102,6 +111,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'check transactionType null data error.';
     IF IFNULL(v_type,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -112,6 +122,7 @@ ll:BEGIN
 
     SET returnMsg_o = 'check hashsign null data error.';
     IF IFNULL(v_hashsign,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -122,6 +133,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'check is_create null data error.';
     IF v_is_create IS NULL THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -132,6 +144,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'check node_dns null data error.';
     IF IFNULL(v_node_dns,'') = '' THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -142,6 +155,7 @@ ll:BEGIN
 
     SET returnMsg_o = 'check blockObject json format error.';
     IF IFNULL(JSON_VALID(v_blockobject),0) = 0 THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -153,6 +167,7 @@ ll:BEGIN
     SET returnMsg_o = 'check request_timestemp null data error.';
     SET v_timestamp = TRIM(BOTH '"' FROM v_blockobject->"$.request_timestemp");
     IF v_timestamp IS NULL THEN
+        COMMIT;
         SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
         TRUNCATE TABLE blockchain_cache.temp_cbi_body;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;    
@@ -168,8 +183,11 @@ ll:BEGIN
     IF v_count = 0 THEN 
         ##insert into queueu
         SET returnMsg_o = 'fail to insert data into queue.';
-        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns,v_dst_endpoint_info, v_returnCode,v_returnMsg);
+        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns, v_returnCode,v_returnMsg);
         IF v_returnCode <> 200 THEN
+            COMMIT;
+            SET returnCode_o = v_returnCode;
+            SET returnMsg_o = v_returnMsg;
             SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
             TRUNCATE TABLE blockchain_cache.temp_cbi_body;
             DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;                
@@ -182,12 +200,6 @@ ll:BEGIN
         INSERT INTO blockchain_cache.`block`(`user`,`transactionType`,`blockObject`,`hashsign`,`timestamp`,`comfirmedTimes`)
              VALUES (v_user,v_type,v_blockobject,v_hashsign,v_timestamp,0);
         
-        UPDATE msg_queues.queues a
-           SET a.queues = CONCAT(a.queue_id,'|$|',a.queues),
-               a.queue_step = msg_queues.`getNextStep`('syncBlockCache', 0, 0),
-               a.last_update_time = UTC_TIMESTAMP()
-         WHERE a.queue_type = 'syncBlockCache' AND a.queue_step = 0;
-        
         ##output hashsign
         IF v_is_create = 1 THEN 
             SET goods_batch_id_o = v_hashsign;
@@ -195,8 +207,11 @@ ll:BEGIN
     ELSEIF v_count > 0 AND v_is_create = 0 THEN           
         ##insert into queueu
         SET returnMsg_o = 'fail to send confirm msg into queue.';
-        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns,v_dst_endpoint_info, v_returnCode,v_returnMsg);
+        CALL blockchain_cache.`cacheQueue.insert`('syncBlockCache',v_queue_body,v_node_dns, v_returnCode,v_returnMsg);
         IF v_returnCode <> 200 THEN
+            COMMIT;
+            SET returnCode_o = v_returnCode;
+            SET returnMsg_o = v_returnMsg;
             SELECT '' success_handled_tids,GROUP_CONCAT(queue_id) fail_handled_tids FROM blockchain_cache.temp_cbi_body;
             TRUNCATE TABLE blockchain_cache.temp_cbi_body;
             DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;                
@@ -208,12 +223,6 @@ ll:BEGIN
         UPDATE blockchain_cache.`block` 
            SET `comfirmedTimes` = `comfirmedTimes` + 1 
          WHERE `hashsign` = v_hashsign;
-
-        UPDATE msg_queues.queues a
-           SET a.queues = CONCAT(a.queue_id,'|$|',a.queues),
-               a.queue_step = msg_queues.`getNextStep`('syncBlockCache', 0, 0),
-               a.last_update_time = UTC_TIMESTAMP()
-         WHERE a.queue_type = 'syncBlockCache' AND a.queue_step = 0;
         
     ELSEIF v_count > 0 AND v_is_create = 1 THEN  
         SET goods_batch_id_o = v_hashsign;
@@ -221,6 +230,7 @@ ll:BEGIN
     
     SELECT GROUP_CONCAT(queue_id) success_handled_tids,'' fail_handled_tids FROM blockchain_cache.temp_cbi_body;
     
+    COMMIT;
     TRUNCATE TABLE blockchain_cache.temp_cbi_body;
     DROP TABLE IF EXISTS blockchain_cache.temp_cbi_body;
 
