@@ -51,12 +51,12 @@ def goodsRegister(data_service_host, body):
         if 'paymentMaxStage' not in goods_info:
             tuple_body[1][0]['paymentMaxStage'] = 1
         
-        goods_info_tuple = (tuple_body[0],tuple_body[1][0])
+        goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0]))
 
         # call api
-        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + transType + '&hashSign=' + goods_info_hash + '&is_create=' + is_create + '&node_dns=' + node_dns
+        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + transType + '&hashSign=' + goods_info_hash + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, str(goods_info_tuple))
-        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
     # body check fail
     else:
@@ -108,12 +108,12 @@ def goodsPriceModify(data_service_host, query_string, body):
         query_string_dict = misc_utility.parse_url('?' + query_string)
         goods_batch_id = misc_utility.get_parameter(query_string_dict, 'goods_batch_id')
 
-        goods_info_tuple = (tuple_body[0],tuple_body[1][0])
+        goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0]))
 
         # call api
-        server_url = data_service_host + '/goods/cache/' + goods_batch_id + '/price?user=' + user + '&hashSign=' + goods_info_hash + '&is_create=' + is_create + '&node_dns=' + node_dns
+        server_url = data_service_host + '/goods/cache/' + goods_batch_id + '/price?user=' + user + '&hashSign=' + goods_info_hash + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'PUT', None, str(goods_info_tuple))
-        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
     # body check fail
     else:
@@ -162,12 +162,12 @@ def goodsQuantityModify(data_service_host, query_string, body):
         query_string_dict = misc_utility.parse_url('?' + query_string)
         goods_batch_id = misc_utility.get_parameter(query_string_dict, 'goods_batch_id')
 
-        goods_info_tuple = (tuple_body[0],tuple_body[1][0])
+        goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0])）
 
         # call api
-        server_url = data_service_host + '/goods/cache/' + goods_batch_id + '/quantity?user=' + user + '&hashSign=' + goods_info_hash + '&is_create=' + is_create + '&node_dns=' + node_dns
+        server_url = data_service_host + '/goods/cache/' + goods_batch_id + '/quantity?user=' + user + '&hashSign=' + goods_info_hash + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, str(goods_info_tuple))
-        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
     # body check fail
     else:
