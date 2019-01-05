@@ -15,7 +15,7 @@ INSERT INTO `queue_workflows` VALUES (7,'syncPurchase',1,null,'/transactions/pur
 INSERT INTO `queue_workflows` VALUES (8,'syncPurchase',2,null,null,null,0,1,null,null,0,0,'end step');
 
 INSERT INTO `queue_workflows` VALUES (9,'deletePurchase',0,null,null,null,0,0,null,null,0,0,'sync cache purchase');
-INSERT INTO `queue_workflows` VALUES (10,'deletePurchase',1,null,'/transactions/purchase/fruit','DELETE',0,0,'syncPurchase',null,0,0,'delete cache purchase');
+INSERT INTO `queue_workflows` VALUES (10,'deletePurchase',1,null,'/transactions/purchase/fruit','PUT',0,0,'syncPurchase',null,0,0,'delete cache purchase');
 INSERT INTO `queue_workflows` VALUES (11,'deletePurchase',2,null,null,null,0,1,null,null,0,0,'end step');
 
 
