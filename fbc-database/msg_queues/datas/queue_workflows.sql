@@ -25,7 +25,7 @@ INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, 
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (3,'syncBlockCache', 1, 'body', '1,2', 0);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (4,'syncPurchase', 1, 'body', '1,2', 0);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (5,'deletePurchase', 1, 'body', '1,2', 0);
-INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (6,'deletePurchase', 1, 'userId', '3', 0);
+INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (6,'deletePurchase', 1, 'user', '3', 0);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `var_name`, `queue_val_pos`, `is_replace_resource`) VALUES (7,'deletePurchase', 1, 'request_id', '4', 0);
 
 

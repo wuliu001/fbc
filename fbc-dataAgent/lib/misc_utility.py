@@ -8,7 +8,10 @@ def bodyChecker(body, body_key_check_dict):
     check_result = ''
     tuple_body = {}
     list_body = []
-
+    
+    if body[0:1] == '(':
+        body = body.replace('"[','[').replace(']"',']')
+        
     formated_body = eval(body)
     if isinstance(formated_body,list):
         list_body = formated_body
@@ -25,9 +28,7 @@ def bodyChecker(body, body_key_check_dict):
     goods_body_list_len = len(list_body)
 
     # check body list number cnt
-    if goods_body_list_len < 2 or goods_body_list_len > 3:
-        return_flag = False
-        check_result = 'body member count error'
+    if goods_body_list_len == 1:
         return return_flag, check_result, tuple_body
     else:
         # check goods contents
