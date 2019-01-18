@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import urlparse
+import hashlib  
 
 # check body
 def bodyChecker(body, body_key_check_dict):
@@ -51,6 +52,25 @@ def parse_url(query_string):
 def get_parameter(query_string_dict, key):
     return query_string_dict[key][0]
 
+
+# check body
+def bodyTypeChecker(body, body_key_check_dict):
+    return_flag = True
+    check_result = ''
+    formated_body = eval(body)    
+    
+    # check contents
+    for key in body_key_check_dict:
+        if key not in formated_body or isinstance(formated_body[key],body_key_check_dict[key]) is False:
+            return_flag = False
+            check_result = 'check %s fail' % key
+            break
+
+    return return_flag, check_result
+
+def get_md5(str):
+    m = hashlib.new('MD5', str)
+    return m.hexdigest()
 
 
 

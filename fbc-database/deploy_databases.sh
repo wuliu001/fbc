@@ -274,6 +274,49 @@ then
 fi
 echo "Schema users Compile End"
 
+echo "Schema user_center Compile Begin"
+mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "drop database if exists user_center"
+mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "create database if not exists user_center"
+
+cd $LOCAL/user_center/tables
+if [ $? -eq 0 ]
+then
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >user_center_tables.sql
+
+    for FN in `ls`
+    do
+        echo "  Compile $FN"
+        cat $FN >> user_center_tables.sql
+    done
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >>user_center_tables.sql
+    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT user_center < user_center_tables.sql
+    returnCode=$[ $returnCode+$? ]
+    rm user_center_tables.sql
+fi
+
+cd $LOCAL/user_center/funcs
+if [ $? -eq 0 ]
+then
+    for FN in `ls`
+    do
+        echo "  Compile $FN"
+        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT user_center < $FN
+        returnCode=$[ $returnCode+$? ]
+    done
+fi
+
+cd $LOCAL/user_center/procs
+if [ $? -eq 0 ]
+then
+    for FN in `ls`
+    do
+        echo "  Compile $FN"
+        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT user_center < $FN
+        returnCode=$[ $returnCode+$? ]
+    done
+fi
+echo "Schema user_center Compile End"
+
 if [ $returnCode -gt 0 ]
 then
     echo "$returnCode"

@@ -1,4 +1,4 @@
-USE `users`;
+USE `user_center`;
 
 /*Table structure for table `public_info` */;
 
