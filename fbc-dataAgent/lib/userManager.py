@@ -11,7 +11,7 @@ def register(server_url, body):
     api_result = {"data": [{"private_key": "[private_key]"},{"publick_key": "[publick_key]"}], "moreResults": [], "ops": {"code": "[CODE]", "message": "[MSG]"}}
     print 'server_url',server_url
     #check body 
-    body_key_check_dict = {"userAccount": str, "password": str, "corporationName": str, "owner": str, "address": str, \
+    body_key_check_dict = {"userAccount": str, "password": str,"trans_password": str, "corporationName": str, "owner": str, "address": str, \
                            "companyRegisterDate": str,"registeredCapital": str, "annualIncome": str, "telNum": str, "email": str}
     check_flag, check_msg = misc_utility.bodyTypeChecker(body, body_key_check_dict)
     if check_flag is False:
@@ -30,8 +30,8 @@ def register(server_url, body):
     crypto_utility.unify_encoding()
     public_key, private_key = crypto_utility.get_key()
     
-    #set user public info to user_center
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?user=' + user, "POST", None,private_key )
+    #set user private key to local
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?user=' + user + '&trans_password='+format_body['trans_password'], "POST", None,private_key )
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -45,7 +45,7 @@ def register(server_url, body):
         api_result["data"][1]["publick_key"]=''
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'    
 
-    #set user private key to local
+    #set user public info to user_center
     http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?user=' + user, "POST", None,body)
     if http_code != 200 :
         api_result["ops"]["code"] = 400
@@ -61,7 +61,7 @@ def register(server_url, body):
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'
 
     #set user public key to blockchain
-
+    
 
     #return final result
     api_result["ops"]["code"] = 200

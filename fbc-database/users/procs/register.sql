@@ -6,6 +6,7 @@ DROP PROCEDURE IF EXISTS `register`;
 
 DELIMITER $$
 CREATE DEFINER=`dba`@`%` PROCEDURE `register`(id_i                  VARCHAR(50),
+                                              trans_passwd_i        VARCHAR(50),
                                               body_i                LONGTEXT,
                                               OUT returnCode_o      INT,
                                               OUT returnMsg_o       LONGTEXT )
@@ -30,9 +31,10 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"id_i":"',IFNULL(id_i,''),'"}');
+    SET v_params_body = CONCAT('{"id_i":"',IFNULL(id_i,''),'"."trans_passwd_i":"',IFNULL(trans_passwd_i,''),'"}');
     SET id_i = TRIM(id_i);
     SET body_i = TRIM(body_i);
+    SET trans_passwd_i = TRIM(trans_passwd_i);
     
     SET returnMsg_o = 'get system lock fail.';
     SET v_userReg_sys_lock = GET_LOCK('user_register',180);
@@ -43,7 +45,7 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'check input null data.';
-    IF IFNULL(id_i,'') = '' OR IFNULL(body_i,'') = '' THEN
+    IF IFNULL(id_i,'') = '' OR IFNULL(body_i,'') = '' OR IFNULL(trans_passwd_i,'') = '' THEN
         SET returnCode_o = 512;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
@@ -60,8 +62,8 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 	
-    INSERT INTO `users`.`private_keys`(`id`, `private_key`)
-         VALUES (id_i, body_i);
+    INSERT INTO `users`.`private_keys`(`id`,`trans_password`, `private_key`)
+         VALUES (id_i,MD5(trans_passwd_i), body_i);
     
     SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
     
