@@ -5,10 +5,13 @@ USE `blockchain`;
 DROP TABLE IF EXISTS `header`;
 
 CREATE TABLE `header` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `version` int(11) NOT NULL,
-  `hashPrevBlock` varchar(256) NOT NULL,
-  `hashMerkleRoot` varchar(256) NOT NULL,
-  `timestamp` bigint(20) NOT NULL,
-  PRIMARY KEY (`id`)
+  `id`           BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `parentHash`   VARCHAR(256) NOT NULL,
+  `stateRoot`    VARCHAR(256) NOT NULL,
+  `txRoot`       VARCHAR(256) NOT NULL,
+  `receiptRoot`  VARCHAR(256) NOT NULL,
+  `Bloom`        LONGTEXT NOT NULL,
+  `Time`         DATETIME,
+  `Nonce`        INT(11),
+  PRIMARY KEY    (`id`)
 ) ENGINE=InnoDB;
