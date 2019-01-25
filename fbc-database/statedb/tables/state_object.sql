@@ -12,6 +12,6 @@ CREATE TABLE `state_object` (
   `balance`                 FLOAT NOT NULL,
   `smartContractPrice`      FLOAT DEFAULT NULL,
   `minSmartContractDeposit` FLOAT DEFAULT NULL,
-  `Nonce`                   INT(11) NOT NULL,
+  `nonce`                   INT(11) NOT NULL,
   PRIMARY KEY               (`id`)
 ) ENGINE=InnoDB;

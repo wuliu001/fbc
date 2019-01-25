@@ -8,10 +8,11 @@ import json
 
 
 def goodsRegister(data_service_host, body):
-    body_key_check_dict = {"User": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfProduction": str, \
-                           "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "Quantity": float, "Price": float, \
-                           "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, "cityOfIssuingLocation": str, \
-                           "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "request_timestemp": str}
+    body_key_check_dict = {"User": str, "Recipient": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
+                           "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
+                           "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
+                           "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
+                           "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
 
     # body check
     check_result, check_msg, tuple_body = misc_utility.bodyChecker(body, body_key_check_dict)

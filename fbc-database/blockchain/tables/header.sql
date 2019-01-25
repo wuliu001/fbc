@@ -10,8 +10,8 @@ CREATE TABLE `header` (
   `stateRoot`    VARCHAR(256) NOT NULL,
   `txRoot`       VARCHAR(256) NOT NULL,
   `receiptRoot`  VARCHAR(256) NOT NULL,
-  `Bloom`        LONGTEXT NOT NULL,
-  `Time`         DATETIME,
-  `Nonce`        INT(11),
+  `bloom`        LONGTEXT NOT NULL,
+  `time`         DATETIME,
+  `nonce`        INT(11),
   PRIMARY KEY    (`id`)
 ) ENGINE=InnoDB;
