@@ -51,7 +51,8 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT IFNULL(smartContractPrice,0) + IFNULL(minSmartContractDeposit,0) AS gasRequest 
+    SELECT IFNULL(smartContractPrice,0) AS smartContractPrice, 
+           IFNULL(minSmartContractDeposit,0) AS minSmartContractDeposit 
       FROM statedb.state_object WHERE id = v_account_id;
 
     SET returnCode_o = 200;

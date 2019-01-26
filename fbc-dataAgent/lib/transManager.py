@@ -7,29 +7,37 @@ import misc_utility
 import json
 
 
-def goodsRegister(data_service_host, body):
-    body_key_check_dict = {"User": str, "Recipient": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
+def goodsRegister(data_service_host, query_string, body):
+    tx_key_check_dict = {"User": str, "Recipient": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
                            "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
                            "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
                            "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
                            "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
 
+    formated_body = eval(body)
     # body check
-    check_result, check_msg, tuple_body = misc_utility.bodyChecker(body, body_key_check_dict)
-    list_body = tuple_body[1]
+    check_result, check_msg = misc_utility.bodyChecker(formated_body, tx_key_check_dict)
+
     # body check success
     if check_result:
-        body_item_len = len(list_body)
-        goods_info = list_body[0]
-        goods_info_str = json.dumps(goods_info)
-        user = goods_info['User']
-        transType = goods_info['Type']
+        body_item_length = len(formated_body)
+        tx_detail = formated_body[0]
+        goods_info_str = json.dumps(tx_detail)
+        user = tx_detail['User']
+        tx_type = tx_detail['Type']
         node_dns = data_service_host
 
+        # get normal account's public_key, balance, nonce
+
+        # get smart_conctract account's smartContractPrice, minSmartContractDeposit
+        # calculate smart_conctract account's gasRequest
+        # verify balance & gasRequest
+        # get account's private_key
+        # get nonce from transactions in pending pack
+
         # check private key
-        if body_item_len == 2:
-            is_create = 1
-            private_key = list_body[1]
+        if body_item_length == 2:
+            tx_password = formated_body[1]
 
             flag, hashSign, verify_message = crypto_utility.verify_private_key(user, private_key, data_service_host, '/users/sync/', goods_info_str)
             if flag is False:
@@ -38,7 +46,6 @@ def goodsRegister(data_service_host, body):
 
         # check md5 signature
         else:
-            is_create = 0
             hashSign = list_body[1]
             node_dns = list_body[2]
 
@@ -55,16 +62,16 @@ def goodsRegister(data_service_host, body):
         goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0]))
 
         # call api
-        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + transType + '&hashSign=' + hashSign + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
+        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + tx_type + '&hashSign=' + hashSign + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, str(goods_info_tuple))
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
     # body check fail
     else:
-        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s", "goods_batch_id": ""}}' % check_msg
+        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % check_msg
         return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
 
-
+"""
 def goodsPriceModify(data_service_host, query_string, body):
     body_key_check_dict = {"User": str, "Type": "goodsPriceModify", "Price": float, "request_timestemp": str, "Comments": str}
 
@@ -375,3 +382,4 @@ def goodsLogisticsSalerConfirm(data_service_host,query_string, body):
 def goodsLogisticsBuyerConfirm(data_service_host,query_string, body):
     pass
 
+"""
