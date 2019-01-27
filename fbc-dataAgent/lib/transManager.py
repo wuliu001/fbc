@@ -22,22 +22,128 @@ def goodsRegister(data_service_host, query_string, body):
     if check_result:
         body_item_length = len(formated_body)
         tx_detail = formated_body[0]
-        goods_info_str = json.dumps(tx_detail)
-        user = tx_detail['User']
+        tx_detail_str = json.dumps(tx_detail)
+        normal_account_address = tx_detail['User']
+        smart_contract_address = tx_detail['Recipient']
         tx_type = tx_detail['Type']
-        node_dns = data_service_host
 
         # get normal account's public_key, balance, nonce
+        flag, public_key, balance, stable_nonce, return_msg = misc_utility.get_account_basicInfo(data_service_host,normal_account_address)
+        if flag is False:
+            api_result = return_msg
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-        # get smart_conctract account's smartContractPrice, minSmartContractDeposit
-        # calculate smart_conctract account's gasRequest
-        # verify balance & gasRequest
-        # get account's private_key
-        # get nonce from transactions in pending pack
+        # get smartcontract account's gasRequest
+        flag, smartcontract_gasRequest, return_msg = misc_utility.get_account_gasRequest(data_service_host,smart_contract_address,1)
+        if flag is False:
+            api_result = return_msg
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+        # get normal account's gasRequest from pending handle transactions
+        flag, normal_account_gasRequest, return_msg = misc_utility.get_account_gasRequest(data_service_host,normal_account_address)
+        if flag is False:
+            api_result = return_msg
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+        # check whether the account's balance is enough to start a transaction
+        if (balance - normal_account_gasRequest) < smartcontract_gasRequest:
+            err_msg = "account's balance is not enough to start a transaction!"
+            api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+        # get parameter
+        query_string_dict = misc_utility.parse_url('?' + query_string)
+        is_broadcast = misc_utility.get_parameter(query_string_dict, 'is_broadcast')
+
+        if body_item_length == 2 and is_broadcast == 0:
+            tx_password = formated_body[1]
+            # get normal account's private_key
+            flag, private_key, return_msg = misc_utility.get_account_privateKey(data_service_host,normal_account_address,tx_password)
+
+            # ues private key generate hashSign
+            flag, hashSign, verify_message = misc_utility.get_hashsign(public_key,private_key)
+            if flag is False:
+                api_result = verify_message
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            # get nonce from pending handle transactions
+            flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
+            if flag is False:
+                api_result = return_msg
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            # check stable_nonce whether lower than max_pending_nonce in pending transactions
+            if stable_nonce >= max_pending_nonce:
+                err_msg = "nonce check error! stable_nonce: %d, max_pending_nonce: %d" % (stable_nonce,max_pending_nonce)
+                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            # generate new nonce
+            nonce = max_pending_nonce + 1
+
+        elif body_item_length == 3 and is_broadcast == 1:
+            hashSign = formated_body[1]
+            nonce = formated_body[2]
+            # check hashSign using public key
+            flag, verify_message = misc_utility.check_md5_signature(public_key,hashSign)
+            if flag is False:
+                api_result = verify_message
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            # get nonce from pending handle transactions
+            flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
+            if flag is False:
+                api_result = return_msg
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+            # check nonce
+            if nonce <= max_pending_nonce:
+                err_msg = "nonce check error! current_nonce: %d, max_pending_nonce: %d" % (nonce, max_pending_nonce)
+                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+        else:
+            err_msg = "is_broadcast parameter value error!"
+            api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+            return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+
+
+        # record into pending transaction
+        server_url = data_service_host + '/account/' + normal_account_address + '/transaction' + '&type=' + tx_type + '&hashSign=' + hashSign + \
+                     '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast)
+        http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)
+        return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
+
+    # body check fail
+    else:
+        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % check_msg
+        return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
+
+
+
+"""
+def goodsRegister(data_service_host, body):
+    body_key_check_dict = {"User": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfProduction": str, \
+                           "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "Quantity": float, "Price": float, \
+                           "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, "cityOfIssuingLocation": str, \
+                           "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "request_timestemp": str}
+
+    # body check
+    check_result, check_msg, tuple_body = misc_utility.bodyChecker(body, body_key_check_dict)
+    list_body = tuple_body[1]
+    # body check success
+    if check_result:
+        body_item_len = len(list_body)
+        goods_info = list_body[0]
+        goods_info_str = json.dumps(goods_info)
+        user = goods_info['User']
+        transType = goods_info['Type']
+        node_dns = data_service_host
 
         # check private key
-        if body_item_length == 2:
-            tx_password = formated_body[1]
+        if body_item_len == 2:
+            is_create = 1
+            private_key = list_body[1]
 
             flag, hashSign, verify_message = crypto_utility.verify_private_key(user, private_key, data_service_host, '/users/sync/', goods_info_str)
             if flag is False:
@@ -46,6 +152,7 @@ def goodsRegister(data_service_host, query_string, body):
 
         # check md5 signature
         else:
+            is_create = 0
             hashSign = list_body[1]
             node_dns = list_body[2]
 
@@ -58,20 +165,20 @@ def goodsRegister(data_service_host, query_string, body):
             tuple_body[1][0]['paymentMinStage'] = 1
         if 'paymentMaxStage' not in goods_info:
             tuple_body[1][0]['paymentMaxStage'] = 1
-        
+
         goods_info_tuple = (tuple_body[0],json.dumps(tuple_body[1][0]))
 
         # call api
-        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + tx_type + '&hashSign=' + hashSign + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
+        server_url = data_service_host + '/goods/cache?user=' + user + '&type=' + transType + '&hashSign=' + hashSign + '&is_create=' + str(is_create) + '&node_dns=' + node_dns
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, str(goods_info_tuple))
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
     # body check fail
     else:
-        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % check_msg
+        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s", "goods_batch_id": ""}}' % check_msg
         return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
 
-"""
+
 def goodsPriceModify(data_service_host, query_string, body):
     body_key_check_dict = {"User": str, "Type": "goodsPriceModify", "Price": float, "request_timestemp": str, "Comments": str}
 

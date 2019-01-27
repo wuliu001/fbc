@@ -37,7 +37,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT IFNULL(SUM(gasRequest),0) AS gasRequest
+    SELECT IFNULL(SUM(gasCost),0) + IFNULL(SUM(gasDeposit),0) AS gasRequest
       FROM transaction_cache.block 
      WHERE accountAddress = account_addr_i;
     

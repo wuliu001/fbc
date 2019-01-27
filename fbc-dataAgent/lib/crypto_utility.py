@@ -69,6 +69,8 @@ def sign_check(message, signature, public_key):
     is_verify = verifier.verify(digest, base64.b64decode(signature))
     return is_verify
 
+
+"""
 # verify private key
 def verify_private_key(user, private_key, data_service_host, data_service_uri, goods_info):
     flag = False
@@ -168,3 +170,4 @@ if __name__ == '__main__':
     is_verify = sign_check(message, signature, public_key)
     print 'is_verify:'
     print(is_verify)
+"""
