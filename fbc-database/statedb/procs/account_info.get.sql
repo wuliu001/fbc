@@ -10,7 +10,7 @@ CREATE PROCEDURE `account_info.get`(
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
-    DECLARE v_account_id     BIGINT(20);
+    DECLARE v_cnt            BIGINT(20);
     DECLARE v_procname       VARCHAR(100) DEFAULT 'account_info.get';
     DECLARE v_modulename     VARCHAR(50) DEFAULT 'statedb';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
@@ -38,20 +38,20 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT IFNULL(MAX(id),0) 
-      INTO v_account_id
+    SELECT COUNT(1) 
+      INTO v_cnt
       FROM statedb.state_object 
      WHERE accountAddress = account_addr_i;
 
     # check account if exist or not
-    IF v_account_id = 0 THEN
+    IF v_cnt = 0 THEN
         SET returnCode_o = 651;
         SET returnMsg_o = 'account not exist.';
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
-    SELECT publicKey,balance,nonce FROM statedb.state_object WHERE id = v_account_id;
+    SELECT publicKey,balance,nonce FROM statedb.state_object WHERE accountAddress = account_addr_i;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

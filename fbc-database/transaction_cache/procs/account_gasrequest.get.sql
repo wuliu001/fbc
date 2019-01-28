@@ -37,8 +37,9 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT IFNULL(SUM(gasCost),0) + IFNULL(SUM(gasDeposit),0) AS gasRequest
-      FROM transaction_cache.block 
+    SELECT IFNULL(SUM(gasCost),0) AS gasCost,
+           IFNULL(SUM(gasDeposit),0) AS gasDeposit
+      FROM transaction_cache.transactions 
      WHERE accountAddress = account_addr_i;
     
     SET returnCode_o = 200;

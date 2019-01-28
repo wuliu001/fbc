@@ -38,7 +38,7 @@ ll:BEGIN
     END IF;
 
     SELECT IFNULL(MAX(nonce),0) AS maxNonce
-      FROM transaction_cache.block 
+      FROM transaction_cache.transactions 
      WHERE accountAddress = account_addr_i;
     
     SET returnCode_o = 200;

@@ -5,7 +5,6 @@ USE `centerdb`;
 DROP TABLE IF EXISTS `accounts`;
 
 CREATE TABLE `accounts` (
-  `id`                  BIGINT(20) NOT NULL AUTO_INCREMENT,
   `accountAddress`      VARCHAR(256) NOT NULL,
   `userAccount`         VARCHAR(50) NOT NULL,
   `loginPassword`       VARCHAR(50) NOT NULL,
@@ -20,5 +19,5 @@ CREATE TABLE `accounts` (
   `create_time`         DATETIME NOT NULL,
   `last_update_time`    DATETIME NOT NULL,
   `last_login_time`     DATETIME NOT NULL,
-  PRIMARY KEY           (`id`)
+  PRIMARY KEY           (`accountAddress`)
 ) ENGINE=InnoDB;

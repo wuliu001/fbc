@@ -65,18 +65,20 @@ def get_account_basicInfo(data_service_host,account_address):
 # get account's gasRequest (include normal account in pending handle transactions & smartcontract)
 def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0):
     flag = True
-    gasRequest = 0
+    gasCost = 0
+    gasDeposit = 0
     return_msg = 'OK'
 
     server_url = data_service_host + '/account/' + account_address + '/gas_request?is_smartcontract=' + str(is_smartcontract)
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
-        gasRequest = api_result["data"][0]["gasRequest"]
+        gasCost = api_result["data"][0]["gasCost"]
+        gasDeposit = api_result["gasDeposit"][0]["gasDeposit"]
     else:
         flag = False
         return_msg = api_result
 
-    return flag, gasRequest, return_msg
+    return flag, gasCost, gasDeposit, return_msg
 
 
 # get normal account's private_key
@@ -114,14 +116,14 @@ def get_pending_handle_account_maxNonce(data_service_host,account_address):
 
 
 # ues private key generate hashSign
-def get_hashsign(public_key,private_key):
+def get_hashsign(public_key,private_key,tx_detail):
     flag = True
     hashSign = ''
     verify_message = ''
 
     if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
-        hashSign = crypto_utility.sign_encode('fbc-blockchain', private_key)
-        if crypto_utility.sign_check('fbc-blockchain', hashSign, public_key) is False:
+        hashSign = crypto_utility.sign_encode(tx_detail, private_key)
+        if crypto_utility.sign_check(tx_detail, hashSign, public_key) is False:
             flag = False
             verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match!"}}'
     else:
@@ -131,11 +133,11 @@ def get_hashsign(public_key,private_key):
 
 
 # check md5 signature
-def check_md5_signature(public_key,hashSign):
+def check_md5_signature(public_key,hashSign,tx_detail):
     flag = True
     verify_message = ''
 
-    if crypto_utility.sign_check('fbc-blockchain', hashSign, public_key) is False:
+    if crypto_utility.sign_check(tx_detail, hashSign, public_key) is False:
         flag = False
         verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match!"}}'
 

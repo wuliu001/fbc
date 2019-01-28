@@ -1,11 +1,10 @@
 USE `transaction_cache`;
 
-/*Table structure for table `block` */;
+/*Table structure for table `transactions` */;
 
-DROP TABLE IF EXISTS `block`;
+DROP TABLE IF EXISTS `transactions`;
 
-CREATE TABLE `block` (
-  `id`              BIGINT(20) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `transactions` (
   `accountAddress`  VARCHAR(256) NOT NULL,
   `transactionType` VARCHAR(32) NOT NULL,
   `blockObject`     LONGTEXT NOT NULL,
@@ -15,5 +14,5 @@ CREATE TABLE `block` (
   `nonce`           INT(11),
   `timestamp`       BIGINT(20) NOT NULL,
   `comfirmedTimes`  INT(11) NOT NULL,
-  PRIMARY KEY       (`id`)
+  PRIMARY KEY       (`accountAddress`)
 ) ENGINE=InnoDB;

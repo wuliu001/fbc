@@ -13,7 +13,7 @@ def goodsRegister(data_service_host, query_string, body):
                            "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
                            "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
                            "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
-
+    tx_detail_str = body.split('}')[0][1:]+'}'
     formated_body = eval(body)
     # body check
     check_result, check_msg = misc_utility.bodyChecker(formated_body, tx_key_check_dict)
@@ -22,7 +22,6 @@ def goodsRegister(data_service_host, query_string, body):
     if check_result:
         body_item_length = len(formated_body)
         tx_detail = formated_body[0]
-        tx_detail_str = json.dumps(tx_detail)
         normal_account_address = tx_detail['User']
         smart_contract_address = tx_detail['Recipient']
         tx_type = tx_detail['Type']
@@ -34,16 +33,18 @@ def goodsRegister(data_service_host, query_string, body):
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # get smartcontract account's gasRequest
-        flag, smartcontract_gasRequest, return_msg = misc_utility.get_account_gasRequest(data_service_host,smart_contract_address,1)
+        flag, smartcontract_gasCost, smartcontract_gasDeposit, return_msg = misc_utility.get_account_gasRequest(data_service_host,smart_contract_address,1)
         if flag is False:
             api_result = return_msg
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        smartcontract_gasRequest = smartcontract_gasCost + smartcontract_gasDeposit
 
         # get normal account's gasRequest from pending handle transactions
-        flag, normal_account_gasRequest, return_msg = misc_utility.get_account_gasRequest(data_service_host,normal_account_address)
+        flag, normal_account_gasCost, normal_account_gasDeposit, return_msg = misc_utility.get_account_gasRequest(data_service_host,normal_account_address)
         if flag is False:
             api_result = return_msg
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        normal_account_gasRequest = normal_account_gasCost + normal_account_gasDeposit
 
         # check whether the account's balance is enough to start a transaction
         if (balance - normal_account_gasRequest) < smartcontract_gasRequest:
@@ -61,7 +62,7 @@ def goodsRegister(data_service_host, query_string, body):
             flag, private_key, return_msg = misc_utility.get_account_privateKey(data_service_host,normal_account_address,tx_password)
 
             # ues private key generate hashSign
-            flag, hashSign, verify_message = misc_utility.get_hashsign(public_key,private_key)
+            flag, hashSign, verify_message = misc_utility.get_hashsign(public_key,private_key,tx_detail_str)
             if flag is False:
                 api_result = verify_message
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
@@ -72,20 +73,14 @@ def goodsRegister(data_service_host, query_string, body):
                 api_result = return_msg
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-            # check stable_nonce whether lower than max_pending_nonce in pending transactions
-            if stable_nonce >= max_pending_nonce:
-                err_msg = "nonce check error! stable_nonce: %d, max_pending_nonce: %d" % (stable_nonce,max_pending_nonce)
-                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
-                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
-
             # generate new nonce
-            nonce = max_pending_nonce + 1
+            nonce = (stable_nonce if max_pending_nonce == 0 else max_pending_nonce) + 1
 
         elif body_item_length == 3 and is_broadcast == 1:
             hashSign = formated_body[1]
             nonce = formated_body[2]
             # check hashSign using public key
-            flag, verify_message = misc_utility.check_md5_signature(public_key,hashSign)
+            flag, verify_message = misc_utility.check_md5_signature(public_key,hashSign,tx_detail_str)
             if flag is False:
                 api_result = verify_message
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
