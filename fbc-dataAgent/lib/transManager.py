@@ -102,7 +102,6 @@ def goodsRegister(data_service_host, query_string, body):
             api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-
         # record into pending transaction
         server_url = data_service_host + '/account/' + normal_account_address + '/transaction' + '&type=' + tx_type + '&hashSign=' + hashSign + \
                      '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast)
