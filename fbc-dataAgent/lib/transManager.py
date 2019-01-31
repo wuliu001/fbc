@@ -7,12 +7,20 @@ import misc_utility
 import json
 
 
-def goodsRegister(data_service_host, query_string, body):
-    tx_key_check_dict = {"User": str, "Recipient": str, "Type": "goodsRegister", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
-                           "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
-                           "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
-                           "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
-                           "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
+def transaction_register(tx_type, data_service_host, query_string, body):
+    if tx_type == 'vendition':
+        tx_key_check_dict = {"User": str, "Recipient": str, "Type": "vendition", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
+                            "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
+                            "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
+                            "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
+                            "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
+    elif tx_type = 'purchase':
+        tx_key_check_dict = {"User": str, "Recipient": str, "Type": "purchase", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
+                            "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
+                            "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
+                            "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, \
+                            "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
+
     tx_detail_str = body.split('}')[0][1:]+'}'
     formated_body = eval(body)
     # body check
@@ -114,6 +122,8 @@ def goodsRegister(data_service_host, query_string, body):
         return '200 OK', [('Content-Type','text/html')], [api_result + '\n']
 
 
+def transaction_modidy(data_service_host, query_string, body):
+    pass
 
 """
 def goodsRegister(data_service_host, body):

@@ -18,44 +18,16 @@ def application(env, start_response):
         h_code, h_header, h_rtn = userManager.register(g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/register') and (method == 'POST'):
-        h_code, h_header, h_rtn = transManager.goodsRegister(g_data_service_host, query_string, body)
+    elif (path_info == '/goods/vendition') and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.transaction_register('vendition', g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/price_modify') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.goodsPriceModify(g_data_service_host, query_string, body)
+    elif (path_info == '/goods/purchase') and (method == 'POST'):
+        h_code, h_header, h_rtn = transManager.transaction_register('purchase', g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/quantity_modify') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.goodsQuantityModify(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/transactions/purchase_request') and (method == 'POST'):
-        h_code, h_header, h_rtn = transManager.goodsPurchaseRequest(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/transactions/purchase_delete') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.goodsPurchaseDelete(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/transactions/purchase_modify') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.goodsPurchaseModify(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/goods/logistics/register') and (method == 'POST'):
-        h_code, h_header, h_rtn = transManager.goodsLogisticsRegister(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/goods/logistics/comments') and (method == 'POST'):
-        h_code, h_header, h_rtn = transManager.goodsComments(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/goods/logistics/saler_confirmation') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.goodsLogisticsSalerConfirm(g_data_service_host, query_string, body)
-        start_response(h_code, h_header)
-        return h_rtn
-    elif (path_info == '/goods/logistics/buyer_confirmation') and (method == 'POST'):
-        h_code, h_header, h_rtn = transManager.goodsLogisticsBuyerConfirm(g_data_service_host, query_string, body)
+    elif (path_info == '/goods/modify') and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.transaction_modify(g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
     else:
