@@ -32,7 +32,6 @@ def transaction_register(tx_type, data_service_host, query_string, body):
         tx_detail = formated_body[0]
         normal_account_address = tx_detail['User']
         smart_contract_address = tx_detail['Recipient']
-        tx_type = tx_detail['Type']
 
         # get normal account's public_key, balance, nonce
         flag, public_key, balance, stable_nonce, return_msg = misc_utility.get_account_basicInfo(data_service_host,normal_account_address)

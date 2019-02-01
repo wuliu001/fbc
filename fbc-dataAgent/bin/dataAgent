@@ -18,15 +18,15 @@ def application(env, start_response):
         h_code, h_header, h_rtn = userManager.register(g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/vendition') and (method == 'POST'):
+    elif (path_info == '/transactions/vendition') and (method == 'POST'):
         h_code, h_header, h_rtn = transManager.transaction_register('vendition', g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/purchase') and (method == 'POST'):
+    elif (path_info == '/transactions/purchase') and (method == 'POST'):
         h_code, h_header, h_rtn = transManager.transaction_register('purchase', g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/goods/modify') and (method == 'PUT'):
+    elif (path_info == '/transactions/modify') and (method == 'PUT'):
         h_code, h_header, h_rtn = transManager.transaction_modify(g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
