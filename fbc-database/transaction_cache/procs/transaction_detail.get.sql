@@ -6,7 +6,6 @@ DROP PROCEDURE IF EXISTS `transaction.modify`;
 
 DELIMITER $$
 CREATE PROCEDURE `transaction.modify`(
-    type_i                   VARCHAR(32),
     tx_address_i             VARCHAR(256),
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
@@ -27,13 +26,12 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
     END;
 
-    SET v_params_body = CONCAT('{"type_i":"',IFNULL(type_i,''),'","tx_address_i":"',IFNULL(tx_address_i,''),'"}');
+    SET v_params_body = CONCAT('{"tx_address_i":"',IFNULL(tx_address_i,''),'"}');
 
-    SET type_i = TRIM(IFNULL(type_i),'');
     SET tx_address_i = TRIM(IFNULL(tx_address_i),'');
 
     # check input parameters
-    IF type_i = '' OR tx_address_i = '' THEN
+    IF tx_address_i = '' THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check input parameters fail.';
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -44,8 +42,7 @@ ll:BEGIN
     SELECT COUNT(1) 
       INTO v_cnt 
       FROM transaction_cache.transactions
-     WHERE transactionType = type_i
-       AND hashSign = tx_address_i;
+     WHERE hashSign = tx_address_i;
 
     IF v_cnt = 0 THEN
         SET returnCode_o = 651;
@@ -56,8 +53,7 @@ ll:BEGIN
 
     SELECT blockObject 
       FROM transaction_cache.transactions 
-     WHERE transactionType = type_i
-       AND hashSign = original_tx_address_i;
+     WHERE md5(hashSign) = original_tx_address_i;
 
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

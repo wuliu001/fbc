@@ -26,8 +26,12 @@ def application(env, start_response):
         h_code, h_header, h_rtn = transManager.transaction_register('purchase', g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
-    elif (path_info == '/transactions/modify') and (method == 'PUT'):
-        h_code, h_header, h_rtn = transManager.transaction_modify(g_data_service_host, query_string, body)
+    elif (path_info == '/transactions/vendition/modify') and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.transaction_register('vendition',g_data_service_host, query_string, body)
+        start_response(h_code, h_header)
+        return h_rtn
+    elif (path_info == '/transactions/purchase/modify') and (method == 'PUT'):
+        h_code, h_header, h_rtn = transManager.transaction_register('purchase',g_data_service_host, query_string, body)
         start_response(h_code, h_header)
         return h_rtn
     else:

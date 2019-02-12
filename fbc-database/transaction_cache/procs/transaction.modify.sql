@@ -64,7 +64,7 @@ ll:BEGIN
      WHERE transactionType = type_i
        AND hashSign = original_tx_address_i;
     
-    SELECT new_tx_address_i AS txAddress;
+    SELECT md5(new_tx_address_i) AS txAddress;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

@@ -62,6 +62,27 @@ def transaction_register(tx_type, data_service_host, query_string, body):
         # get parameter
         query_string_dict = misc_utility.parse_url('?' + query_string)
         is_broadcast = misc_utility.get_parameter(query_string_dict, 'is_broadcast')
+        txAddress = misc_utility.get_parameter(query_string_dict, 'txAddress')
+
+        # vendition/purchase modify
+        if txAddress:
+            server_url = data_service_host + '/transaction/' + txAddress + '/detail'
+            http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
+            if http_code == 200 and api_code == 200:
+                tx_result_len = len(api_result["data"])
+                if tx_result_len:
+                    return_flag = 0
+                else:
+                    return_flag = 1
+            else:
+                return_flag = 1
+            
+            if return_flag:
+                err_msg = 'verify txAddress fail.'
+                api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+        else:
+            txAddress = ''
 
         if body_item_length == 2 and is_broadcast == 0:
             tx_password = formated_body[1]
@@ -110,8 +131,8 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # record into pending transaction
-        server_url = data_service_host + '/account/' + normal_account_address + '/transaction' + '&type=' + tx_type + '&hashSign=' + hashSign + \
-                     '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast)
+        server_url = data_service_host + '/account/' + normal_account_address + '/transaction' + '?type=' + tx_type + '&hashSign=' + hashSign + \
+                     '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
