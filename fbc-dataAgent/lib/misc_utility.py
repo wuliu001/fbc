@@ -49,7 +49,7 @@ def get_account_basicInfo(data_service_host,account_address):
     nonce = 0
     return_msg = 'OK'
 
-    server_url = data_service_host + '/account/' + account_address + '/basic_info'
+    server_url = data_service_host + '/statedb/' + account_address + '/basic_info'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
         public_key = api_result["data"][0]["public_key"]
@@ -69,7 +69,11 @@ def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0)
     gasDeposit = 0
     return_msg = 'OK'
 
-    server_url = data_service_host + '/account/' + account_address + '/gas_request?is_smartcontract=' + str(is_smartcontract)
+    if is_smartcontract == 0:
+        server_url = data_service_host + '/transactionCache/' + account_address + '/gas_request'
+    else:
+        server_url = data_service_host + '/statedb/' + account_address + '/gas_request'
+
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
         gasCost = api_result["data"][0]["gasCost"]
@@ -87,7 +91,7 @@ def get_account_privateKey(data_service_host,account_address,txpasswd):
     private_key = ''
     return_msg = 'OK'
 
-    server_url = data_service_host + '/account/' + account_address + '/private_key'
+    server_url = data_service_host + '/keystore/' + account_address + '/private_key'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'PUT', txpasswd, '')
     if http_code == 200 and api_code == 200:
         private_key = api_result["data"][0]["private_key"]
@@ -104,7 +108,7 @@ def get_pending_handle_account_maxNonce(data_service_host,account_address):
     max_pending_nonce = ''
     return_msg = 'OK'
 
-    server_url = data_service_host + '/account/' + account_address + '/max_nonce'
+    server_url = data_service_host + '/transactionCache/' + account_address + '/nonce'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
         max_pending_nonce = api_result["data"][0]["maxNonce"]

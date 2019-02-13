@@ -66,7 +66,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
 
         # vendition/purchase modify
         if txAddress:
-            server_url = data_service_host + '/transaction/' + txAddress + '/detail'
+            server_url = data_service_host + '/transactionCache/' + txAddress + '/detail'
             http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code == 200 and api_code == 200:
                 tx_result_len = len(api_result["data"])
@@ -131,7 +131,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # record into pending transaction
-        server_url = data_service_host + '/account/' + normal_account_address + '/transaction' + '?type=' + tx_type + '&hashSign=' + hashSign + \
+        server_url = data_service_host + '/transactionCache/' + normal_account_address + '/transaction' + '?type=' + tx_type + '&hashSign=' + hashSign + \
                      '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
