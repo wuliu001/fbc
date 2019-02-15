@@ -44,7 +44,7 @@ ll:BEGIN
     SELECT COUNT(1) 
       INTO v_cnt 
       FROM transaction_cache.transactions
-     WHERE hashSign = tx_address_i;
+     WHERE md5(hashSign) = tx_address_i;
 
     IF v_cnt = 0 THEN
         SET returnCode_o = 651;
@@ -55,7 +55,7 @@ ll:BEGIN
 
     SELECT blockObject 
       FROM transaction_cache.transactions 
-     WHERE md5(hashSign) = original_tx_address_i;
+     WHERE md5(hashSign) = tx_address_i;
 
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

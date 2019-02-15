@@ -10,7 +10,7 @@ DELIMITER $$
 CREATE PROCEDURE `transaction.modify`(
     type_i                   VARCHAR(32),
     original_tx_address_i    VARCHAR(256),
-    new_tx_address_i         VARCHAR(256),
+    hashSign_i               VARCHAR(256),
     body_i                   LONGTEXT,
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
@@ -31,15 +31,15 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
     END;
 
-    SET v_params_body = CONCAT('{"type_i":"',IFNULL(type_i,''),'","original_tx_address_i":"',IFNULL(original_tx_address_i,''),'","new_tx_address_i":"',IFNULL(new_tx_address_i,''),'"}');
+    SET v_params_body = CONCAT('{"type_i":"',IFNULL(type_i,''),'","original_tx_address_i":"',IFNULL(original_tx_address_i,''),'","hashSign_i":"',IFNULL(hashSign_i,''),'"}');
 
     SET type_i = TRIM(IFNULL(type_i,''));
     SET original_tx_address_i = TRIM(IFNULL(original_tx_address_i,''));
-    SET new_tx_address_i = TRIM(IFNULL(new_tx_address_i,''));
+    SET hashSign_i = TRIM(IFNULL(hashSign_i,''));
     SET body_i = TRIM(IFNULL(body_i,''));
 
     # check input parameters
-    IF type_i = '' OR original_tx_address_i = '' OR new_tx_address_i = '' OR body_i = '' OR JSON_VALID(body_i) = 0 THEN
+    IF type_i = '' OR original_tx_address_i = '' OR hashSign_i = '' OR body_i = '' OR JSON_VALID(body_i) = 0 THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check input parameters fail.';
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -51,7 +51,7 @@ ll:BEGIN
       INTO v_cnt 
       FROM transaction_cache.transactions
      WHERE transactionType = type_i
-       AND hashSign = original_tx_address_i;
+       AND MD5(hashSign) = original_tx_address_i;
 
     IF v_cnt = 0 THEN
         SET returnCode_o = 651;
@@ -62,11 +62,11 @@ ll:BEGIN
 
     UPDATE transaction_cache.transactions
        SET blockObject = body_i,
-           hashSign = new_tx_address_i
+           hashSign = hashSign_i
      WHERE transactionType = type_i
        AND hashSign = original_tx_address_i;
     
-    SELECT md5(new_tx_address_i) AS txAddress;
+    SELECT md5(hashSign_i) AS txAddress;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

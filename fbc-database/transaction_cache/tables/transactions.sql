@@ -13,6 +13,6 @@ CREATE TABLE `transactions` (
   `gasDeposit`      FLOAT NOT NULL,
   `nonce`           INT(11),
   `timestamp`       BIGINT(20) NOT NULL,
-  `comfirmedTimes`  INT(11) NOT NULL,
+  `comfirmedTimes`  INT(11),
   PRIMARY KEY       (`accountAddress`)
 ) ENGINE=InnoDB;

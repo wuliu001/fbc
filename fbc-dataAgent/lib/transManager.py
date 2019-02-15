@@ -95,14 +95,17 @@ def transaction_register(tx_type, data_service_host, query_string, body):
                 api_result = verify_message
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-            # get nonce from pending handle transactions
-            flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
-            if flag is False:
-                api_result = return_msg
-                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
+            if txAddress == '':
+                # get nonce from pending handle transactions
+                flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
+                if flag is False:
+                    api_result = return_msg
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
-            # generate new nonce
-            nonce = (stable_nonce if max_pending_nonce == 0 else max_pending_nonce) + 1
+                # generate new nonce
+                nonce = (stable_nonce if max_pending_nonce == 0 else max_pending_nonce) + 1
+            else:
+                nonce = 0
 
         elif body_item_length == 3 and is_broadcast == 1:
             hashSign = formated_body[1]
@@ -131,8 +134,9 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # record into pending transaction
-        server_url = data_service_host + '/transactionCache/' + normal_account_address + '/transaction' + '?type=' + tx_type + '&hashSign=' + hashSign + \
-                     '&gasRequest=' + str(smartcontract_gasRequest) + '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
+        server_url = data_service_host + '/transactionCache/' + normal_account_address + '/transaction' + '?type=' + tx_type + \
+                     '&hashSign=' + hashSign + '&gasCost=' + str(smartcontract_gasCost) + '&gasDeposit=' + str(smartcontract_gasDeposit) + \
+                     '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']
 
