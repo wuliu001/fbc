@@ -26,23 +26,9 @@ ll:BEGIN
     DECLARE v_modulename        VARCHAR(50) DEFAULT 'transaction_cache';
     DECLARE v_timestamp         BIGINT(20);
     DECLARE v_cnt               INT,
-
-
-    DECLARE v_user              VARCHAR(50);
-    DECLARE v_type              VARCHAR(32);
-    DECLARE v_body              LONGTEXT;
-    DECLARE v_hashsign          VARCHAR(256);
-    DECLARE v_is_create         TINYINT(4);
-    DECLARE v_node_dns          VARCHAR(100);
     DECLARE v_params_body       LONGTEXT DEFAULT NULL;
     DECLARE v_returnCode        INT DEFAULT 0;
     DECLARE v_returnMsg         LONGTEXT DEFAULT '';
-    DECLARE v_queue_body        LONGTEXT;
-    DECLARE v_count             INT;
-    DECLARE v_timestamp         BIGINT(20);
-    DECLARE v_sql               LONGTEXT;
-    DECLARE v_blockobject       LONGTEXT;
-    DECLARE v_dst_endpoint_info VARCHAR(100);
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -50,13 +36,14 @@ ll:BEGIN
       
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
     END;
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"user_i":"',IFNULL(user_i,''),'","type_i":"',IFNULL(type_i,''),'","hashsign_i":"',IFNULL(hashsign_i,'')
-                                 ,'","is_create_i":"',IFNULL(is_create_i,''),'","node_dns_i":"',IFNULL(node_dns_i,''),'"}');
+    SET v_params_body = CONCAT('{"account_addr_i":"',IFNULL(account_addr_i,''),'","type_i":"',IFNULL(type_i,''),'","hashsign_i":"',IFNULL(hashsign_i,'')
+                                 ,'","gascost_i":"',IFNULL(gascost_i,''),'","gasdeposit_i":"',IFNULL(gasdeposit_i,''),'","nonce_i":"',IFNULL(nonce_i,'')
+                                 ,'","is_broadcast_i":"',IFNULL(is_broadcast_i,''),'","old_txAddress_i":"',IFNULL(old_txAddress_i,''),'"}');
 
     SET account_addr_i = TRIM(account_addr_i);
     SET type_i = TRIM(type_i);
@@ -69,7 +56,7 @@ ll:BEGIN
     IF IFNULL(account_addr_i,'') = '' THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check account_addr fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -77,7 +64,7 @@ ll:BEGIN
     IF IFNULL(type_i,'') = '' THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check type fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -85,7 +72,7 @@ ll:BEGIN
     IF IFNULL(hashsign_i,'') = '' THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check hashsign fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -93,7 +80,7 @@ ll:BEGIN
     IF IFNULL(body_i,'') = '' OR JSON_VALID(body_i) = 0 THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check body fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
@@ -101,7 +88,7 @@ ll:BEGIN
     IF IFNULL(old_txAddress_i,'') = '' AND nonce_i = 0 THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check nonce fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
@@ -110,7 +97,7 @@ ll:BEGIN
     IF v_timestamp IS NULL THEN   
         SET returnCode_o = 651;
         SET returnMsg_o = 'check request_timestemp in body fail.';
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
@@ -147,7 +134,7 @@ ll:BEGIN
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
-    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,v_body,returnMsg_o,v_returnCode,v_returnMsg);
+    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
     
 END $$
 DELIMITER ;
