@@ -1,22 +1,22 @@
-USE `users`;
+USE `keystore`;
 
 /*Procedure structure for Procedure `register` */;
 
 DROP PROCEDURE IF EXISTS `register`;
 
 DELIMITER $$
-CREATE DEFINER=`dba`@`%` PROCEDURE `register`(id_i                  VARCHAR(50),
-                                              trans_passwd_i        VARCHAR(50),
+CREATE DEFINER=`dba`@`%` PROCEDURE `register`(accountAddress_i      VARCHAR(256),
+                                              txPassword_i          VARCHAR(50),
                                               body_i                LONGTEXT,
                                               OUT returnCode_o      INT,
                                               OUT returnMsg_o       LONGTEXT )
 ll:BEGIN
-    DECLARE v_procname               VARCHAR(100) DEFAULT 'users.register';
-    DECLARE v_modulename             VARCHAR(50) DEFAULT 'userManagement';
+    DECLARE v_procname               VARCHAR(100) DEFAULT 'keystore.register';
+    DECLARE v_modulename             VARCHAR(50) DEFAULT 'keystore';
     DECLARE v_params_body            LONGTEXT DEFAULT '';
     DECLARE v_returnCode             INT;
     DECLARE v_returnMsg              LONGTEXT;
-    DECLARE v_userReg_sys_lock       INT;
+    DECLARE v_keyReg_sys_lock        INT;
     DECLARE v_checker                INT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
@@ -26,29 +26,29 @@ ll:BEGIN
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
-        SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
+        SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
     END;
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"id_i":"',IFNULL(id_i,''),'"."trans_passwd_i":"',IFNULL(trans_passwd_i,''),'"}');
-    SET id_i = TRIM(id_i);
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"."txPassword_i":"',IFNULL(txPassword_i,''),'"}');
+    SET accountAddress_i = TRIM(accountAddress_i);
     SET body_i = TRIM(body_i);
-    SET trans_passwd_i = TRIM(trans_passwd_i);
+    SET txPassword_i = TRIM(txPassword_i);
     
     SET returnMsg_o = 'get system lock fail.';
-    SET v_userReg_sys_lock = GET_LOCK('user_register',180);
-    IF v_userReg_sys_lock <> 1 THEN
+    SET v_keyReg_sys_lock = GET_LOCK('keystore_register',180);
+    IF v_keyReg_sys_lock <> 1 THEN
         SET returnCode_o = 511;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
     SET returnMsg_o = 'check input null data.';
-    IF IFNULL(id_i,'') = '' OR IFNULL(body_i,'') = '' OR IFNULL(trans_passwd_i,'') = '' THEN
+    IF IFNULL(accountAddress_i,'') = '' OR IFNULL(body_i,'') = '' OR IFNULL(txPassword_i,'') = '' THEN
         SET returnCode_o = 512;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
-        SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
+        SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
         LEAVE ll;
     END IF;
     
@@ -58,14 +58,14 @@ ll:BEGIN
     IF v_checker = 0 THEN
         SET returnCode_o = 513;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
-        SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
+        SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
         LEAVE ll;
     END IF;
 	
-    INSERT INTO `users`.`private_keys`(`id`,`trans_password`, `private_key`)
-         VALUES (id_i,MD5(trans_passwd_i), body_i);
+    INSERT INTO `keystore`.`accounts`(`accountAddress`,`txPassword`, `private_key`)
+         VALUES (accountAddress_i,MD5(txPassword_i), body_i);
     
-    SET v_userReg_sys_lock = RELEASE_LOCK('user_register');
+    SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
