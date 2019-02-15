@@ -21,17 +21,17 @@ def register(server_url, body):
         api_result["data"][1]["publick_key"]=''
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'
 
-    #get userid
+    #get accountAddress
     format_body = eval(body)
-    user_str = format_body['userAccount'] + format_body['owner']+ format_body['address']
-    user = misc_utility.get_md5(user_str)
-    print 'user',user
+    accountAddress_str = format_body['userAccount'] + format_body['owner']+ format_body['address']
+    accountAddress = misc_utility.get_md5(accountAddress_str)
+    print 'accountAddress',accountAddress
     #get publick_key and private_key
     crypto_utility.unify_encoding()
     public_key, private_key = crypto_utility.get_key()
     
     #set user private key to local
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?user=' + user + '&trans_password='+format_body['trans_password'], "POST", None,private_key )
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['trans_password'], "POST", None,private_key )
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -46,7 +46,7 @@ def register(server_url, body):
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'    
 
     #set user public info to user_center
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?user=' + user, "POST", None,body)
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?accountAddress=' + accountAddress, "POST", None,body)
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)

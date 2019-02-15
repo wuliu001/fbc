@@ -1,13 +1,13 @@
 location = /user_center/insert {
     set_by_lua $kkk '
         local kkk;
-        local u = ngx.var.arg_user or "";
+        local a = ngx.var.arg_accountAddress or "";
         local body = ngx.var.arg_body or "";
         local oo = "&o=code&o=message&pi=2";
         local m = ngx.var.request_method or ""; -- HTTP method
         local I = "&i=";
         if (m=="POST") then
-            kkk = "&n=`user_center`.`register`"..I..u..I..body..oo;
+            kkk = "&n=`centerdb`.`register`"..I..a..I..body..oo;
         end;
         return kkk;
     ';
@@ -23,7 +23,7 @@ location = /user_center/login {
         local m = ngx.var.request_method or ""; -- HTTP method
         local I = "&i=";
         if (m=="POST") then
-            kkk = "&n=`user_center`.`login`"..I..un..I..pw..oo;
+            kkk = "&n=`centerdb`.`login`"..I..un..I..pw..oo;
         end;
         return kkk;
     ';
@@ -31,16 +31,16 @@ location = /user_center/login {
 }
 
 location ~ "^/user_center/([^/]+)$" {
-    set $user $1;
+    set $accountAddress $1;
     set_by_lua $kkk '
         local kkk;
-        local u = ngx.var.user or "";
+        local a = ngx.var.accountAddress or "";
         local body = ngx.var.arg_body or "";
         local oo = "&o=code&o=message&pi=2";
         local m = ngx.var.request_method or ""; -- HTTP method
         local I = "&i=";
         if (m=="PUT") then
-            kkk = "&n=`user_center`.`change_pw`"..I..u..I..body..oo;
+            kkk = "&n=`centerdb`.`change_pw`"..I..a..I..body..oo;
         end;
         return kkk;
     ';
