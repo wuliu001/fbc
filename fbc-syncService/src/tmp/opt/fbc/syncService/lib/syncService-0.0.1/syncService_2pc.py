@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
+
 import sys
 import getopt
 import ConfigParser
@@ -8,6 +9,7 @@ import os
 import utils_2pc
 import json
 import time
+import re
 
 global g_log_level
 global g_log_file
@@ -136,6 +138,7 @@ def load_config(file_path):
 # sync endpoint config info to all endpoints
 def sync_config_info():
     global g_syncService_endpoint
+    check_retry_idx = 1
 
     # get syncService endpoint
     g_syncService_endpoint = utils_2pc.get_endpoint()
@@ -163,40 +166,49 @@ def sync_config_info():
             endpoint_info = 'http://' + ip + ':' + port
             http_url = endpoint_info + g_sync_config_url + '?syncService_id=' + g_syncService_endpoint
             http_method = 'POST'
+            utils_2pc.logI('[get_last_synced_id] http url is: %s,method: %s' % (http_url,http_method))
+            utils_2pc.logD('[sync_config_info] body is: %s' % ( http_body))
 
-            utils_2pc.logD('[sync_config_info] http url is: %s, body is: %s' % (http_url, http_body))
+            while check_retry_idx <= g_check_retry_cnt:
+                check_retry_idx = check_retry_idx + 1
 
-            http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method,http_url,http_body)
+                http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method,http_url,http_body)
+                if http_code != 200 or api_return_code != 200:
+                    utils_2pc.logE('[sync_config_info] sync config info to [%s] fail, http return msg: %s,check_retry_idx:%s.' % (ip, api_return_str,check_retry_idx))
+                    time.sleep(5)
+                else:
+                    utils_2pc.logD('[sync_config_info] sync config info to [%s] success, http return msg: %s' % (ip,api_return_str))
+                    break
 
-            if http_code != 200 or api_return_code != 200:
-                # if sync data to one endpoint fail, remove this endpoint from the g_endpoint_info list
-                # means do not sync queue data from this endpoint
-                utils_2pc.logE('[sync_config_info] sync config info to [%s] fail, http return msg: %s, remove this endpoint.' % (ip, api_return_str))
+            #if sync the config error ,then remove the endpoint
+            if check_retry_idx > g_check_retry_cnt:
+                utils_2pc.logE('[sync_config_info] sync config info to [%s] ver the maximum number of cycles,so remove the endpoint.' % (ip))        
                 g_endpoint_info.remove(endpoint)
-            else:
-                utils_2pc.logD('[sync_config_info] sync config info to [%s] success, http return msg: %s' % (ip,api_return_str))
+
     else:
         utils_2pc.doExit(1)
 
 
 # get last synced queue id from all the same queue type dst endpoint
 def get_last_synced_id(source_endpoint_info,dst_queue_type,dst_queue_step,dst_endpoint_info):
-    http_method = 'GET'
-    last_sync_id = None
+    try:
+        http_method = 'GET'
+        last_sync_id = None
 
-    http_url = dst_endpoint_info + '/msg_management/' + dst_queue_type + '/last_synced_id?dst_queue_step=' + str(dst_queue_step) + \
-               '&endpoint_info=' + source_endpoint_info
-    utils_2pc.logD('[get_last_synced_id] http url is: %s' % http_url)
-    http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, '')
+        http_url = dst_endpoint_info + '/msg_management/' + dst_queue_type + '/last_synced_id?dst_queue_step=' + str(dst_queue_step) + '&endpoint_info=' + source_endpoint_info
+        utils_2pc.logI('[get_last_synced_id] http url is: %s,method: %s' % (http_url,http_method))
 
-    if http_code != 200 or api_return_code != 200:
-        utils_2pc.logE('[get_last_synced_id] get last synced id from [%s] fail, http return msg: %s' % (dst_endpoint_info, api_return_str))
-    else:
-        utils_2pc.logD('[get_last_synced_id] get last synced id from [%s] success, http return msg: %s' % (dst_endpoint_info, api_return_str))
-        last_sync_id = api_return_str['data'][0]['last_synced_id']
-        utils_2pc.logD('[get_last_synced_id] the last synced id get from [%s] is: %d' % (dst_endpoint_info, last_sync_id))
-    
-    return last_sync_id
+        http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, '')
+        if http_code != 200 or api_return_code != 200:
+            utils_2pc.logE('[get_last_synced_id] get last synced id from fail,api_return_code: %s,http_code : %s, http return msg: %s' % (http_code, api_return_code, api_return_str))
+        else:
+            utils_2pc.logD('[get_last_synced_id] get last synced id from success,api_return_code: %s,http_code : %s, http return msg: %s' % (http_code, api_return_code, api_return_str))
+            last_sync_id = api_return_str['data'][0]['last_synced_id']
+        
+        return last_sync_id
+    except Exception, e:
+        utils_2pc.logE('[get_last_synced_id] get last synced queue fail,exception msg: %s' % (e))
+        return None
 
 
 # get all the endpoint weight info from previous endpoint
@@ -205,7 +217,7 @@ def get_endpoint_weight(endpoint_info):
     weight_info = ''
 
     http_url = endpoint_info + g_get_weight_url + '?syncService_id=' + g_syncService_endpoint
-    utils_2pc.logD('[get_endpoint_weight] http url is: %s' % http_url)
+    utils_2pc.logI('[get_endpoint_weight] http url is: %s,method: %s' % (http_url,http_method))
 
     http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, '')
     if http_code != 200 or api_return_code != 200:
@@ -215,7 +227,7 @@ def get_endpoint_weight(endpoint_info):
         try:
             weight_info = api_return_str["data"][0]["cur_weight_after_selected"]
         except Exception, e:
-            utils_2pc.logE('[get_endpoint_weight] extract weight info fail, exception info is: [%s]' % e)
+            utils_2pc.logE('[get_endpoint_weight] extract weight info fail, exception info is: [%s],endpoint_info is: %s' % (e,endpoint_info))
             return ''
 
     return weight_info
@@ -223,81 +235,184 @@ def get_endpoint_weight(endpoint_info):
 
 # get unsynced queue data from one endpoint
 def get_unsynced_queue_info(endpoint_info,syncservice_id,last_receive_info,weight_info):
-    http_method = 'GET'
-    api_return_dataSet = ''
+    try:
+        http_method = 'GET'
+        api_return_dataSet = ''
 
-    http_url = endpoint_info + g_get_unsynced_data_url + '?syncService_id=' + syncservice_id
-    if last_receive_info != '':
-        http_url = http_url + '&last_receive_info=' + last_receive_info
-    http_url = http_url + '&cur_weight_after_selected=' + weight_info
+        http_url = endpoint_info + g_get_unsynced_data_url + '?syncService_id=' + syncservice_id
+        utils_2pc.logI('[get_unsynced_queue_info] http url is: %s,method: %s' % (http_url,http_method))
 
-    utils_2pc.logD('[get_unsynced_queue_info] http url is: %s' % http_url)
+        if last_receive_info != '' or last_receive_info != None:
+            http_url = http_url + '&last_receive_info=' + last_receive_info
+        http_url = http_url + '&cur_weight_after_selected=' + weight_info
 
-    http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, '')
+        utils_2pc.logI('[get_unsynced_queue_info] http url is: %s,method: %s' % (http_url,http_method))
 
-    if http_code != 200 or api_return_code != 200:
-        utils_2pc.logE('[get_unsynced_queue_info] get unsynced queue data from [%s] fail, http return msg: %s' % (endpoint_info,api_return_str))
-    else:
-        utils_2pc.logD('[get_unsynced_queue_info] get unsynced queue data from [%s] success, http return msg: %s' % (endpoint_info,api_return_str))
-        api_return_dataSet = api_return_str['data']
+        http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, '')
+        if http_code != 200 or api_return_code != 200:
+            utils_2pc.logE('[get_unsynced_queue_info] get unsynced queue data from [%s] fail,syncservice_id : %s, http return msg: %s,last_receive_info: %s,weight_info : %s' % (endpoint_info,syncservice_id,api_return_str,last_receive_info,weight_info))
+        else:
+            utils_2pc.logD('[get_unsynced_queue_info] get unsynced queue data from [%s] success,syncservice_id : %s, last_receive_info: %s,weight_info : %s' % (endpoint_info,syncservice_id,last_receive_info,weight_info))
+            utils_2pc.logD('[get_unsynced_queue_info] http return msg is: %s' % api_return_str)
+            api_return_dataSet = api_return_str['data']
 
-    return http_code, api_return_code, api_return_dataSet
+        return http_code, api_return_code, api_return_dataSet
 
+    except Exception, e:
+        utils_2pc.logE('[get_unsynced_queue_info] get unsynced queue data fail: %s,endpoint_info: %s,syncservice_id : %s,last_receive_info: %s,weight_info : %s' % (e,endpoint_info,syncservice_id,last_receive_info,weight_info))
+        return 200,400,e        
 
 # insert queue message data (double queue)
 def insert_queue_data(dst_http_uri,dst_endpoint_info, http_method, dst_queue_step, body, double_side):
-    if double_side is 1:
-        http_url = dst_http_uri + '?dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info) + \
-               '&dst_queue_step=' + ('' if dst_queue_step is None else str(dst_queue_step))
-    else:
-        http_url = dst_http_uri
+    try:
+        if double_side is 1:
+            http_url = dst_http_uri + '?dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info) + '&dst_queue_step=' + ('' if dst_queue_step is None else str(dst_queue_step))
+        else:
+            http_url = dst_http_uri
+        utils_2pc.logI('[insert_queue_data] http url is: %s,method: %s' % (http_url,http_method))
+        utils_2pc.logD('[insert_queue_data] body is: %s' % (body))
 
-    utils_2pc.logD('[insert_queue_data] http url is: %s, body is: %s' % (http_url,body))
+        http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, body)
+        if http_code != 200 or api_return_code != 200:
+            utils_2pc.logE('[insert_queue_data] insert queue message data fail,error msg: %s,dst_http_uri: %s,dst_endpoint_info: %s,http_method: %s,dst_queue_step: %s,double_side: %s' % (api_return_str,dst_http_uri,dst_endpoint_info, http_method, dst_queue_step, double_side))
+        else:
+            utils_2pc.logD('[insert_queue_data] insert queue message data success, http return msg: %s' % api_return_str)
 
-    http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, body)
-
-    if http_code != 200 or api_return_code != 200:
-        utils_2pc.logE('[insert_queue_data] insert queue message data fail, http return msg: %s' % api_return_str)
-    else:
-        utils_2pc.logD('[insert_queue_data] insert queue message data success, http return msg: %s' % api_return_str)
-
-    return http_code, api_return_code, api_return_str
-
+        return http_code, api_return_code, api_return_str
+    except Exception, e:
+        utils_2pc.logE('[insert_queue_data] insert_queue_data unexpected fail: %s,dst_http_uri: %s,dst_endpoint_info: %s,http_method: %s,dst_queue_step: %s,double_side: %s' % (e,dst_http_uri,dst_endpoint_info, http_method, dst_queue_step, double_side))
+        return 200,400,None
 
 # update queue status after sync data
 def update_queue_status(endpoint_info,source_queue_type,dst_queue_type,dst_endpoint_info,body):
-    http_method = 'PUT'
-    http_url = endpoint_info + '/msg_management/' + source_queue_type + '/data?dst_queue_type=' + \
-               ('' if dst_queue_type is None else dst_queue_type) + \
-               '&dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info)
+    try:
+        http_method = 'PUT'
+        http_url = endpoint_info + '/msg_management/' + source_queue_type + '/data?dst_queue_type=' + ('' if dst_queue_type is None else dst_queue_type) + '&dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info)
+        utils_2pc.logI('[update_queue_status] http url is: %s,method: %s' % (http_url,http_method))
 
-    utils_2pc.logD('[update_queue_status] http url is: %s, body is: %s' % (http_url, body))
+        http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, body)
+        if http_code != 200 or api_return_code != 200:
+            utils_2pc.logE('[update_queue_status] update queue status fail,endpoint_info: %s,source_queue_type: %s,dst_queue_type: %s,dst_endpoint_info: %s, http return msg: %s' % (endpoint_info,source_queue_type,dst_queue_type,dst_endpoint_info, api_return_str))
+        else:
+            utils_2pc.logD('[update_queue_status] update queue status success,endpoint_info: %s,source_queue_type: %s,dst_queue_type: %s,dst_endpoint_info: %s, http return msg: %s' % (endpoint_info,source_queue_type,dst_queue_type,dst_endpoint_info, api_return_str))
 
-    http_code, api_return_code, api_return_str = utils_2pc.http_handler(http_method, http_url, body)
+        return http_code, api_return_code
+    except Exception, e:
+        utils_2pc.logE('[update_queue_status] update_queue_status unexpected fail: %s,endpoint_info: %s,source_queue_type: %s,dst_queue_type: %s,dst_endpoint_info: %s' % (e,endpoint_info,source_queue_type,dst_queue_type,dst_endpoint_info))
+        return 200,None
 
-    if http_code != 200 or api_return_code != 200:
-        utils_2pc.logE('[update_queue_status] update queue status in [%s] fail, http return msg: %s' % (endpoint_info, api_return_str))
-    else:
-        utils_2pc.logD('[update_queue_status] update queue status in [%s] success, http return msg: %s' % (endpoint_info, api_return_str))
-
-    return http_code, api_return_code
-
-
-# check queue data is valid or not
-def check_queue_valid(msgs,current_queue_id_list):
+# check current_queue_ids is valid or not
+def check_current_queue_ids_valid(msgs,current_queue_ids):
     # get queue id list from queue data
-    try: 
+    try:
         msg_tuple = eval(msgs + ',')
-        queue_id_list = ','.join([str(msg_tuple[x][0]) for x in range(len(msg_tuple))])
-        utils_2pc.logD('[check_queue_valid] current_queue_id_list is: %s, queue_id_list in msgs is: %s' % (current_queue_id_list, queue_id_list))
+        queue_ids = ','.join([str(msg_tuple[x][0]) for x in range(len(msg_tuple))])
 
-        if current_queue_id_list == queue_id_list:
+        utils_2pc.logD('[check_current_queue_ids_valid] current_queue_ids is: %s, queue_ids in msgs is: %s' % (current_queue_ids, queue_ids))
+
+        if current_queue_ids == queue_ids:
             return True
         else:
             return False
     except Exception, e:
-        utils_2pc.logE('[check_queue_valid] check queue valid fail, exception info is: [%s], current_queue_id_list is: [%s], msg is: [%s]' % (e,current_queue_id_list,msgs))
+        utils_2pc.logE('[check_current_queue_ids_valid] check queue valid fail, exception info is: %s,current_queue_ids: %s,msgs: %s' % (e,current_queue_ids,msgs))
         return False
+
+
+# handle detail queue_info 
+def handle_queue_detail(endpoint_info,queue_info):
+    try:
+        queue_body = ''
+        last_receive_info = ''
+        queue_ids_chk = True
+        
+        # extract values from queue_info
+        utils_2pc.logD('[handle_queue_detail] extract values from queue_info: [%s]' % queue_info)
+        queue_http_uri = queue_info['uri']
+        http_method = queue_info['method']
+        http_body = queue_info['msgs']
+        current_queue_ids = str(queue_info['current_check_list'])
+        last_synced_id = queue_info['last_sync_queue_id']
+        double_side = queue_info['double_side']
+        source_queue_type = queue_info['source_queue_type']
+        dst_queue_type = queue_info['dst_queue_type']
+        dst_queue_step = queue_info['dst_queue_step']
+        dst_endpoint_info = queue_info['dst_endpoint_info']
+
+        # check current_queue_ids data valid
+        queue_ids_chk = check_current_queue_ids_valid(http_body,current_queue_ids)
+        if queue_ids_chk is False:
+            utils_2pc.logE('[handle_queue_detail] check queue data detail fail, http_body: %s,current_queue_ids: %s.' % (http_body,current_queue_ids))
+            last_receive_info = '(' + str(last_synced_id) + ',"' + source_queue_type + '","' + dst_endpoint_info + '","' + dst_queue_type + '")'
+            return 651,'fail to check the current_queue_ids',''
+        
+        # handle double side queue last_handle_queue_detail_id
+        if double_side == 1:
+            utils_2pc.logD('[handle_queue_detail] double side queue, queue_info is: [%s]' % queue_info)
+            # get last synced queue id from destination endpoint to check if last synced id is valid
+            dst_last_synced_id = get_last_synced_id(endpoint_info, dst_queue_type, dst_queue_step, dst_endpoint_info)
+            if dst_last_synced_id is None:
+                utils_2pc.logE('[handle_queue_detail] get last synced queue id fail, source last synced id: %d, destination last sync id: %s' % (last_synced_id, dst_last_synced_id))
+                return 652,'fail to get last synced queue id',''     
+            elif last_synced_id > dst_last_synced_id:
+                utils_2pc.logE('[handle_queue_detail] compare last synced queue id fail, source last synced id: %d, destination last sync id: %s' % (last_synced_id, dst_last_synced_id))
+                last_receive_info = '(' + str(dst_last_synced_id) + ',"' + source_queue_type + '","' + dst_endpoint_info + '","' + dst_queue_type + '")'
+                return 653,'fail to check last sync queue id',last_receive_info
+
+        #handle one side body
+        if double_side == 0:
+            tuple_body = eval(http_body+',')
+            http_body = ','.join([str(tuple_body[x][2]) for x in range(len(tuple_body))])
+        
+        # post queue data to destination endpoint
+        dst_http_uri = dst_endpoint_info + queue_http_uri
+        http_code, api_return_code, api_return_dataSet = insert_queue_data(dst_http_uri, endpoint_info, http_method, dst_queue_step, http_body, double_side)
+
+        #get the success or fail queues in api_return_dataSet&current_queue_ids
+        if http_code == 200 and api_return_code == 200:
+            if re.search('success_handled_ids', str(api_return_dataSet['data'])) is not None:
+                success_handled_list = api_return_dataSet['data'][0]['success_handled_ids'].split(',')
+                fail_handled_list = api_return_dataSet['data'][0]['fail_handled_ids'].split(',')
+                utils_2pc.logD('[handle_queue_detail] success_queues_ids: %s ,fail_queue_ids: %s.' % (success_handled_list,fail_handled_list))  
+            elif re.search('success_handled_ids', str(api_return_dataSet['moreResults'])) is not None:    
+                success_handled_list = api_return_dataSet['moreResults'][0][0]['success_handled_ids'].split(',')
+                fail_handled_list = api_return_dataSet['moreResults'][0][0]['fail_handled_ids'].split(',')
+                utils_2pc.logD('[handle_queue_detail] success_queues_ids: %s ,fail_queue_ids: %s.' % (success_handled_list,fail_handled_list))  
+            else:
+                success_handled_list = current_queue_ids.split(',')
+                fail_handled_list = []
+                utils_2pc.logD('[handle_queue_detail] success_queues_ids: %s ,fail_queue_ids: %s.' % (success_handled_list,fail_handled_list))  
+        else:      
+            success_handled_list = []
+            fail_handled_list = current_queue_ids.split(',')
+            utils_2pc.logE('[handle_queue_detail] success_queues_ids: %s ,fail_queue_ids: %s,http_msg: %s,http_code: %s.' % (success_handled_list,fail_handled_list,api_return_dataSet,http_code))  
+            utils_2pc.logE('[handle_queue_detail] body detail: %s.' % (http_body))  
+        
+        if len(success_handled_list):
+            queue_success_body = ',0),('.join(success_handled_list)
+            queue_success_body = '(' + queue_success_body + ',0)'
+            queue_body = queue_success_body
+        if len(fail_handled_list):
+            queue_fail_body = ',1),('.join(fail_handled_list)
+            queue_fail_body = '(' + queue_fail_body + ',1)'
+            queue_body = queue_body + ',' + queue_fail_body
+
+        queue_body =  queue_body.strip(',')
+
+        # update queue status
+        # queue_body format: (queue_id,status),(queue_id,status),(queue_id,status)
+        # queue_body example: (1,0),(2,0),(3,0),(4,1),(5,1)
+        # status in queue_body: 0 is success, 1 is fail
+        http_code, api_return_code = update_queue_status(endpoint_info, source_queue_type, dst_queue_type, dst_endpoint_info, queue_body)
+        if http_code == 200 and api_return_code == 200:
+            utils_2pc.logD('[handle_queue_detail] update queue list [%s] status to [%s] success.' % (current_queue_ids, endpoint_info))
+        else:
+            utils_2pc.logE('[handle_queue_detail] update queue info,endpoint_info: %s,source_queue_type: %s,dst_queue_type: %s,dst_endpoint_info: %s,queue_body: %s.' % (endpoint_info, source_queue_type, dst_queue_type, dst_endpoint_info, queue_body))
+    
+        return 200,'OK',last_receive_info
+
+    except Exception, e:
+        return 400,e,''
 
 
 # sync queue data from one endpoint to another endpoint
@@ -306,160 +421,51 @@ def sync_queue(endpoint,weight_info):
     ip = endpoint['ip']
     port = endpoint['port']
     endpoint_info = 'http://' + ip + ':' + port
+    final_last_receive_info = ''
+    check_retry_idx = 0
 
-    # get unsynced queue data from endpoint
-    http_code, api_return_code, api_return_dataSet = get_unsynced_queue_info(endpoint_info,g_syncService_endpoint,'',weight_info)
+    # get unsynced queue data from endpoint,last_receive_info is null
+    utils_2pc.logI('[sync_queue] begin get unsynced queue. endpoint_info: %s, g_syncService_endpoint: %s,weight_info: %s.' % (endpoint_info,g_syncService_endpoint,weight_info))
+    http_code, api_return_code, api_return_dataSet = get_unsynced_queue_info(endpoint_info,g_syncService_endpoint,'',weight_info) 
     if http_code == 200 and api_return_code == 200:
-        utils_2pc.logD('[sync_queue] get unsynced queue data from endpoint [%s] success.' % ip)
-
-        # handle queue data sync one by one
+        utils_2pc.logD('[sync_queue] get unsynced queue data success. http_code: %s, api_return_code: %s,api_return_dataSet: %s.' % (http_code, api_return_code, api_return_dataSet))
         for queue_info in api_return_dataSet:
-            err_flag = 0
-            queue_body = ''
-            check_retry_idx = 0
-            last_receive_info = ''
-            queue_list_chk = True
-            last_queue_id_chk = True
-
-            while check_retry_idx <= g_check_retry_cnt:
-                # get unsynced queue data from endpoint when check queue list or last synced id fail
-                if check_retry_idx > 0 or queue_list_chk == False or last_queue_id_chk == False:
-                    utils_2pc.logD('[sync_queue] retry check queue data valid [%d]rd...' % check_retry_idx)
-                    http_code, api_return_code, api_return_dataSet = get_unsynced_queue_info(endpoint_info, g_syncService_endpoint, last_receive_info, weight_info)
-                    if http_code == 200 and api_return_code == 200:
-                        utils_2pc.logD('[sync_queue] get unsynced queue data with last_receive_info [%s] from endpoint [%s] success.' % (last_receive_info, ip))
-                        queue_info = api_return_dataSet[0]
-                    else:
-                        utils_2pc.logE('[sync_queue] get unsynced queue data with last_receive_info [%s] from endpoint [%s] fail.' % (last_receive_info, ip))
-                        err_flag = 1
-                        break
-
-                # extract values from queue_info
-                utils_2pc.logD('[sync_queue] extract values from queue_info: [%s]' % queue_info)
-                try:
-                    queue_http_uri = queue_info['uri']
-                    http_method = queue_info['method']
-                    http_body = queue_info['msgs']
-                    current_queue_id_list = str(queue_info['current_check_list'])
-                    last_synced_id = queue_info['last_synced_id']
-                    double_side = queue_info['double_side']
-                    source_queue_type = queue_info['source_queue_type']
-                    dst_queue_type = queue_info['dst_queue_type']
-                    dst_queue_step = queue_info['dst_queue_step']
-                    dst_endpoint_info = queue_info['dst_endpoint_info']
-                except Exception, e:
-                    utils_2pc.logE('[sync_queue] extract values from queue_info fail, exception info: [%s], queue_info: [%s], skip sync this queue data.' % (e,queue_info))
-                    err_flag = 1
-                    break
-                
-                # last_receive_info data
-                last_receive_info = '(' + str(last_synced_id) + ',"' + source_queue_type + '","' + dst_endpoint_info + '","' + dst_queue_type + '")'
-
-                # check queue data valid
-                queue_list_chk = check_queue_valid(http_body,current_queue_id_list)
-                if queue_list_chk is True:
-                    utils_2pc.logD('[sync_queue] check queue data valid success, queue_info: [%s].' % queue_info)
-                    if last_queue_id_chk is True:
-                        check_retry_idx = 0
-                else:
-                    utils_2pc.logE('[sync_queue] check queue data valid fail, queue_info: [%s].' % queue_info)
-                    if last_queue_id_chk is False:
-                        check_retry_idx = 0
-                        last_queue_id_chk = True
-                    else:
-                        check_retry_idx += 1
-                    continue
-
-                # handle single queue situation
-                if double_side is 0:
-                    utils_2pc.logD('[sync_queue] single side queue, queue_info is: [%s]' % queue_info)
-                    queue_id_map = {}
-                    body_list = []
-                    msgs = eval(http_body + ',')
-                    for msg_info in msgs:
-                        queue_id = str(msg_info[0])
-                        msg = msg_info[1]
-                        q_info = msg.split('|$|')
-                        real_id = q_info[0]
-                        if real_id in queue_id_map:
-                            queue_id_map[real_id] = queue_id_map[real_id] + ',' + queue_id
-                        else:
-                            queue_id_map[real_id] = queue_id
-                        q_info_format = ['"' + q_info[x] + '"' for x in range(1,len(q_info))]
-                        q_value = '(' + real_id + ',' + ','.join(q_info_format) + ')'
-                        body_list.append(q_value)
-
-                    http_body = ','.join(body_list)
-                    break
-                else:
-                    utils_2pc.logD('[sync_queue] double side queue, queue_info is: [%s]' % queue_info)
-                    # get last synced queue id from destination endpoint to check if last synced id is valid
-                    dst_last_synced_id = get_last_synced_id(endpoint_info, dst_queue_type, dst_queue_step, dst_endpoint_info)
-                    if dst_last_synced_id is not None and last_synced_id <= dst_last_synced_id:
-                        utils_2pc.logD('[sync_queue] compare last synced queue id success, source last synced id: %d, destination last sync id: %s' % (last_synced_id, dst_last_synced_id))
-                        last_queue_id_chk = True
-                        break
-                    else:
-                        utils_2pc.logE('[sync_queue] compare last synced queue id fail, source last synced id: %d, destination last sync id: %s' % (last_synced_id, dst_last_synced_id))
-                        last_queue_id_chk = False
-                        check_retry_idx += 1
-                        continue
-
-            # confirm the check result, if check result is false, stop current loop, begin next loop
-            if queue_list_chk is False or last_queue_id_chk is False:
-                utils_2pc.logE('[sync_queue] queue info check fail, queue_info is: [%s]' % queue_info)
-                continue
-            
-            # stop current loop, begin next loop
-            if err_flag == 1:
-                continue
-
-            # post queue data to destination endpoint
-            dst_http_uri = dst_endpoint_info + queue_http_uri
-            http_code, api_return_code, api_return_dataSet = insert_queue_data(dst_http_uri, endpoint_info, http_method, dst_queue_step, http_body, double_side)
-
-            if http_code == 200 and api_return_code == 200:
-                utils_2pc.logD('[sync_queue] insert queue list [%s] to [%s] success.' % (current_queue_id_list, dst_endpoint_info))
-
-                if double_side is 0:
-                    if len(api_return_dataSet['data']) == 1:
-                        success_handled_tids = str(api_return_dataSet['data'][0]['success_handled_tids']).split(',')
-                        fail_handled_tids = str(api_return_dataSet['data'][0]['fail_handled_tids']).split(',')
-                    else:
-                        success_handled_tids = str(api_return_dataSet['moreResults'][0][0]['success_handled_tids']).split(',')
-                        fail_handled_tids = str(api_return_dataSet['moreResults'][0][0]['fail_handled_tids']).split(',')
-
-                    success_queue_ids_list = [] if success_handled_tids == [''] else [queue_id_map[rid] for rid in success_handled_tids]
-                    fail_queue_ids_list = [] if fail_handled_tids == [''] else [queue_id_map[rid] for rid in fail_handled_tids]
-                else:
-                    success_queue_ids_list = current_queue_id_list.split(',')
- 
-                if len(success_queue_ids_list):
-                    queue_success_body = ',0),('.join(success_queue_ids_list)
-                    queue_success_body = '(' + queue_success_body + ',0)'
-                    queue_body = queue_success_body
-
-                if len(fail_queue_ids_list):
-                    queue_fail_body = ',1),('.join(fail_queue_ids_list)
-                    queue_fail_body = '(' + queue_fail_body + ',1)'
-                    queue_body = queue_body + ',' + queue_fail_body
-
-                # queue_body format: (queue_id,status),(queue_id,status),(queue_id,status)
-                # queue_body example: (1,0),(2,0),(3,0),(4,1),(5,1)
-                # status in queue_body: 0 is success, 1 is fail
-                # update queue id (current_queue_id_list) status
-                http_code, api_return_code = update_queue_status(endpoint_info, source_queue_type, dst_queue_type, dst_endpoint_info, queue_body)
-
-                if http_code == 200 and api_return_code == 200:
-                    utils_2pc.logD('[sync_queue] update queue list [%s] status to [%s] success.' % (current_queue_id_list, ip))
-                else:
-                    utils_2pc.logE('[sync_queue] update queue list [%s] status to [%s] fail.' % (current_queue_id_list, ip))
-
+            utils_2pc.logI('[sync_queue] begin handle  queue details.')
+            code ,msg,last_receive_info = handle_queue_detail(endpoint_info,queue_info)
+            if code == 200:
+                utils_2pc.logD('[sync_queue] handle queue detail success. code: %s, msg: %s,last_receive_info: %s,queue_info: %s.' % (code ,msg,last_receive_info,queue_info))
             else:
-                utils_2pc.logE('[sync_queue] insert queue list [%s] to [%s] fail, skip sync this queue data.' % (current_queue_id_list,dst_endpoint_info))
+                utils_2pc.logE('[sync_queue] handle queue detail fail.code: %s, msg: %s,last_receive_info: %s.' % (code ,msg,last_receive_info))
+                utils_2pc.logD('[sync_queue] handle queue detail fail.queue_info: %s.' % (queue_info))
 
+            if last_receive_info is not None and last_receive_info != '':
+                utils_2pc.logD('[sync_queue] handle last_receive_info. last_receive_info: %s.' % (last_receive_info))
+                final_last_receive_info = last_receive_info + ',' + final_last_receive_info
+
+        #get last_receive_info data 
+        while check_retry_idx <= g_check_retry_cnt and final_last_receive_info != '': 
+            final_last_receive_info = final_last_receive_info.strip(',')
+            check_retry_idx = check_retry_idx + 1        
+            utils_2pc.logI('[sync_queue] begin get unsynced queue with final_last_receive_info. endpoint_info: %s, g_syncService_endpoint: %s,weight_info: %s,final_last_receive_info: %s.' % (endpoint_info,g_syncService_endpoint,weight_info,final_last_receive_info))
+            http_code, api_return_code, api_return_dataSet = get_unsynced_queue_info(endpoint_info,g_syncService_endpoint,final_last_receive_info,weight_info)      
+            final_last_receive_info = ''
+            if http_code == 200 and api_return_code == 200:
+                utils_2pc.logD('[sync_queue] get unsynced queue data success. http_code: %s, api_return_code: %s,api_return_dataSet: %s.' % (http_code, api_return_code, api_return_dataSet))
+                for queue_info in api_return_dataSet:
+                    utils_2pc.logI('[sync_queue] begin handle queue details with final_last_receive_info.')
+                    code ,msg,last_receive_info = handle_queue_detail(endpoint_info,queue_info)
+                    if code == 200: 
+                        utils_2pc.logD('[sync_queue] handle queue detail success. code: %s, msg: %s,last_receive_info: %s,queue_info: %s.' % (code ,msg,last_receive_info,queue_info))
+                    else:
+                        utils_2pc.logE('[sync_queue] handle queue detail fail.code: %s, msg: %s,last_receive_info: %s,check_retry_idx: %s.' % (code ,msg,last_receive_info,check_retry_idx))
+                        utils_2pc.logD('[sync_queue] handle queue detail fail.queue_info: %s.' % (queue_info)) 
+                    if last_receive_info is not None and last_receive_info != '':
+                        utils_2pc.logD('[sync_queue] handle last_receive_info. last_receive_info: %s.' % (last_receive_info))
+                        final_last_receive_info = last_receive_info + ',' + final_last_receive_info    
+            else:
+                utils_2pc.logE('[sync_queue] get unsynced queue data fail with final_last_receive_info.http_code: %s,api_return_code: %s,api_return_dataSet: %s.' % (http_code, api_return_code, api_return_dataSet)) 
     else:
-        utils_2pc.logE('[sync_queue] sync queue data from endpoint [%s] fail, skip sync this endpoint data.' % ip)
+        utils_2pc.logE('[sync_queue] get unsynced queue data fail. http_code: %s,api_return_code: %s,api_return_dataSet: %s.' % (http_code, api_return_code, api_return_dataSet))
 
 
 def main():

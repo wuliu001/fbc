@@ -1,3 +1,4 @@
+
 USE `msg_queues`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
@@ -35,8 +36,8 @@ ll:BEGIN
     
     SET SESSION group_concat_max_len = 4294967295;
     SET returnCode_o = 400;
-    SET returnMsg_o =  CONCAT(v_modulename,v_procname,' command Error.');
-    SET v_params_body = CONCAT('{"user_i":"',user_i,'","dst_queue_step_i":"',IFNULL(dst_queue_step_i,''),'","endpoint_info_i":"',IFNULL(endpoint_info_i,''),'","dst_queue_type_i":"',IFNULL(dst_queue_type_i,''),'"}');
+    SET returnMsg_o =  CONCAT(v_modulename, ' ', v_procname, ' command Error');
+    SET v_params_body = CONCAT('{"user_i":"',IFNULL(user_i,'NULL'),'","dst_queue_step_i":"',IFNULL(dst_queue_step_i,'NULL'),'","endpoint_info_i":"',IFNULL(endpoint_info_i,'NULL'),'","dst_queue_type_i":"',IFNULL(dst_queue_type_i,'NULL'),'"}');
     SET endpoint_info_i = TRIM(endpoint_info_i);
     SET dst_queue_step_i = TRIM(dst_queue_step_i);
     
@@ -57,11 +58,13 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to return final result.';
     IF EXISTS (SELECT 1 FROM msg_queues.queues WHERE source_endpoint_info = endpoint_info_i AND queue_type = dst_queue_type_i) THEN 
+        #the receiving end
         SELECT IFNULL(MAX(queue_id),0) last_synced_id 
           FROM msg_queues.queues 
          WHERE queue_type = dst_queue_type_i
-           AND source_endpoint_info = endpoint_info_i;
+           AND dst_endpoint_info = endpoint_info_i;
     ELSE
+        #the sending end
         SELECT IFNULL(MAX(queue_id),0) last_synced_id 
           FROM msg_queues.queues 
          WHERE queue_type = dst_queue_type_i

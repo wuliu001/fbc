@@ -1,22 +1,23 @@
+
 USE `msg_queues`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
-/*Event structure for Event `control_do_unlock` */;
+/*Event structure for Event `fail_queues_handle` */;
 
-DROP EVENT IF EXISTS `control_do_unlock`;
+DROP EVENT IF EXISTS `fail_queues_handle`;
 
 DELIMITER $$
 
-CREATE EVENT `control_do_unlock` ON SCHEDULE EVERY 1 MINUTE STARTS '2016-01-01 00:00:00' ON COMPLETION PRESERVE ENABLE DO ll:BEGIN
+CREATE EVENT `fail_queues_handle` ON SCHEDULE EVERY 1 MINUTE STARTS '2016-01-01 00:00:00' ON COMPLETION PRESERVE ENABLE DO ll:BEGIN
     DECLARE v_returnCode                 INT;
     DECLARE v_returnMsg                  LONGTEXT;
     DECLARE v_curMsg                     LONGTEXT;
     DECLARE imp_lock                     INT;
-    DECLARE v_procname                   VARCHAR(50) DEFAULT 'control_do_unlock.job';
+    DECLARE v_procname                   VARCHAR(50) DEFAULT 'fail_queues_handle.job';
     DECLARE v_modulename                 VARCHAR(50) DEFAULT 'messageManager';
     DECLARE v_body                       LONGTEXT DEFAULT NULL;
-    DECLARE v_lock_name                  VARCHAR(50) DEFAULT 'control_do_unlock';
+    DECLARE v_lock_name                  VARCHAR(50) DEFAULT 'fail_queues_handle';
     DECLARE v_params_body                LONGTEXT DEFAULT '{}';
     DECLARE v_id                         LONGTEXT;
     DECLARE v_queue_id                   BIGINT;
@@ -28,15 +29,15 @@ CREATE EVENT `control_do_unlock` ON SCHEDULE EVERY 1 MINUTE STARTS '2016-01-01 0
 
     DECLARE cur1 CURSOR FOR SELECT queue_type, queue_step, proc_name
                               FROM msg_queues.`job_config`
-                             WHERE `type` = 'unlock';
+                             WHERE `type` = 'fail';
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
-        SET v_returnMsg = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', v_curMsg, ' | ', IFNULL(v_returnMsg,''));
+        SET v_curMsg = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', v_curMsg, ' | ', IFNULL(v_returnMsg,''));
         SET imp_lock = RELEASE_LOCK(v_lock_name);
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,v_returnMsg,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,v_body,v_curMsg,v_returnCode,v_returnMsg);
     END;
 
     SET v_curMsg = 'fail to get system lock.';

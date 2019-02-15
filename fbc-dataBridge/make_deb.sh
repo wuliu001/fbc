@@ -88,7 +88,7 @@ cat <<- EOT
         -v|version         Display script version
 
     Example:
-        ./make_deb.sh -i roadDB.deb
+        ./make_deb.sh -i bridge.deb
 
 EOT
 }    # ----------  end of function usage  ----------
@@ -142,8 +142,8 @@ fi
 #-----------------------------------------------------------------------
 cd $SCRIPT_DIR && rm -rf *deb
 
-if [[ -n "$RDB_VERSION" ]]; then
-    sed -i "s#BUILD_VERSION#$RDB_VERSION#g" "$SCRIPT_DIR/src/DEBIAN/control"
+if [[ -n "$FBC_VERSION" ]]; then
+    sed -i "s#BUILD_VERSION#$FBC_VERSION#g" "$SCRIPT_DIR/src/DEBIAN/control"
 else
     sed -i "s#BUILD_VERSION#0.0.0.0#g" "$SCRIPT_DIR/src/DEBIAN/control"
 fi
