@@ -30,7 +30,7 @@ ll:BEGIN
 
     SET v_params_body = CONCAT('{"tx_address_i":"',IFNULL(tx_address_i,''),'"}');
 
-    SET tx_address_i = TRIM(IFNULL(tx_address_i),'');
+    SET tx_address_i = TRIM(IFNULL(tx_address_i,''));
 
     # check input parameters
     IF tx_address_i = '' THEN

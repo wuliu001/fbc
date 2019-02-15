@@ -33,10 +33,10 @@ ll:BEGIN
 
     SET v_params_body = CONCAT('{"type_i":"',IFNULL(type_i,''),'","original_tx_address_i":"',IFNULL(original_tx_address_i,''),'","new_tx_address_i":"',IFNULL(new_tx_address_i,''),'"}');
 
-    SET type_i = TRIM(IFNULL(type_i),'');
-    SET original_tx_address_i = TRIM(IFNULL(original_tx_address_i),'');
-    SET new_tx_address_i = TRIM(IFNULL(new_tx_address_i),'');
-    SET body_i = TRIM(IFNULL(body_i),'');
+    SET type_i = TRIM(IFNULL(type_i,''));
+    SET original_tx_address_i = TRIM(IFNULL(original_tx_address_i,''));
+    SET new_tx_address_i = TRIM(IFNULL(new_tx_address_i,''));
+    SET body_i = TRIM(IFNULL(body_i,''));
 
     # check input parameters
     IF type_i = '' OR original_tx_address_i = '' OR new_tx_address_i = '' OR body_i = '' OR JSON_VALID(body_i) = 0 THEN
