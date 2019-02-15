@@ -1,4 +1,6 @@
 USE `statedb`;
+/*!50003 SET @saved_sql_mode = @@sql_mode */;
+/*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
 /*Procedure structure for Procedure `smartcontract_gasrequest.get` */;
 
@@ -62,3 +64,4 @@ ll:BEGIN
 END
 $$
 DELIMITER ;
+/*!50003 SET sql_mode = @saved_sql_mode */;
