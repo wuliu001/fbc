@@ -1,0 +1,15 @@
+#!/bin/bash
+
+USER=tao
+GROUP=tao
+
+cp -R /tmp/opt /
+
+rm -rf /tmp/opt
+
+cp -R /tmp/uwsgi_config/app/dataAgent.ini        /etc/uwsgi/apps-available/dataAgent.ini
+rm -rf /tmp/uwsgi_config
+
+chown -R $USER:$GROUP /opt/fbc/dataAgent
+
+exit 0
