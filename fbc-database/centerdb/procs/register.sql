@@ -62,7 +62,7 @@ ll:BEGIN
     END IF;
 
     SELECT TRIM(BOTH '"' FROM body_i->"$.userAccount"),
-           TRIM(BOTH '"' FROM body_i->"$.password"),
+           TRIM(BOTH '"' FROM body_i->"$.loginPassword"),
            TRIM(BOTH '"' FROM body_i->"$.corporationName"),
            TRIM(BOTH '"' FROM body_i->"$.owner"),
            TRIM(BOTH '"' FROM body_i->"$.address"),

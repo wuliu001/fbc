@@ -8,17 +8,15 @@ import json
 
 
 def register(server_url, body):
-    api_result = {"data": [{"private_key": "[private_key]"},{"publick_key": "[publick_key]"}], "moreResults": [], "ops": {"code": "[CODE]", "message": "[MSG]"}}
+    api_result = {"data": [], "moreResults": [], "ops": {"code": "[CODE]", "message": "[MSG]"}}
     print 'server_url',server_url
     #check body 
-    body_key_check_dict = {"userAccount": str, "password": str,"trans_password": str, "corporationName": str, "owner": str, "address": str, \
-                           "companyRegisterDate": str,"registeredCapital": str, "annualIncome": str, "telNum": str, "email": str}
+    body_key_check_dict = {"userAccount": str, "loginPassword": str,"txPassword": str,"trans_password": str, "corporationName": str, "owner": str,  \
+                           "address": str,"companyRegisterDate": str,"registeredCapital": str, "annualIncome": str, "telNum": str, "email": str}
     check_flag, check_msg = misc_utility.bodyTypeChecker(body, body_key_check_dict)
     if check_flag is False:
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = check_msg
-        api_result["data"][0]["private_key"]=''
-        api_result["data"][1]["publick_key"]=''
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'
 
     #get accountAddress
