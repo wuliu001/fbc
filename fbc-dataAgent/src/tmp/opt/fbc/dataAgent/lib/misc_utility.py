@@ -91,10 +91,10 @@ def get_account_privateKey(data_service_host,account_address,txpasswd):
     private_key = ''
     return_msg = 'OK'
 
-    server_url = data_service_host + '/keystore/' + account_address + '/private_key'
+    server_url = data_service_host + '/users/' + account_address + '/private_key'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'PUT', txpasswd, '')
     if http_code == 200 and api_code == 200:
-        private_key = api_result["data"][0]["private_key"]
+        private_key = api_result["ops"]["private_key"]
     else:
         flag = False
         return_msg = api_result
