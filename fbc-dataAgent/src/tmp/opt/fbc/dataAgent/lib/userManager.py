@@ -7,7 +7,7 @@ import misc_utility
 import json
 
 
-def register(server_url, body):
+def register(server_url, query_string, body):
     api_result = {"data": [], "moreResults": [], "ops": {"code": "[CODE]", "message": "[MSG]"}}
     print 'server_url',server_url
     #check body 
@@ -29,9 +29,10 @@ def register(server_url, body):
 
     #set format body
     format_body = eval(body)
-
+    
     #set user private key to local
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['trans_password'], "POST", None,private_key )
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['txPassword'], "POST", None,private_key )
+    print 'json_obj1',json_obj
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -43,6 +44,7 @@ def register(server_url, body):
 
     #set user public info to user_center
     http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?accountAddress=' + accountAddress, "POST", None,body)
+    print 'json_obj2',json_obj
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -56,6 +58,9 @@ def register(server_url, body):
     statebody = {"publicKey":"[publicKey]","creditRating":0,"balance":0,"smartContractPrice":0,"minSmartContractDeposit":0,"nonce":0}
     statebody["publicKey"] = public_key
     http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/statedb/insert?accountAddress=' + accountAddress, "POST", None,statebody)
+    print server_url + '/statedb/insert?accountAddress=' + accountAddress
+    print statebody
+    print 'json_obj3',json_obj
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
