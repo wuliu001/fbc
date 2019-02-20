@@ -52,7 +52,7 @@ def get_account_basicInfo(data_service_host,account_address):
     server_url = data_service_host + '/statedb/' + account_address + '/basic_info'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
-        public_key = api_result["data"][0]["public_key"]
+        public_key = api_result["data"][0]["publicKey"]
         balance = api_result["data"][0]["balance"]
         nonce = api_result["data"][0]["nonce"]
     else:

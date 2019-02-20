@@ -36,20 +36,20 @@ def transaction_register(tx_type, data_service_host, query_string, body):
         # get normal account's public_key, balance, nonce
         flag, public_key, balance, stable_nonce, return_msg = misc_utility.get_account_basicInfo(data_service_host,normal_account_address)
         if flag is False:
-            api_result = return_msg
+            api_result = json.dumps(return_msg)
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # get smartcontract account's gasRequest
         flag, smartcontract_gasCost, smartcontract_gasDeposit, return_msg = misc_utility.get_account_gasRequest(data_service_host,smart_contract_address,1)
         if flag is False:
-            api_result = return_msg
+            api_result = json.dumps(return_msg)
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
         smartcontract_gasRequest = smartcontract_gasCost + smartcontract_gasDeposit
 
         # get normal account's gasRequest from pending handle transactions
         flag, normal_account_gasCost, normal_account_gasDeposit, return_msg = misc_utility.get_account_gasRequest(data_service_host,normal_account_address)
         if flag is False:
-            api_result = return_msg
+            api_result = json.dumps(return_msg)
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
         normal_account_gasRequest = normal_account_gasCost + normal_account_gasDeposit
 
@@ -61,11 +61,14 @@ def transaction_register(tx_type, data_service_host, query_string, body):
 
         # get parameter
         query_string_dict = misc_utility.parse_url('?' + query_string)
-        is_broadcast = misc_utility.get_parameter(query_string_dict, 'is_broadcast')
-        txAddress = misc_utility.get_parameter(query_string_dict, 'txAddress')
-
-        # vendition/purchase modify
-        if txAddress:
+        if 'is_broadcast' in query_string_dict.keys():
+           is_broadcast = int(misc_utility.get_parameter(query_string_dict, 'is_broadcast'))
+        else:
+            is_broadcast = 0
+        
+        if 'txAddress' in query_string_dict.keys():
+            # vendition/purchase modify
+            txAddress = misc_utility.get_parameter(query_string_dict, 'txAddress')
             server_url = data_service_host + '/transactionCache/' + txAddress + '/detail'
             http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code == 200 and api_code == 200:
@@ -88,6 +91,9 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             tx_password = formated_body[1]
             # get normal account's private_key
             flag, private_key, return_msg = misc_utility.get_account_privateKey(data_service_host,normal_account_address,tx_password)
+            if flag is False:
+                api_result = json.dumps(return_msg)
+                return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
             # ues private key generate hashSign
             flag, hashSign, verify_message = misc_utility.get_hashsign(public_key,private_key,tx_detail_str)
@@ -99,7 +105,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
                 # get nonce from pending handle transactions
                 flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
                 if flag is False:
-                    api_result = return_msg
+                    api_result = json.dumps(return_msg)
                     return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
                 # generate new nonce
@@ -119,7 +125,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             # get nonce from pending handle transactions
             flag, max_pending_nonce, return_msg = misc_utility.get_pending_handle_account_maxNonce(data_service_host,normal_account_address)
             if flag is False:
-                api_result = return_msg
+                api_result = json.dumps(return_msg)
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
             # check nonce
