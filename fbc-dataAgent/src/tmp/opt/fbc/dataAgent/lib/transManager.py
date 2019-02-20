@@ -14,7 +14,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
                             "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
                             "cityOfIssuingLocation": str, "zoneOfIssuingLocation": str, "addressOfIssuingLocation": str, "dateOfReqBegin": str, \
                             "dateOfReqEnd": str, "paymentMinStage":int, "paymentMaxStage": int, "request_timestemp": str}
-    elif tx_type = 'purchase':
+    elif tx_type == 'purchase':
         tx_key_check_dict = {"User": str, "Recipient": str, "Type": "purchase", "Varieties": str, "placeOfProduction": str, "dateOfMature": str, \
                             "dateOfProduction": str, "appearanceRating": int,"sizeRating": int, "sweetnessRating": int, "minQuantity": float, \
                             "maxQuantity": float, "Price": float, "countryOfIssuingLocation": str, "provinceOfIssuingLocation": str, \
