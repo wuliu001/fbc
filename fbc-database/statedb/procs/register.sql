@@ -29,6 +29,8 @@ ll:BEGIN
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
         
         SET returnCode_o = 400;
+        TRUNCATE TABLE statedb.temp_r_info;
+        DROP TABLE IF EXISTS statedb.temp_r_info;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
@@ -36,7 +38,7 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{}');
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"}');
     SET body_i = TRIM(body_i);
     SET accountAddress_i = TRIM(accountAddress_i);
     
@@ -48,31 +50,39 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
-    
+
     SET returnMsg_o = 'check input data validation error.';
-    IF IFNULL(JSON_VALID(body_i),0) = 0 OR IFNULL(body_i,'') = '' OR IFNULL(accountAddress_i,'') = '' THEN
+    IF IFNULL(body_i,'') = '' OR IFNULL(accountAddress_i,'') = '' THEN
         SET returnCode_o = 512;
         SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
-    SELECT TRIM(BOTH '"' FROM body_i->"$.publicKey"),
-           TRIM(BOTH '"' FROM body_i->"$.creditRating"),
-           TRIM(BOTH '"' FROM body_i->"$.balance"),
-           TRIM(BOTH '"' FROM body_i->"$.smartContractPrice"),
-           TRIM(BOTH '"' FROM body_i->"$.minSmartContractDeposit"),
-           TRIM(BOTH '"' FROM body_i->"$.nonce")
-	  INTO v_publicKey,
-           v_creditRating,
-           v_balance,
-           v_smartContractPrice,
-           v_minSmartContractDeposit,
-           v_nonce;
-
-    IF IFNULL(v_publicKey,'') = '' OR v_creditRating IS NULL OR v_balance IS NULL OR v_smartContractPrice IS NULL
-       OR v_minSmartContractDeposit IS NULL OR v_nonce IS NULL  THEN
+    CREATE TEMPORARY TABLE IF NOT EXISTS  statedb.`temp_r_info` (
+      `publicKey`               TEXT,
+      `creditRating`            FLOAT,
+      `balance`                 FLOAT,
+      `smartContractPrice`      FLOAT,
+      `minSmartContractDeposit` FLOAT,
+      `nonce`                   INT(11)
+    ) ENGINE=InnoDB;
+    TRUNCATE TABLE statedb.`temp_r_info`;
+    
+    CALL commons.dynamic_sql_execute(CONCAT('INSERT INTO statedb.`temp_r_info` (publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce) VALUES ',body_i),v_returnCode,v_returnMsg);
+    
+    SELECT COUNT(*)
+      INTO v_checker
+      FROM statedb.temp_r_info
+	 WHERE IFNULL(publicKey,'') = ''
+        OR creditRating IS NULL
+        OR balance IS NULL
+        OR smartContractPrice IS NULL;
+    
+    IF v_checker > 0  THEN
         SET returnCode_o = 512;
+        TRUNCATE TABLE statedb.temp_r_info;
+        DROP TABLE IF EXISTS statedb.temp_r_info;
         SET returnMsg_o = 'Body format is mismatch for register.';
         SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -85,6 +95,8 @@ ll:BEGIN
 	 WHERE accountAddress = accountAddress_i;
     IF v_checker > 0 THEN
         SET returnCode_o = 513;
+        TRUNCATE TABLE statedb.temp_r_info;
+        DROP TABLE IF EXISTS statedb.temp_r_info;
         SET returnMsg_o = 'This user account exist in this node, please change another user account and try again.';
         SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -92,19 +104,26 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'This public key format is wrong.';
-    SELECT v_publicKey REGEXP '^-----BEGIN RSA PUBLIC KEY-----' AND v_publicKey REGEXP '-----END RSA PUBLIC KEY-----$'
-      INTO v_checker;
+    SELECT publicKey REGEXP '^-----BEGIN PUBLIC KEY-----' AND publicKey REGEXP '-----END PUBLIC KEY-----$'
+      INTO v_checker
+      FROM statedb.temp_r_info;
     IF v_checker = 0 THEN
         SET returnCode_o = 514;
+        TRUNCATE TABLE statedb.temp_r_info;
+        DROP TABLE IF EXISTS statedb.temp_r_info;        
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
         LEAVE ll;
     END IF;
     
     INSERT INTO `statedb`.`state_object`(accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce)
-         VALUES (accountAddress_i, v_publicKey, v_creditRating, v_balance, v_smartContractPrice, v_minSmartContractDeposit, v_nonce);
+         SELECT accountAddress_i, publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce
+           FROM statedb.temp_r_info;
     
     SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+    
+    TRUNCATE TABLE statedb.temp_r_info;
+    DROP TABLE IF EXISTS statedb.temp_r_info;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
