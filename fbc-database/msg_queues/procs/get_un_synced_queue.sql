@@ -1,4 +1,3 @@
-
 USE `msg_queues`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
@@ -359,11 +358,11 @@ ll:BEGIN
        AND a.queue_type = b.queue_type;
        
     SET returnMsg_o = 'fail to set dst_queue_info';
-    SELECT GROUP_CONCAT(DISTINCT queue_type)
+    SELECT GROUP_CONCAT(DISTINCT dst_queue_type)
       INTO v_queue_types
       FROM msg_queues.`temp_gusq_unsync_queue` 
      WHERE IFNULL(dst_endpoint_info ,'') = '';
-     
+    
     IF IFNULL(v_queue_types,'') <> '' THEN
         CALL msg_queues.`get_next_server`(syncService_id_i , v_queue_types, v_endpoint_infos, v_returnCode, v_returnMsg);
         IF v_returnCode <> 200 THEN
@@ -390,7 +389,7 @@ ll:BEGIN
         UPDATE msg_queues.`temp_gusq_unsync_queue` a,
                msg_queues.`temp_gusq_dst_endpoint_info` b
            SET a.dst_endpoint_info = b.dst_endpoint_info
-         WHERE a.queue_type = b.queue_type 
+         WHERE a.dst_queue_type = b.queue_type 
            AND IFNULL(a.dst_endpoint_info,'') = '';
     END IF;
 

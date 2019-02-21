@@ -266,7 +266,7 @@ def get_unsynced_queue_info(endpoint_info,syncservice_id,last_receive_info,weigh
 def insert_queue_data(dst_http_uri,dst_endpoint_info, http_method, dst_queue_step, body, double_side):
     try:
         if double_side is 1:
-            http_url = dst_http_uri + '?dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info) + '&dst_queue_step=' + ('' if dst_queue_step is None else str(dst_queue_step))
+            http_url = dst_http_uri + 'dst_endpoint_info=' + ('' if dst_endpoint_info is None else dst_endpoint_info) + '&dst_queue_step=' + ('' if dst_queue_step is None else str(dst_queue_step))
         else:
             http_url = dst_http_uri
         utils_2pc.logI('[insert_queue_data] http url is: %s,method: %s' % (http_url,http_method))
