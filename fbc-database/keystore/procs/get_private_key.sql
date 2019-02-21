@@ -5,8 +5,8 @@ USE `keystore`;
 DROP PROCEDURE IF EXISTS `get_private_key`;
 
 DELIMITER $$
-CREATE DEFINER=`dba`@`%` PROCEDURE `get_private_key`(account_addr_i           VARCHAR(256),
-                                              tx_passwd_i        VARCHAR(50),
+CREATE DEFINER=`dba`@`%` PROCEDURE `get_private_key`(account_addr_i VARCHAR(256),
+                                              tx_passwd_i           VARCHAR(50),
                                               OUT private_key_o     TEXT,
                                               OUT returnCode_o      INT,
                                               OUT returnMsg_o       LONGTEXT )
