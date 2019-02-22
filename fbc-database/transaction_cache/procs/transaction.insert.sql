@@ -7,7 +7,6 @@ USE `transaction_cache`;
 DROP PROCEDURE IF EXISTS `transaction.insert`;
 
 DELIMITER $$
-USE `blockchain_cache`$$
 CREATE PROCEDURE `transaction.insert`( 
     account_addr_i              VARCHAR(256),
     type_i                      VARCHAR(32), 
@@ -25,7 +24,7 @@ ll:BEGIN
     DECLARE v_procname          VARCHAR(64) DEFAULT 'transaction.insert';
     DECLARE v_modulename        VARCHAR(50) DEFAULT 'transaction_cache';
     DECLARE v_timestamp         BIGINT(20);
-    DECLARE v_cnt               INT,
+    DECLARE v_cnt               INT;
     DECLARE v_params_body       LONGTEXT DEFAULT NULL;
     DECLARE v_returnCode        INT DEFAULT 0;
     DECLARE v_returnMsg         LONGTEXT DEFAULT '';

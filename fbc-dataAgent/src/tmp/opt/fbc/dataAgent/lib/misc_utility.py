@@ -77,7 +77,7 @@ def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0)
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
         gasCost = api_result["data"][0]["gasCost"]
-        gasDeposit = api_result["gasDeposit"][0]["gasDeposit"]
+        gasDeposit = api_result["data"][0]["gasDeposit"]
     else:
         flag = False
         return_msg = api_result
@@ -92,7 +92,7 @@ def get_account_privateKey(data_service_host,account_address,txpasswd):
     return_msg = 'OK'
 
     server_url = data_service_host + '/users/' + account_address + '/private_key'
-    http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'PUT', txpasswd, '')
+    http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, txpasswd)
     if http_code == 200 and api_code == 200:
         private_key = api_result["ops"]["private_key"]
     else:
@@ -123,17 +123,19 @@ def get_pending_handle_account_maxNonce(data_service_host,account_address):
 def get_hashsign(public_key,private_key,tx_detail):
     flag = True
     hashSign = ''
-    verify_message = ''
+    return_message = ''
 
-    if re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
-        hashSign = crypto_utility.sign_encode(tx_detail, private_key)
-        if crypto_utility.sign_check(tx_detail, hashSign, public_key) is False:
+    if re.search('-----BEGIN PUBLIC KEY-----', public_key) and re.search('-----END PUBLIC KEY-----', public_key) and re.search('-----BEGIN RSA PRIVATE KEY-----', private_key) and re.search('-----END RSA PRIVATE KEY-----', private_key):
+        tx_detail_md5 = crypto_utility.encrypt_md5(tx_detail)
+        hashSign = crypto_utility.sign_encode(tx_detail_md5, private_key)
+        if crypto_utility.sign_check(tx_detail_md5, hashSign, public_key) is False:
             flag = False
-            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match!"}}'
+            return_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key and private key mis-match!"}}'
     else:
-        verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "private key format error!"}}'
+        flag = False
+        return_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key or private key format error!"}}'
 
-    return flag, hashSign, verify_message
+    return flag, hashSign, return_message
 
 
 # check md5 signature
@@ -141,10 +143,14 @@ def check_md5_signature(public_key,hashSign,tx_detail):
     flag = True
     verify_message = ''
 
-    if crypto_utility.sign_check(tx_detail, hashSign, public_key) is False:
+    if re.search('-----BEGIN PUBLIC KEY-----', public_key) and re.search('-----END PUBLIC KEY-----', public_key):
+        tx_detail_md5 = crypto_utility.encrypt_md5(tx_detail)
+        if crypto_utility.sign_check(tx_detail_md5, hashSign, public_key) is False:
+            flag = False
+            verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match!"}}'
+    else:
         flag = False
-        verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "md5 signature and hash not match!"}}'
-
+        verify_message = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "public key format error!"}}'
     return flag, verify_message
 
 
