@@ -17,7 +17,6 @@ CREATE PROCEDURE `transaction.insert`(
     is_broadcast_i              TINYINT(4),
     old_txAddress_i             VARCHAR(256),
     body_i                      LONGTEXT,
-    OUT txAddress_o             VARCHAR(256),
     OUT returnCode_o            INT,
     OUT returnMsg_o             LONGTEXT)
 ll:BEGIN
@@ -25,6 +24,7 @@ ll:BEGIN
     DECLARE v_modulename        VARCHAR(50) DEFAULT 'transaction_cache';
     DECLARE v_timestamp         BIGINT(20);
     DECLARE v_cnt               INT;
+    DECLARE v_newtxAddress      VARCHAR(256);
     DECLARE v_params_body       LONGTEXT DEFAULT NULL;
     DECLARE v_returnCode        INT DEFAULT 0;
     DECLARE v_returnMsg         LONGTEXT DEFAULT '';
@@ -100,14 +100,15 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
+    SET v_newtxAddress = md5(hashsign_i);
     IF old_txAddress_i <> '' THEN
         # update data in transactions table
         SELECT COUNT(1) 
           INTO v_cnt 
           FROM transaction_cache.transactions
-         WHERE accountAddress = account_addr_i
-           AND transactionType = type_i
-           AND md5(hashSign) = old_txAddress_i;
+         WHERE txAddress = old_txAddress_i
+           AND accountAddress = account_addr_i
+           AND transactionType = type_i;
 
         IF v_cnt = 0 THEN
             SET returnCode_o = 651;
@@ -117,19 +118,20 @@ ll:BEGIN
         END IF;
 
         UPDATE transaction_cache.transactions
-           SET blockObject = body_i,
+           SET txAddress = v_newtxAddress,
+               blockObject = body_i,
                hashSign = hashsign_i,
                `timestamp` = v_timestamp
-         WHERE accountAddress = account_addr_i
-           AND transactionType = type_i
-           AND md5(hashSign) = old_txAddress_i;
+         WHERE txAddress = old_txAddress_i
+           AND accountAddress = account_addr_i
+           AND transactionType = type_i;
     ELSE
         # insert data into transactions table
-        INSERT INTO transaction_cache.transactions (accountAddress,transactionType,blockObject,hashSign,gasCost,gasDeposit,nonce,`timestamp`)
-             VALUES (account_addr_i,type_i,body_i,hashsign_i,gascost_i,gascost_i,nonce_i,v_timestamp);
+        INSERT INTO transaction_cache.transactions (txAddress,accountAddress,transactionType,blockObject,hashSign,gasCost,gasDeposit,nonce,`timestamp`)
+             VALUES (v_newtxAddress,account_addr_i,type_i,body_i,hashsign_i,gascost_i,gascost_i,nonce_i,v_timestamp);
     END IF;
 
-    SELECT md5(hashsign_i) AS txAddress;  
+    SELECT v_newtxAddress AS txAddress;  
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';

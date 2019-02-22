@@ -2,18 +2,18 @@ USE `transaction_cache`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
-/*Procedure structure for Procedure `transaction.modify` */;
+/*Procedure structure for Procedure `transaction_detail.get` */;
 
-DROP PROCEDURE IF EXISTS `transaction.modify`;
+DROP PROCEDURE IF EXISTS `transaction_detail.get`;
 
 DELIMITER $$
-CREATE PROCEDURE `transaction.modify`(
+CREATE PROCEDURE `transaction_detail.get`(
     tx_address_i             VARCHAR(256),
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
     DECLARE v_cnt            INT;
-    DECLARE v_procname       VARCHAR(100) DEFAULT 'transaction.modify';
+    DECLARE v_procname       VARCHAR(100) DEFAULT 'transaction_detail.get';
     DECLARE v_modulename     VARCHAR(50) DEFAULT 'transaction_cache';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
     DECLARE v_returnCode     INT;
@@ -44,7 +44,7 @@ ll:BEGIN
     SELECT COUNT(1) 
       INTO v_cnt 
       FROM transaction_cache.transactions
-     WHERE md5(hashSign) = tx_address_i;
+     WHERE txAddress = tx_address_i;
 
     IF v_cnt = 0 THEN
         SET returnCode_o = 651;
@@ -55,7 +55,7 @@ ll:BEGIN
 
     SELECT blockObject 
       FROM transaction_cache.transactions 
-     WHERE md5(hashSign) = tx_address_i;
+     WHERE txAddress = tx_address_i;
 
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
