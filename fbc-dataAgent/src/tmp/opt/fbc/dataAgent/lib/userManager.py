@@ -12,7 +12,7 @@ def register(server_url, query_string, body):
     print 'server_url',server_url
     #check body 
     body_key_check_dict = {"userAccount": str, "loginPassword": str,"txPassword": str,"corporationName": str, "owner": str, "address": str, \
-                           "companyRegisterDate": str,"registeredCapital": str, "annualIncome": str, "telNum": str, "email": str}
+                           "companyRegisterDate": str,"registeredCapital": int, "annualIncome": str, "telNum": str, "email": str}
     check_flag, check_msg = misc_utility.bodyTypeChecker(body, body_key_check_dict)
     if check_flag is False:
         api_result["ops"]["code"] = 400
