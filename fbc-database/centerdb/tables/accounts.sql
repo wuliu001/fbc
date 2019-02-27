@@ -16,6 +16,7 @@ CREATE TABLE `accounts` (
   `annualIncome`        INT(11) NOT NULL,
   `telNum`              VARCHAR(50) NOT NULL,
   `email`               VARCHAR(200) NOT NULL,
+  `register_ip_address` VARCHAR(255) NOT NULL,
   `create_time`         DATETIME NOT NULL,
   `last_update_time`    DATETIME NOT NULL,
   `last_login_time`     DATETIME NOT NULL,

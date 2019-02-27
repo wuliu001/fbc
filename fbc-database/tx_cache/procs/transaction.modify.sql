@@ -1,4 +1,4 @@
-USE `transaction_cache`;
+USE `tx_cache`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
@@ -17,7 +17,7 @@ CREATE PROCEDURE `transaction.modify`(
 ll:BEGIN
     DECLARE v_cnt            INT;
     DECLARE v_procname       VARCHAR(100) DEFAULT 'transaction.modify';
-    DECLARE v_modulename     VARCHAR(50) DEFAULT 'transaction_cache';
+    DECLARE v_modulename     VARCHAR(50) DEFAULT 'tx_cache';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
     DECLARE v_returnCode     INT;
     DECLARE v_returnMsg      LONGTEXT;
@@ -49,7 +49,7 @@ ll:BEGIN
     # check record exists
     SELECT COUNT(1) 
       INTO v_cnt 
-      FROM transaction_cache.transactions
+      FROM tx_cache.transactions
      WHERE transactionType = type_i
        AND MD5(hashSign) = original_tx_address_i;
 
@@ -60,7 +60,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    UPDATE transaction_cache.transactions
+    UPDATE tx_cache.transactions
        SET blockObject = body_i,
            hashSign = hashSign_i
      WHERE transactionType = type_i

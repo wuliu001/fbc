@@ -592,76 +592,76 @@ fi
 
 echo "Schema statedb Compile End"
 
-echo "Schema transaction_cache Compile Begin"
-mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "drop database if exists transaction_cache"
-mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "create database if not exists transaction_cache"
+echo "Schema tx_cache Compile Begin"
+mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "drop database if exists tx_cache"
+mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "create database if not exists tx_cache"
 
-cd $LOCAL/transaction_cache/tables
+cd $LOCAL/tx_cache/tables
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >transaction_cache_tables.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >tx_cache_tables.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
-        cat $FN >> transaction_cache_tables.sql
+        cat $FN >> tx_cache_tables.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >>transaction_cache_tables.sql
-    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT transaction_cache < transaction_cache_tables.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >>tx_cache_tables.sql
+    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT tx_cache < tx_cache_tables.sql
     returnCode=$[ $returnCode+$? ]
-    rm transaction_cache_tables.sql
+    rm tx_cache_tables.sql
 fi
 
-cd $LOCAL/transaction_cache/funcs
+cd $LOCAL/tx_cache/funcs
 if [ $? -eq 0 ]
 then
     for FN in `ls`
     do
         echo "  Compile $FN"
-        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT transaction_cache < $FN
+        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT tx_cache < $FN
         returnCode=$[ $returnCode+$? ]
     done
 fi
 
-cd $LOCAL/transaction_cache/procs
+cd $LOCAL/tx_cache/procs
 if [ $? -eq 0 ]
 then
     for FN in `ls`
     do
         echo "  Compile $FN"
-        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT transaction_cache < $FN
+        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT tx_cache < $FN
         returnCode=$[ $returnCode+$? ]
     done
 fi
 
-cd $LOCAL/transaction_cache/jobs
+cd $LOCAL/tx_cache/jobs
 if [ $? -eq 0 ]
 then
     for FN in `ls`
     do
         echo "  Compile $FN"
-        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT transaction_cache < $FN
+        mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT tx_cache < $FN
         returnCode=$[ $returnCode+$? ]
     done
 fi
 
-cd $LOCAL/transaction_cache/datas
+cd $LOCAL/tx_cache/datas
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >transaction_cache_datas.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >tx_cache_datas.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
-        cat $FN >> transaction_cache_datas.sql
+        cat $FN >> tx_cache_datas.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> transaction_cache_datas.sql
-    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT transaction_cache < transaction_cache_datas.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> tx_cache_datas.sql
+    mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT tx_cache < tx_cache_datas.sql
     returnCode=$[ $returnCode+$? ]
-    rm transaction_cache_datas.sql
+    rm tx_cache_datas.sql
 fi
 
-echo "Schema transaction_cache Compile End"
+echo "Schema tx_cache Compile End"
 
 echo "Schema transactions Compile Begin"
 mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT -e "drop database if exists transactions"

@@ -1,4 +1,4 @@
-USE `transaction_cache`;
+USE `tx_cache`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
@@ -21,7 +21,7 @@ CREATE PROCEDURE `transaction.insert`(
     OUT returnMsg_o             LONGTEXT)
 ll:BEGIN
     DECLARE v_procname          VARCHAR(64) DEFAULT 'transaction.insert';
-    DECLARE v_modulename        VARCHAR(50) DEFAULT 'transaction_cache';
+    DECLARE v_modulename        VARCHAR(50) DEFAULT 'tx_cache';
     DECLARE v_timestamp         BIGINT(20);
     DECLARE v_cnt               INT;
     DECLARE v_newtxAddress      VARCHAR(256);
@@ -105,7 +105,7 @@ ll:BEGIN
         # update data in transactions table
         SELECT COUNT(1) 
           INTO v_cnt 
-          FROM transaction_cache.transactions
+          FROM tx_cache.transactions
          WHERE txAddress = old_txAddress_i
            AND accountAddress = account_addr_i
            AND transactionType = type_i;
@@ -117,7 +117,7 @@ ll:BEGIN
             LEAVE ll;
         END IF;
 
-        UPDATE transaction_cache.transactions
+        UPDATE tx_cache.transactions
            SET txAddress = v_newtxAddress,
                blockObject = body_i,
                hashSign = hashsign_i,
@@ -127,7 +127,7 @@ ll:BEGIN
            AND transactionType = type_i;
     ELSE
         # insert data into transactions table
-        INSERT INTO transaction_cache.transactions (txAddress,accountAddress,transactionType,blockObject,hashSign,gasCost,gasDeposit,nonce,`timestamp`)
+        INSERT INTO tx_cache.transactions (txAddress,accountAddress,transactionType,blockObject,hashSign,gasCost,gasDeposit,nonce,`timestamp`)
              VALUES (v_newtxAddress,account_addr_i,type_i,body_i,hashsign_i,gascost_i,gascost_i,nonce_i,v_timestamp);
     END IF;
 

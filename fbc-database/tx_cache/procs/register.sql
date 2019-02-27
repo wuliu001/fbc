@@ -1,4 +1,4 @@
-USE `statedb`;
+USE `tx_cache`;
 
 /*Procedure structure for Procedure `register` */;
 
@@ -10,8 +10,8 @@ CREATE DEFINER=`dba`@`%` PROCEDURE `register`(accountAddress_i      VARCHAR(256)
                                               OUT returnCode_o      INT,
                                               OUT returnMsg_o       LONGTEXT )
 ll:BEGIN
-    DECLARE v_procname                VARCHAR(100) DEFAULT 'statedb.register';
-    DECLARE v_modulename              VARCHAR(50) DEFAULT 'statedb';
+    DECLARE v_procname                VARCHAR(100) DEFAULT 'tx_cache.register';
+    DECLARE v_modulename              VARCHAR(50) DEFAULT 'tx_cache';
     DECLARE v_params_body             LONGTEXT DEFAULT '';
     DECLARE v_returnCode              INT;
     DECLARE v_returnMsg               LONGTEXT;
@@ -29,11 +29,11 @@ ll:BEGIN
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
         
         SET returnCode_o = 400;
-        TRUNCATE TABLE statedb.temp_r_info;
-        DROP TABLE IF EXISTS statedb.temp_r_info;
+        TRUNCATE TABLE tx_cache.temp_r_info;
+        DROP TABLE IF EXISTS tx_cache.temp_r_info;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
-        SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+        SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
     END;
     
     SET returnCode_o = 400;
@@ -43,7 +43,7 @@ ll:BEGIN
     SET accountAddress_i = TRIM(accountAddress_i);
     
     SET returnMsg_o = 'get system lock fail.';
-    SET v_userReg_sys_lock = GET_LOCK('statedb_register',180);
+    SET v_userReg_sys_lock = GET_LOCK('tx_cache_register',180);
 
     IF v_userReg_sys_lock <> 1 THEN
         SET returnCode_o = 511;
@@ -54,12 +54,12 @@ ll:BEGIN
     SET returnMsg_o = 'check input data validation error.';
     IF IFNULL(body_i,'') = '' OR IFNULL(accountAddress_i,'') = '' THEN
         SET returnCode_o = 512;
-        SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+        SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 
-    CREATE TEMPORARY TABLE IF NOT EXISTS  statedb.`temp_r_info` (
+    CREATE TEMPORARY TABLE IF NOT EXISTS  tx_cache.`temp_r_info` (
       `publicKey`               TEXT,
       `creditRating`            FLOAT,
       `balance`                 FLOAT,
@@ -67,13 +67,13 @@ ll:BEGIN
       `minSmartContractDeposit` FLOAT,
       `nonce`                   INT(11)
     ) ENGINE=InnoDB;
-    TRUNCATE TABLE statedb.`temp_r_info`;
+    TRUNCATE TABLE tx_cache.`temp_r_info`;
     
-    CALL commons.dynamic_sql_execute(CONCAT('INSERT INTO statedb.`temp_r_info` (publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce) VALUES ',body_i),v_returnCode,v_returnMsg);
+    CALL commons.dynamic_sql_execute(CONCAT('INSERT INTO tx_cache.`temp_r_info` (publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce) VALUES ',body_i),v_returnCode,v_returnMsg);
     
     SELECT COUNT(*)
       INTO v_checker
-      FROM statedb.temp_r_info
+      FROM tx_cache.temp_r_info
 	 WHERE IFNULL(publicKey,'') = ''
         OR creditRating IS NULL
         OR balance IS NULL
@@ -81,24 +81,24 @@ ll:BEGIN
     
     IF v_checker > 0  THEN
         SET returnCode_o = 512;
-        TRUNCATE TABLE statedb.temp_r_info;
-        DROP TABLE IF EXISTS statedb.temp_r_info;
+        TRUNCATE TABLE tx_cache.temp_r_info;
+        DROP TABLE IF EXISTS tx_cache.temp_r_info;
         SET returnMsg_o = 'Body format is mismatch for register.';
-        SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+        SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
     SELECT COUNT(*)
       INTO v_checker
-      FROM statedb.state_object
+      FROM tx_cache.state_object
 	 WHERE accountAddress = accountAddress_i;
     IF v_checker > 0 THEN
         SET returnCode_o = 513;
-        TRUNCATE TABLE statedb.temp_r_info;
-        DROP TABLE IF EXISTS statedb.temp_r_info;
+        TRUNCATE TABLE tx_cache.temp_r_info;
+        DROP TABLE IF EXISTS tx_cache.temp_r_info;
         SET returnMsg_o = 'This user account exist in this node, please change another user account and try again.';
-        SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+        SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
@@ -106,24 +106,24 @@ ll:BEGIN
     SET returnMsg_o = 'This public key format is wrong.';
     SELECT publicKey REGEXP '^-----BEGIN PUBLIC KEY-----' AND publicKey REGEXP '-----END PUBLIC KEY-----$'
       INTO v_checker
-      FROM statedb.temp_r_info;
+      FROM tx_cache.temp_r_info;
     IF v_checker = 0 THEN
         SET returnCode_o = 514;
-        TRUNCATE TABLE statedb.temp_r_info;
-        DROP TABLE IF EXISTS statedb.temp_r_info;        
+        TRUNCATE TABLE tx_cache.temp_r_info;
+        DROP TABLE IF EXISTS tx_cache.temp_r_info;        
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
-        SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+        SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
         LEAVE ll;
     END IF;
     
-    INSERT INTO `statedb`.`state_object`(accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce)
+    INSERT INTO `tx_cache`.`state_object`(accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce)
          SELECT accountAddress_i, publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce
-           FROM statedb.temp_r_info;
+           FROM tx_cache.temp_r_info;
     
-    SET v_userReg_sys_lock = RELEASE_LOCK('statedb_register');
+    SET v_userReg_sys_lock = RELEASE_LOCK('tx_cache_register');
     
-    TRUNCATE TABLE statedb.temp_r_info;
-    DROP TABLE IF EXISTS statedb.temp_r_info;
+    TRUNCATE TABLE tx_cache.temp_r_info;
+    DROP TABLE IF EXISTS tx_cache.temp_r_info;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

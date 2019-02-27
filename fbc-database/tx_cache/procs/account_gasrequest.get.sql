@@ -1,4 +1,4 @@
-USE `transaction_cache`;
+USE `tx_cache`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
@@ -13,7 +13,7 @@ CREATE PROCEDURE `account_gasrequest.get`(
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
     DECLARE v_procname       VARCHAR(100) DEFAULT 'account_gasrequest.get';
-    DECLARE v_modulename     VARCHAR(50) DEFAULT 'transaction_cache';
+    DECLARE v_modulename     VARCHAR(50) DEFAULT 'tx_cache';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
     DECLARE v_returnCode     INT;
     DECLARE v_returnMsg      LONGTEXT;
@@ -41,7 +41,7 @@ ll:BEGIN
 
     SELECT IFNULL(SUM(gasCost),0) AS gasCost,
            IFNULL(SUM(gasDeposit),0) AS gasDeposit
-      FROM transaction_cache.transactions 
+      FROM tx_cache.transactions 
      WHERE accountAddress = account_addr_i;
     
     SET returnCode_o = 200;

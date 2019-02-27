@@ -1,4 +1,4 @@
-USE `transaction_cache`;
+USE `tx_cache`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
@@ -14,7 +14,7 @@ CREATE PROCEDURE `transaction_detail.get`(
 ll:BEGIN
     DECLARE v_cnt            INT;
     DECLARE v_procname       VARCHAR(100) DEFAULT 'transaction_detail.get';
-    DECLARE v_modulename     VARCHAR(50) DEFAULT 'transaction_cache';
+    DECLARE v_modulename     VARCHAR(50) DEFAULT 'tx_cache';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
     DECLARE v_returnCode     INT;
     DECLARE v_returnMsg      LONGTEXT;
@@ -43,7 +43,7 @@ ll:BEGIN
     # check record exists
     SELECT COUNT(1) 
       INTO v_cnt 
-      FROM transaction_cache.transactions
+      FROM tx_cache.transactions
      WHERE txAddress = tx_address_i;
 
     IF v_cnt = 0 THEN
@@ -54,7 +54,7 @@ ll:BEGIN
     END IF;
 
     SELECT blockObject 
-      FROM transaction_cache.transactions 
+      FROM tx_cache.transactions 
      WHERE txAddress = tx_address_i;
 
     SET returnCode_o = 200;

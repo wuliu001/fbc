@@ -1,4 +1,4 @@
-USE `transaction_cache`;
+USE `tx_cache`;
 
 /*Table structure for table `transactions` */;
 

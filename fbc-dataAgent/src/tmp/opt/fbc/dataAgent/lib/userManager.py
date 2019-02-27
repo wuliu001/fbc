@@ -54,7 +54,7 @@ def register(server_url, query_string, body):
 
     #set user info to statedb
     statebody = '("'+public_key+'",0,0,0,0,0)'
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/statedb/insert?accountAddress=' + accountAddress, "POST", None,statebody)
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/tx_cache/insert?accountAddress=' + accountAddress, "POST", None,statebody)
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
