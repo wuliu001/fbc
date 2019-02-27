@@ -6,6 +6,7 @@ DROP PROCEDURE IF EXISTS `register`;
 
 DELIMITER $$
 CREATE DEFINER=`dba`@`%` PROCEDURE `register`(accountAddress_i      VARCHAR(256),
+                                              register_ip_address_i VARCHAR(255),
                                               body_i                LONGTEXT,
                                               OUT returnCode_o      INT,
                                               OUT returnMsg_o       LONGTEXT )
@@ -40,9 +41,10 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{}');
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'","register_ip_address_i":"',IFNULL(register_ip_address_i,''),'"}');
     SET body_i = TRIM(body_i);
     SET accountAddress_i = TRIM(accountAddress_i);
+    SET register_ip_address_i = TRIM(register_ip_address_i);
     
     SET returnMsg_o = 'get system lock fail.';
     SET v_userReg_sys_lock = GET_LOCK('centerdb_register',180);
@@ -54,7 +56,7 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'check input data validation error.';
-    IF IFNULL(JSON_VALID(body_i),0) = 0 OR IFNULL(body_i,'') = '' OR IFNULL(accountAddress_i,'') = '' THEN
+    IF IFNULL(JSON_VALID(body_i),0) = 0 OR IFNULL(body_i,'') = '' OR IFNULL(accountAddress_i,'') = '' OR IFNULL(register_ip_address_i,'') = '' THEN
         SET returnCode_o = 512;
         SET v_userReg_sys_lock = RELEASE_LOCK('centerdb_register');
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -102,8 +104,8 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    INSERT INTO `centerdb`.`accounts`(`accountAddress`, `userAccount`, `loginPassword`, `corporationName`, `owner`, `address`, `companyRegisterDate`, `registeredCapital`, `annualIncome`, `telNum`, `email`, `create_time`, `last_update_time`, `last_login_time`)
-         VALUES (accountAddress_i, v_username, MD5(v_password), v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP());
+    INSERT INTO `centerdb`.`accounts`(`accountAddress`, `userAccount`, `loginPassword`, `corporationName`, `owner`, `address`, `companyRegisterDate`, `registeredCapital`, `annualIncome`, `telNum`, `email`, `create_time`, `last_update_time`, `last_login_time`,register_ip_address)
+         VALUES (accountAddress_i, v_username, MD5(v_password), v_corporation_name, v_owner, v_address, v_company_register_date, v_registered_capital, v_annual_income, v_tel_num, v_email, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP(),register_ip_address_i);
     
     SET v_userReg_sys_lock = RELEASE_LOCK('centerdb_register');
     

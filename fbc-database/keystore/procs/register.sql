@@ -5,11 +5,12 @@ USE `keystore`;
 DROP PROCEDURE IF EXISTS `register`;
 
 DELIMITER $$
-CREATE DEFINER=`dba`@`%` PROCEDURE `register`(accountAddress_i      VARCHAR(256),
-                                              txPassword_i          VARCHAR(50),
-                                              body_i                LONGTEXT,
-                                              OUT returnCode_o      INT,
-                                              OUT returnMsg_o       LONGTEXT )
+CREATE DEFINER=`dba`@`%` PROCEDURE `register`(accountAddress_i        VARCHAR(256),
+                                              txPassword_i            VARCHAR(50),
+                                              body_i                  LONGTEXT,
+                                              current_packing_nonce_i INT,
+                                              OUT returnCode_o        INT,
+                                              OUT returnMsg_o         LONGTEXT )
 ll:BEGIN
     DECLARE v_procname               VARCHAR(100) DEFAULT 'keystore.register';
     DECLARE v_modulename             VARCHAR(50) DEFAULT 'keystore';
@@ -31,10 +32,11 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"."txPassword_i":"',IFNULL(txPassword_i,''),'"}');
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"."txPassword_i":"',IFNULL(txPassword_i,''),'"."current_packing_nonce_i":"',IFNULL(current_packing_nonce_i,''),'"}');
     SET accountAddress_i = TRIM(accountAddress_i);
     SET body_i = TRIM(body_i);
     SET txPassword_i = TRIM(txPassword_i);
+    SET current_packing_nonce_i = IF(current_packing_nonce_i IS NULL,0,current_packing_nonce_i);
     
     SET returnMsg_o = 'get system lock fail.';
     SET v_keyReg_sys_lock = GET_LOCK('keystore_register',180);
@@ -62,8 +64,8 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 	
-    INSERT INTO `keystore`.`accounts`(`accountAddress`,`txPassword`, `private_key`)
-         VALUES (accountAddress_i,MD5(txPassword_i), body_i);
+    INSERT INTO `keystore`.`accounts`(`accountAddress`,`txPassword`, `private_key`,current_packing_nonce)
+         VALUES (accountAddress_i,MD5(txPassword_i), body_i,current_packing_nonce_i);
     
     SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
     

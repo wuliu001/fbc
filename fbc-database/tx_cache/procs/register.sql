@@ -77,7 +77,8 @@ ll:BEGIN
 	 WHERE IFNULL(publicKey,'') = ''
         OR creditRating IS NULL
         OR balance IS NULL
-        OR smartContractPrice IS NULL;
+        OR nonce IS NULL;
+        #OR smartContractPrice IS NULL;
     
     IF v_checker > 0  THEN
         SET returnCode_o = 512;

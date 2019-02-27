@@ -49,7 +49,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SELECT registeredCapital,telNum,annualIncome,companyRegisterDate,`owner`,address,corporationName,userAccount,email
+    SELECT registeredCapital,telNum,annualIncome,companyRegisterDate,`owner`,address,corporationName,userAccount,email,register_ip_address
       FROM centerdb.accounts
      WHERE accountAddress = accountAddress_i;
     
