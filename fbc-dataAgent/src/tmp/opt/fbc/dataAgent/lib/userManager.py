@@ -31,9 +31,11 @@ def register(server_url, query_string, body):
     format_body = eval(body)
     
     #set user private key to keystore
-    if ! format_body['current_packing_nonce']:
+    '''
+    if format_body['current_packing_nonce'] is None or format_body['current_packing_nonce'] == '':
         format_body['current_packing_nonce'] = 0  
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['txPassword']+'&current_packing_nonce='+format_body['current_packing_nonce'], "POST", None,private_key )
+    '''    
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['txPassword']+'&current_packing_nonce=0', "POST", None,private_key )
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
