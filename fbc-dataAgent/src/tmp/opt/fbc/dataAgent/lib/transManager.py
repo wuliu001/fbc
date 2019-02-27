@@ -69,18 +69,23 @@ def transaction_register(tx_type, data_service_host, query_string, body):
         if 'txAddress' in query_string_dict.keys():
             # vendition/purchase modify
             txAddress = misc_utility.get_parameter(query_string_dict, 'txAddress')
-            server_url = data_service_host + '/transactionCache/' + txAddress + '/detail'
+            server_url = data_service_host + '/tx_cache/' + txAddress + '/detail'
             http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code == 200 and api_code == 200:
-                tx_result_len = len(api_result["data"])
-                if tx_result_len:
-                    return_flag = 0
+                current_nonce = api_result["data"][0]["nonce"]
+                # get user's current packing nonce
+                server_url = data_service_host + '/users/' + normal_account_address + '/packing_nonce'
+                http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+                if http_code == 200 and api_code == 200:
+                    current_packing_nonce = api_result["data"][0]["current_packing_nonce"]
+                    if current_packing_nonce > current_nonce:
+                        err_msg = 'nonce check failed, cannot modify this transaction.'
+                        api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
+                        return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
                 else:
-                    return_flag = 1
+                    api_result = json.dumps(return_msg)
+                    return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
             else:
-                return_flag = 1
-            
-            if return_flag:
                 err_msg = 'verify txAddress fail.'
                 api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
                 return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
@@ -140,7 +145,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
             return '200 OK', [('Content-Type', 'text/html')], [api_result + '\n']
 
         # record into pending transaction
-        server_url = data_service_host + '/transactionCache/' + normal_account_address + '/transaction' + '?type=' + tx_type + \
+        server_url = data_service_host + '/tx_cache/' + normal_account_address + '/transaction' + '?type=' + tx_type + \
                      '&hashSign=' + hashSign + '&gasCost=' + str(smartcontract_gasCost) + '&gasDeposit=' + str(smartcontract_gasDeposit) + \
                      '&nonce=' + str(nonce) + '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)

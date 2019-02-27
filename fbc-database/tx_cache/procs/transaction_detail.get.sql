@@ -53,7 +53,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT blockObject 
+    SELECT blockObject,nonce
       FROM tx_cache.transactions 
      WHERE txAddress = tx_address_i;
 

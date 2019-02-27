@@ -70,7 +70,7 @@ def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0)
     return_msg = 'OK'
 
     if is_smartcontract == 0:
-        server_url = data_service_host + '/transactionCache/' + account_address + '/gas_request'
+        server_url = data_service_host + '/tx_cache/' + account_address + '/gas_request'
     else:
         server_url = data_service_host + '/statedb/' + account_address + '/gas_request'
 
@@ -108,7 +108,7 @@ def get_pending_handle_account_maxNonce(data_service_host,account_address):
     max_pending_nonce = ''
     return_msg = 'OK'
 
-    server_url = data_service_host + '/transactionCache/' + account_address + '/nonce'
+    server_url = data_service_host + '/tx_cache/' + account_address + '/nonce'
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
         max_pending_nonce = api_result["data"][0]["maxNonce"]
