@@ -30,8 +30,10 @@ def register(server_url, query_string, body):
     #set format body
     format_body = eval(body)
     
-    #set user private key to local
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['txPassword'], "POST", None,private_key )
+    #set user private key to keystore
+    if ! format_body['current_packing_nonce']:
+        format_body['current_packing_nonce'] = 0  
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/users/insert?accountAddress=' + accountAddress + '&trans_password='+format_body['txPassword']+'&current_packing_nonce='+format_body['current_packing_nonce'], "POST", None,private_key )
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -41,8 +43,9 @@ def register(server_url, query_string, body):
         api_result["ops"]["message"] = json_obj["ops"]["message"]
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'    
 
-    #set user public info to user_center
-    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?accountAddress=' + accountAddress, "POST", None,body)
+    #set user public info to centerdb
+    register_ip_address = server_url.strip('http://')
+    http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/user_center/insert?accountAddress=' + accountAddress+'&register_ip_address='+register_ip_address, "POST", None,body)
     if http_code != 200 :
         api_result["ops"]["code"] = 400
         api_result["ops"]["message"] = str(json_obj)
@@ -52,7 +55,7 @@ def register(server_url, query_string, body):
         api_result["ops"]["message"] = json_obj["ops"]["message"]
         return '200 OK', [('Content-Type', 'text/html')], json.dumps(api_result)+'\n'
 
-    #set user info to statedb
+    #set user info to tx_cache
     statebody = '("'+public_key+'",0,0,0,0,0)'
     http_code, api_code, json_obj = restful_utility.restful_runner(server_url + '/tx_cache/insert?accountAddress=' + accountAddress, "POST", None,statebody)
     if http_code != 200 :

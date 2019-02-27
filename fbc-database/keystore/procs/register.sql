@@ -32,11 +32,11 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"."txPassword_i":"',IFNULL(txPassword_i,''),'"."current_packing_nonce_i":"',IFNULL(current_packing_nonce_i,''),'"}');
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"."current_packing_nonce_i":"',IFNULL(current_packing_nonce_i,''),'"."txPassword_i":"',IFNULL(txPassword_i,''),'"}');
     SET accountAddress_i = TRIM(accountAddress_i);
     SET body_i = TRIM(body_i);
     SET txPassword_i = TRIM(txPassword_i);
-    SET current_packing_nonce_i = IF(current_packing_nonce_i IS NULL,0,current_packing_nonce_i);
+    #SET current_packing_nonce_i = IF(current_packing_nonce_i IS NULL,0,current_packing_nonce_i);
     
     SET returnMsg_o = 'get system lock fail.';
     SET v_keyReg_sys_lock = GET_LOCK('keystore_register',180);
@@ -47,7 +47,7 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'check input null data.';
-    IF IFNULL(accountAddress_i,'') = '' OR IFNULL(body_i,'') = '' OR IFNULL(txPassword_i,'') = '' THEN
+    IF IFNULL(accountAddress_i,'') = '' OR IFNULL(body_i,'') = '' OR IFNULL(txPassword_i,'') = '' OR current_packing_nonce_i IS NULL THEN
         SET returnCode_o = 512;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         SET v_keyReg_sys_lock = RELEASE_LOCK('keystore_register');
