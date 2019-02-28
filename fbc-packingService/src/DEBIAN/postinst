@@ -1,0 +1,23 @@
+#!/bin/bash
+
+USER=tao
+GROUP=tao
+
+cp -R /tmp/opt /
+rm -rf /tmp/opt
+
+chown -R $USER:$GROUP /opt/fbc/packingService
+
+if [ ! -d "/opt/fbc/packingService/bin" ]; then
+    mkdir -p /opt/fbc/packingService/bin
+fi
+
+ln -fs /opt/fbc/packingService/lib/packingService-0.0.1/blockchain_packing.py /opt/fbc/syncService/bin/blockchain_packing
+
+if [ ! -d "/var/log/fbc/server" ]; then
+    mkdir -p /var/log/fbc/server
+fi
+chown -R $USER:$GROUP /var/log/fbc/server
+returnCode=$?
+
+exit $returnCode

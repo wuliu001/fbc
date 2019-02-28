@@ -1,0 +1,10 @@
+Package: fbc-packingService
+Priority: optional
+Section: application
+Description: FBC packing service package
+Maintainer: Qiao Li <leeqiao1986@163.com>
+Depends: python (>= 2.7)
+Version: BUILD_VERSION
+Architecture: amd64
+Source: fbc
+

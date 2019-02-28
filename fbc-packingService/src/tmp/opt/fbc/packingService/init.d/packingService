@@ -1,0 +1,78 @@
+#!/bin/bash  
+
+## Fill in config of program here.  
+LOCAL=$(dirname `readlink -f $0`)
+source $LOCAL/syncService.conf
+
+USER=tao
+CMDP_HOME=/opt/fbc/syncService
+CMDP_TWOPC="$CMDP_HOME/bin/syncService_2pc"
+TWOPC_PROG_NAME=syncService_2pc
+
+export TZ=UTC
+
+get_TWOPC_PID() {
+    echo "`ps aux|grep $TWOPC_PROG_NAME| grep -v grep|awk '{print $2}'`"
+}
+
+start() {
+    # 2pc
+    if [[ $(get_TWOPC_PID) ]]; then
+        echo "2pc already started"
+    else
+        ## Running the service
+        su $USER -s /bin/bash -c "python $CMDP_TWOPC -l $twoPC_loglevel -p $twoPC_http_retrycnt -k $twoPC_check_retrycnt -t $twoPC_threadnum -f $twoPC_logfile -c $twoPC_configfile > /dev/null &"
+        echo "2pc program started"  
+    fi  
+}  
+
+stop() { 
+    # 2pc
+    if [[ $(get_TWOPC_PID) ]]; then
+        ## Program is running, so stop it  
+        pid="`get_TWOPC_PID`"
+        kill $pid
+        echo "2pc stopped"  
+    else  
+        ## Program is not running, exit with error.  
+        echo "Error! 2pc program not started!" 1>&2  
+    fi  
+}
+
+status() {
+    # 2pc
+    if [[ $(get_TWOPC_PID) ]]; then
+        echo "2pc program is processing..."  
+    else
+        echo "2pc program stopped"
+    fi
+}
+
+if [ "$(id -u)" != "0" ]; then  
+    echo "This script must be run as root" 1>&2  
+    exit 1  
+fi  
+
+case "$1" in  
+    start)  
+        start  
+        exit 0  
+    ;;  
+    stop)  
+        stop  
+        exit 0  
+    ;;  
+    status)  
+        status  
+        exit 0  
+    ;; 
+    reload|restart|force-reload)  
+        stop  
+        start  
+        exit 0  
+    ;;  
+    **)  
+        echo "Usage: $0 {start|stop|status|reload}" 1>&2  
+        exit 1  
+    ;;  
+esac
