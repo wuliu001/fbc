@@ -33,6 +33,7 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{}');
     
+    #sync block_cache data to block
     
     
 

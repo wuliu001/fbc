@@ -41,6 +41,8 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
+    
+    #biaoji shanchu state_cache && transaction_cache
    
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
