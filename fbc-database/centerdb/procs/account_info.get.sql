@@ -15,7 +15,7 @@ ll:BEGIN
     DECLARE v_modulename             VARCHAR(50) DEFAULT 'centerdb';
     DECLARE v_returnCode             INT;
     DECLARE v_returnMsg              LONGTEXT;
-    DECLARE v_is_valid               INT;
+    DECLARE v_cnt                    INT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -29,21 +29,22 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"}');
     SET accountAddress_i = TRIM(accountAddress_i);
-    
+
     SET returnMsg_o = 'check input null data error.';
     IF IFNULL(accountAddress_i,'') = '' THEN
         SET returnCode_o = 511;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
-    
+
     SELECT COUNT(*)
-      INTO v_is_valid
+      INTO v_cnt
       FROM centerdb.accounts
-	 WHERE accountAddress = accountAddress_i;
+	 WHERE accountAddress = accountAddress_i
+       AND accountAddress_i <> '0';
        
-    SET returnMsg_o = 'account_info.get Failed, Please check accountAddress.';   
-    IF v_is_valid = 0 THEN
+    SET returnMsg_o = 'account_info.get Failed, please check input accountAddress is wrong.';   
+    IF v_cnt = 0 AND accountAddress_i <> '0' THEN
         SET returnCode_o = 512;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
@@ -51,7 +52,7 @@ ll:BEGIN
     
     SELECT registeredCapital,telNum,annualIncome,companyRegisterDate,`owner`,address,corporationName,userAccount,email,register_ip_address
       FROM centerdb.accounts
-     WHERE accountAddress = accountAddress_i;
+     WHERE (CASE WHEN accountAddress_i = '0' THEN 1 = 1 ELSE accountAddress = accountAddress_i END);
     
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
