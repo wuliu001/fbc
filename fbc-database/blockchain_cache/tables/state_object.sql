@@ -12,5 +12,6 @@ CREATE TABLE `state_object` (
   `smartContractPrice`      FLOAT DEFAULT NULL,
   `minSmartContractDeposit` FLOAT DEFAULT NULL,
   `nonce`                   INT(11) NOT NULL,
+  `delete_flag`             TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY               (`accountAddress`)
 ) ENGINE=InnoDB;

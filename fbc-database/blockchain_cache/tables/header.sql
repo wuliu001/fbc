@@ -12,5 +12,6 @@ CREATE TABLE `header` (
   `bloom`        LONGTEXT NOT NULL,
   `time`         DATETIME,
   `nonce`        INT(11) NOT NULL,
+  `delete_flag`  TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY    (`nonce`)
 ) ENGINE=InnoDB;

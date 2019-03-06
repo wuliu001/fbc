@@ -19,5 +19,6 @@ CREATE TABLE `transactions` (
   `receiptAddress`            VARCHAR(256) NOT NULL,
   `createTime`                DATETIME NOT NULL,
   `closeTime`                 DATETIME DEFAULT NULL,
+  `delete_flag`               TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY                 (`address`)
 ) ENGINE=InnoDB;
