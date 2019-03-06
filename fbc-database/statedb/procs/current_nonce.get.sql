@@ -12,7 +12,7 @@ CREATE PROCEDURE `current_nonce.get`(
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
-    DECLARE v_cnt            BIGINT(20);
+    DECLARE v_cnt            INT;
     DECLARE v_procname       VARCHAR(100) DEFAULT 'current_nonce.get';
     DECLARE v_modulename     VARCHAR(50) DEFAULT 'statedb';
     DECLARE v_params_body    LONGTEXT DEFAULT '';
@@ -38,10 +38,24 @@ ll:BEGIN
     SET returnMsg_o = 'check input data validation error.';
     IF IFNULL(account_addr_i,'') = '' THEN
         SET returnCode_o = 511;
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
+    SET returnMsg_o = 'check account_addr_i not exists.';
+    SELECT COUNT(1) INTO v_cnt FROM statedb.state_object  WHERE accountAddress = account_addr_i;
+    IF v_cnt = 0 THEN
+        SET returnCode_o = 512;
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;    
+    
+    SELECT IFNULL(MAX(GREATEST(a.nonce,IFNULL(b.nonce,0))),0) AS current_user_nonce
+      FROM statedb.state_object a
+      LEFT 
+      JOIN tx_cache.transactions b ON a.accountAddress = b.accountAddress AND a.accountAddress = account_addr_i AND b.delete_flag = 0;
+    
+    /*
     SELECT IFNULL(MAX(nonce),0) 
       INTO v_state_nonce
       FROM statedb.state_object 
@@ -52,7 +66,10 @@ ll:BEGIN
       FROM tx_cache.transactions 
      WHERE accountAddress = account_addr_i;
     
+    
     SELECT IFNULL(v_state_nonce,v_tx_trans_nonce) AS  current_user_nonce;
+    
+    */
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
