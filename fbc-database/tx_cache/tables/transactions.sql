@@ -14,7 +14,7 @@ CREATE TABLE `transactions` (
   `gasDeposit`      FLOAT NOT NULL,
   `nonce`           INT(11),
   `timestamp`       BIGINT(20) NOT NULL,
-  `comfirmedTimes`  TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
-  `delete_flag`     INT NOT NULL DEFAULT 0,
+  `comfirmedTimes`  INT NOT NULL DEFAULT 0,
+  `delete_flag`     TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY       (`txAddress`)
 ) ENGINE=InnoDB;
