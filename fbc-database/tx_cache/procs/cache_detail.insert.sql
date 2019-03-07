@@ -8,7 +8,7 @@ DROP PROCEDURE IF EXISTS `cache_detail.insert`;
 
 DELIMITER $$
 CREATE PROCEDURE `cache_detail.insert`(
-    accountAddress_i         VARCHAR(256),
+    body_i                   LONGTEXT,
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
@@ -18,6 +18,9 @@ ll:BEGIN
     DECLARE v_params_body    LONGTEXT DEFAULT '';
     DECLARE v_returnCode     INT;
     DECLARE v_returnMsg      LONGTEXT;
+    DECLARE v_statecache     LONGTEXT;
+    DECLARE v_trancache      LONGTEXT;
+    DECLARE v_sql            LONGTEXT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -25,26 +28,53 @@ ll:BEGIN
         
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, '-', v_procname, ' execute Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
     END;
 
-    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"}');
+    SET v_params_body = CONCAT('{}');
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET accountAddress_i = TRIM(accountAddress_i);
+    SET body_i = TRIM(body_i);
 
     SET returnMsg_o = 'check input null data';
-    IF IFNULL(accountAddress_i,'') = ''THEN
+    IF IFNULL(body_i,'') = '' THEN
         SET returnCode_o = 511;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
-    SET returnMsg_o = 'fail to insert into  cache data';
+    SET returnMsg_o = 'check input body json invalid';
+    IF IFNULL(json_valid(body_i),0) = 0 THEN
+        SET returnCode_o = 512;
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;
+    
+    SET returnMsg_o = 'fail to parase body';
+    SELECT TRIM(BOTH '"' FROM body_i->"$.stateObjectCache"),
+           TRIM(BOTH '"' FROM body_i->"$.transactionCache")
+	  INTO v_statecache,
+           v_trancache;
+    
+    SET returnMsg_o = 'fail to insert into stateCache data';
+    IF IFNULL(v_statecache,'') <> '' THEN
+        SET v_sql = CONCAT('INSERT INTO tx_cache.state_object (accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce) 
+                            VALUES ',v_statecache ,'
+                                ON DUPLICATE KEY UPDATE nonce = nonce');
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
+    END IF;                  
+    
+    SET returnMsg_o = 'fail to insert into txCache data';
+    IF IFNULL(v_trancache,'') <> '' THEN
+        SET v_sql = CONCAT('INSERT INTO tx_cache.transactions (txAddress, accountAddress, transactionType, blockObject, hashSign, gasCost, gasDeposit, nonce, `timestamp`, comfirmedTimes) 
+                            VALUES ',v_trancache ,'
+                                ON DUPLICATE KEY UPDATE nonce = nonce');
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
+    END IF;
 
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
-    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
+    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
 END
 $$
 DELIMITER ;

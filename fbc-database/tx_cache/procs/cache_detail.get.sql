@@ -116,18 +116,31 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'fail to return transaction datas';
-    SELECT txAddress, accountAddress, transactionType, blockObject, hashSign, gasCost, gasDeposit, nonce, `timestamp`, comfirmedTimes
+    SELECT GROUP_CONCAT('("',txAddress,'","',
+                        accountAddress, '","',
+                        transactionType, '","',
+                        blockObject, '","',
+                        hashSign, '",',
+                        gasCost, ',',
+                        gasDeposit, ',',
+                        IF(nonce IS NULL,'NULL',nonce), ',',
+                        `timestamp`,',',
+                        comfirmedTimes,')')
+        AS transactionCache
       FROM tx_cache.temp_cdg_transactions
      WHERE nonce > current_user_nonce_i;
     
     SET returnMsg_o = 'fail to return cache state_object datas';
-    SELECT accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce 
+    SELECT GROUP_CONCAT('("',accountAddress,'","',
+                             publicKey, '",',
+                             creditRating, ',',
+                             balance, ',', 
+                             IF(smartContractPrice IS NULL,'NULL',smartContractPrice), ',',
+                             IF(minSmartContractDeposit IS NULL,'NULL',minSmartContractDeposit), ',',
+                             nonce ,')')
+        AS stateObjectCache                     
       FROM tx_cache.state_object 
-     WHERE delete_flag = 0
-     UNION 
-    SELECT accountAddress, '' AS publicKey, NULl AS creditRating, NULL AS balance, NULL AS smartContractPrice,NULL AS minSmartContractDeposit, nonce
-      FROM tx_cache.temp_cdg_transactions
-     WHERE nonce > current_user_nonce_i;
+     WHERE delete_flag = 0;
       
     SET returnMsg_o = 'fail to update keystore nonce';
     UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,0) WHERE accountAddress = accountAddress_i;
