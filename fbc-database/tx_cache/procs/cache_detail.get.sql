@@ -23,6 +23,8 @@ ll:BEGIN
     DECLARE v_cur_timestamp          BIGINT(20) UNSIGNED DEFAULT FLOOR(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(6))*1000000);
     DECLARE v_acutal_min_nonce       BIGINT(20);
     DECLARE v_acutal_max_nonce       BIGINT(20);
+    DECLARE v_transactionCache       LONGTEXT;
+    DECLARE v_stateObjectCache       LONGTEXT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -126,7 +128,7 @@ ll:BEGIN
                         IF(nonce IS NULL,'NULL',nonce), ',',
                         `timestamp`,',',
                         comfirmedTimes,')')
-        AS transactionCache
+      INTO v_transactionCache
       FROM tx_cache.temp_cdg_transactions
      WHERE nonce > current_user_nonce_i;
     
@@ -138,10 +140,12 @@ ll:BEGIN
                              IF(smartContractPrice IS NULL,'NULL',smartContractPrice), ',',
                              IF(minSmartContractDeposit IS NULL,'NULL',minSmartContractDeposit), ',',
                              nonce ,')')
-        AS stateObjectCache                     
+      INTO v_stateObjectCache                     
       FROM tx_cache.state_object 
      WHERE delete_flag = 0;
-      
+     
+    SELECT v_transactionCache AS transactionCache,v_stateObjectCache AS stateObjectCache;
+    
     SET returnMsg_o = 'fail to update keystore nonce';
     UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,0) WHERE accountAddress = accountAddress_i;
     

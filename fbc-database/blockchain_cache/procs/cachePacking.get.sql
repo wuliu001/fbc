@@ -11,12 +11,14 @@ CREATE PROCEDURE `cachePacking.get`(
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
-    DECLARE v_cnt                    INT;
-    DECLARE v_procname               VARCHAR(100) DEFAULT 'cachePacking.get';
-    DECLARE v_modulename             VARCHAR(50) DEFAULT 'blockchain_cache';
-    DECLARE v_params_body            LONGTEXT DEFAULT '';
-    DECLARE v_returnCode             INT;
-    DECLARE v_returnMsg              LONGTEXT;
+    DECLARE v_cnt                        INT;
+    DECLARE v_procname                   VARCHAR(100) DEFAULT 'cachePacking.get';
+    DECLARE v_modulename                 VARCHAR(50) DEFAULT 'blockchain_cache';
+    DECLARE v_params_body                LONGTEXT DEFAULT '';
+    DECLARE v_returnCode                 INT;
+    DECLARE v_returnMsg                  LONGTEXT;
+    DECLARE v_transactionPackingCache    LONGTEXT;
+    DECLARE v_stateObjectPackingCache    LONGTEXT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -41,7 +43,7 @@ ll:BEGIN
                         IF(nonce IS NULL,'NULL',nonce), ',',
                         `timestamp`,',',
                         comfirmedTimes,')')
-        AS transactionPackingCache
+      INTO v_transactionPackingCache
       FROM tx_cache.transactions
      WHERE delete_flag = 0;
     
@@ -53,9 +55,11 @@ ll:BEGIN
                              IF(smartContractPrice IS NULL,'NULL',smartContractPrice), ',',
                              IF(minSmartContractDeposit IS NULL,'NULL',minSmartContractDeposit), ',',
                              nonce ,')')
-        AS stateObjectPackingCache
+      INTO v_stateObjectPackingCache
       FROM tx_cache.state_object 
      WHERE delete_flag = 0;
+    
+    SELECT v_transactionPackingCache AS transactionPackingCache,v_stateObjectPackingCache AS stateObjectPackingCache;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
