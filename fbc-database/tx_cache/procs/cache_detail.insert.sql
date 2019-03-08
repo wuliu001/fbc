@@ -25,7 +25,7 @@ ll:BEGIN
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
-        
+        ROLLBACK;
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, '-', v_procname, ' execute Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -55,6 +55,8 @@ ll:BEGIN
            TRIM(BOTH '"' FROM body_i->"$.transactionCache")
 	  INTO v_statecache,
            v_trancache;
+    START TRANSACTION;
+    SET SESSION innodb_lock_wait_timeout = 30;
     
     SET returnMsg_o = 'fail to insert into stateCache data';
     IF IFNULL(v_statecache,'') <> '' THEN
@@ -71,7 +73,9 @@ ll:BEGIN
                                 ON DUPLICATE KEY UPDATE nonce = nonce');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
     END IF;
-
+    
+    COMMIT;
+    
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
     CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
