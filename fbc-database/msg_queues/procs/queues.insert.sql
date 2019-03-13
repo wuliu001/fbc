@@ -1,4 +1,3 @@
-
 USE `msg_queues`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
@@ -71,12 +70,7 @@ ll:BEGIN
      `main_queue_info`                 VARCHAR(255),
      `queue_msg`                       LONGTEXT,
      `status`                          VARCHAR(20),
-     #`queue_type`                     VARCHAR(50),
-     #`queue_step`                     TINYINT,
      `next_queue_step`                 TINYINT
-     #`source_endpoint_info`           VARCHAR(100),
-     #`dst_endpoint_info`              VARCHAR(100),
-     #`is_re_assign_endpoint`          TINYINT,
     ) ENGINE=InnoDB;
     TRUNCATE TABLE msg_queues.temp_qi_queues;
     

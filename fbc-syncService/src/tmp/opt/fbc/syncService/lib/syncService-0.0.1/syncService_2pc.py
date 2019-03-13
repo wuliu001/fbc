@@ -138,7 +138,6 @@ def load_config(file_path):
 # sync endpoint config info to all endpoints
 def sync_config_info():
     global g_syncService_endpoint
-    check_retry_idx = 1
 
     # get syncService endpoint
     g_syncService_endpoint = utils_2pc.get_endpoint()
@@ -160,6 +159,8 @@ def sync_config_info():
     if bRet is True:
         endpoint_list = g_endpoint_info[:]
         for endpoint in endpoint_list:
+            check_retry_idx = 1
+
             ip = endpoint['ip']
             port = endpoint['port']
             utils_2pc.logD('[sync_config_info] sync config info [%s] to endpoint [%s].' % (strSql, ip+':'+port))
@@ -182,7 +183,7 @@ def sync_config_info():
 
             #if sync the config error ,then remove the endpoint
             if check_retry_idx > g_check_retry_cnt:
-                utils_2pc.logE('[sync_config_info] sync config info to [%s] ver the maximum number of cycles,so remove the endpoint.' % (ip))        
+                utils_2pc.logE('[sync_config_info] sync config info to [%s] ver the maximum number of cycles,so remove the endpoint.' % (ip))
                 g_endpoint_info.remove(endpoint)
 
     else:
@@ -512,16 +513,18 @@ def main():
 
                     weight_info = get_endpoint_weight(previous_endpoint_info)
                     if weight_info != '':
+                        sync_queue(endpoint,weight_info)
                         break
                     else:
                         previous_idx -= 1
 
                     idx += 1
-
+                '''
                 if weight_info != '':
                     sync_queue(endpoint,weight_info)
                 else:
                     break
+                '''    
             
             # sleep 5 seconds then do next round
             time.sleep(5)

@@ -1,4 +1,3 @@
-
 USE `msg_queues`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
@@ -73,15 +72,7 @@ ll:BEGIN
     CREATE TEMPORARY TABLE IF NOT EXISTS msg_queues.`temp_qsu_queues` (
      `queue_id`                        BIGINT(20) UNSIGNED NOT NULL,
      `queue_status`                    TINYINT NOT NULL,
-     #`queue_type`                     VARCHAR(50),
-     #`dst_endpoint_info`              VARCHAR(100),
-     #`queue_step`                     INT,
-     #`next_queue_step`                INT,
-     #`cycle_cnt`                      INT,
      KEY `idx_tqq_queue_id`            (`queue_id`)
-     #KEY `idx_tqq_queue_type`         (`queue_type`),
-     #KEY `idx_tqq_queue_step`         (`queue_step`),
-     #KEY `idx_tqq_dst_ep`             (`dst_endpoint_info`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE msg_queues.temp_qsu_queues;
 
@@ -131,7 +122,8 @@ ll:BEGIN
            msg_queues.`temp_qsu_queues_steps` c
        SET a.queue_step = c.next_queue_step,
            a.last_update_time = UTC_TIMESTAMP(),
-           a.cycle_cnt = CASE WHEN a.queue_step = c.next_queue_step THEN a.cycle_cnt + 1 ELSE 0 END
+           a.cycle_cnt = CASE WHEN a.queue_step = c.next_queue_step THEN a.cycle_cnt + 1 ELSE 0 END,
+           a.`status` = CASE WHEN b.`queue_status` > 0 AND a.queue_step <> c.next_queue_step THEN 1 ELSE a.`status` END
      WHERE a.queue_id = b.queue_id
        AND a.queue_type = source_queue_type_i
        AND a.dst_endpoint_info = dst_endpoint_info_i

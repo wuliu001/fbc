@@ -72,8 +72,16 @@ BEGIN
     
     IF INSTR(string_i,'/') > 0 AND INSTR(keepstr_i,'/') = 0 THEN
         SET string_i = REPLACE(string_i,'/','\\/');
-    END IF;     
-    
+    END IF;
+
+    IF INSTR(string_i,'"') > 0 AND INSTR(keepstr_i,'"') = 0 THEN
+        SET string_i = REPLACE(string_i,'"','\\"');
+    END IF;
+
+    IF INSTR(string_i,'''') > 0 AND INSTR(keepstr_i,'''') = 0 THEN
+        SET string_i = REPLACE(string_i,'''','\\''');
+    END IF;
+
     RETURN IFNULL(string_i,''); 
 END$$
 
