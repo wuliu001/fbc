@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS `receipt_trie`;
 
 CREATE TABLE `receipt_trie` (
   `id`          BIGINT(20) NOT NULL AUTO_INCREMENT,
-  `parentHash`  VARCHAR(256) NOT NULL,
+  `parentHash`  VARCHAR(256) DEFAULT NULL,
   `hash`        VARCHAR(256) NOT NULL,
   `alias`       VARCHAR(200) NOT NULL,
   `layer`       INT NOT NULL,
