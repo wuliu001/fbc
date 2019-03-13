@@ -39,6 +39,7 @@ CREATE EVENT `end_queues_handle` ON SCHEDULE EVERY 1 MINUTE STARTS '2016-01-01 0
        SET a.is_delete = 1
      WHERE a.is_delete = 0
        AND a.queue_step = b.queue_step
+       AND a.queue_type = b.queue_type
        AND b.is_end_step = 1;
     
     SET imp_lock = RELEASE_LOCK(v_lock_name);
