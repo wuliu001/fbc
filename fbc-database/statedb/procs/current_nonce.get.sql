@@ -53,7 +53,7 @@ ll:BEGIN
     SELECT IFNULL(MAX(GREATEST(a.nonce,IFNULL(b.nonce,0))),0) AS current_user_nonce
       FROM statedb.state_object a
       LEFT 
-      JOIN tx_cache.transactions b ON a.accountAddress = b.accountAddress AND a.accountAddress = account_addr_i AND b.delete_flag = 0;
+      JOIN tx_cache.transactions b ON a.accountAddress = b.initiator AND a.accountAddress = account_addr_i AND b.delete_flag = 0;
     
     /*
     SELECT IFNULL(MAX(nonce),0) 
