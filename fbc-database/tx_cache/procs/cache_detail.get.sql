@@ -55,17 +55,20 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to create temp tables';
     CREATE TEMPORARY TABLE IF NOT EXISTS tx_cache.temp_cdg_transactions (
-      `txAddress`       VARCHAR(256) NOT NULL,
-      `accountAddress`  VARCHAR(256) NOT NULL,
-      `transactionType` VARCHAR(32) NOT NULL,
-      `blockObject`     LONGTEXT NOT NULL,
-      `hashSign`        VARCHAR(256) NOT NULL,
-      `gasCost`         FLOAT NOT NULL,
-      `gasDeposit`      FLOAT NOT NULL,
-      `nonce`           INT(11),
-      `timestamp`       BIGINT(20) NOT NULL,
-      `comfirmedTimes`  INT NOT NULL DEFAULT 0,
-      KEY `idx_nonce`   (nonce)
+      `address`                   VARCHAR(256) NOT NULL,
+      `initiator`                 VARCHAR(256) NOT NULL,
+      `nonceForCurrentInitiator`  BIGINT(20) NOT NULL,
+      `nonceForOriginInitiator`   BIGINT(20) NOT NULL,
+      `nonceForSmartContract`     BIGINT(20) DEFAULT NULL,
+      `receiver`                  VARCHAR(256) NOT NULL,
+      `txType`                    VARCHAR(32) NOT NULL,
+      `detail`                    LONGTEXT NOT NULL,
+      `gasCost`                   FLOAT NOT NULL,
+      `gasDeposit`                FLOAT NOT NULL,
+      `hashSign`                  VARCHAR(256) NOT NULL,
+      `receiptAddress`            VARCHAR(256) NOT NULL,
+      `timestamp`                 BIGINT(20) NOT NULL,
+      KEY `idx_nonce`             (`nonceForCurrentInitiator`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE tx_cache.temp_cdg_transactions;
 
@@ -79,13 +82,13 @@ ll:BEGIN
     SET SESSION innodb_lock_wait_timeout = 30;
     
     SET returnMsg_o = 'fail to insert data into temp tables';
-    INSERT INTO tx_cache.temp_cdg_transactions(txAddress, accountAddress, transactionType, blockObject, hashSign, gasCost, gasDeposit, nonce, `timestamp`, comfirmedTimes)
-    SELECT txAddress, accountAddress, transactionType, blockObject, hashSign, gasCost, gasDeposit, nonce, `timestamp`, comfirmedTimes 
+    INSERT INTO tx_cache.temp_cdg_transactions(address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, `timestamp`)
+    SELECT address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, `timestamp`
       FROM tx_cache.transactions 
-     WHERE accountAddress=accountAddress_i
+     WHERE initiator=accountAddress_i
        AND delete_flag = 0
        AND (v_cur_timestamp - `timestamp`)/1000000/60 >= time_diff_i;
-    INSERT INTO tx_cache.temp_cdg_nonce(nonce) SELECT nonce FROM tx_cache.temp_cdg_transactions;
+    INSERT INTO tx_cache.temp_cdg_nonce(nonce) SELECT nonceForCurrentInitiator FROM tx_cache.temp_cdg_transactions;
     
     SET returnMsg_o = 'fail to check nonce continuity with current_user_nonce';
     SELECT MIN(nonce),MAX(nonce) INTO v_acutal_min_nonce,v_acutal_max_nonce FROM tx_cache.temp_cdg_nonce;
@@ -104,7 +107,7 @@ ll:BEGIN
     SELECT COUNT(1)
       INTO v_cnt
       FROM tx_cache.temp_cdg_transactions a
-      LEFT JOIN tx_cache.temp_cdg_nonce b ON a.nonce = b.nonce-1
+      LEFT JOIN tx_cache.temp_cdg_nonce b ON a.nonceForCurrentInitiator = b.nonce-1
      WHERE b.nonce IS NULL;
     IF v_cnt > 1 THEN
         COMMIT;
@@ -118,19 +121,22 @@ ll:BEGIN
     END IF;
     
     SET returnMsg_o = 'fail to return transaction datas';
-    SELECT GROUP_CONCAT('("',txAddress,'","',
-                        accountAddress, '","',
-                        transactionType, '","',
-                        blockObject, '","',
-                        hashSign, '",',
-                        gasCost, ',',
-                        gasDeposit, ',',
-                        IF(nonce IS NULL,'NULL',nonce), ',',
-                        `timestamp`,',',
-                        comfirmedTimes,')')
+    SELECT GROUP_CONCAT('("',address,'","',
+                        initiator, '",',
+                        nonceForCurrentInitiator, ',',
+                        nonceForOriginInitiator, ',',
+                        IF(nonceForSmartContract IS NULL ,'NULL',nonceForSmartContract), ',"',
+                        receiver, '","',
+                        txType, '","',
+                        detail, '",',
+                        gasCost,',',
+                        gasDeposit,',"',
+                        hashSign,'","',
+                        receiptAddress,'",',
+                        `timestamp`,')')
       INTO v_transactionCache
       FROM tx_cache.temp_cdg_transactions
-     WHERE nonce > current_user_nonce_i;
+     WHERE nonceForCurrentInitiator > current_user_nonce_i;
     
     SET returnMsg_o = 'fail to return cache state_object datas';
     SELECT GROUP_CONCAT('("',accountAddress,'","',

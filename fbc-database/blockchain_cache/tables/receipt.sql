@@ -10,5 +10,6 @@ CREATE TABLE `receipt` (
   `txAddress`       VARCHAR(256) NOT NULL,
   `gasCost`         FLOAT NOT NULL,
   `creditRating`    FLOAT NOT NULL,
+  `delete_flag`     TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY       (`address`)
 ) ENGINE=InnoDB;

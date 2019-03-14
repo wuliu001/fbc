@@ -22,6 +22,8 @@ ll:BEGIN
     DECLARE v_blockCacheBody                LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheAddress             LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheHeader              LONGTEXT DEFAULT NULL;
+    DECLARE v_blockCacheReceipt             LONGTEXT DEFAULT NULL;
+    DECLARE v_blockCacheReceiptTrie         LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheStateObject         LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheStateTrie           LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheTransaction         LONGTEXT DEFAULT NULL;
@@ -65,15 +67,35 @@ ll:BEGIN
       INTO v_blockCacheHeader
       FROM blockchain_cache.`header`
      WHERE delete_flag = 0;  
-     
+   
+    SET returnMsg_o = 'fail to get receipt info';
+    SELECT GROUP_CONCAT('("',address,'","',
+                        `accountAddress`,'","',
+                        `txAddress`,'",',
+                        `gasCost`,',',
+                        `creditRating`,')')
+      INTO v_blockCacheReceipt                  
+      FROM blockchain_cache.`receipt`
+     WHERE delete_flag = 0;
+
+    SET returnMsg_o = 'fail to get receipt info';
+    SELECT GROUP_CONCAT('(',id,',"',
+                        IFNULL(`parentHash`,''),'","',
+                        `hash`,'","',
+                        `alias`,'",',
+                        `layer`,',"',
+                        IFNULL(`address`,''),'")')
+      INTO v_blockCacheReceiptTrie                                   
+      FROM blockchain_cache.`receipt_trie`
+     WHERE delete_flag = 0;
      
     SET returnMsg_o = 'fail to get state_object info';
-    SELECT GROUP_CONCAT('("',accountAddress,'","',
+    SELECT GROUP_CONCAT('("',`accountAddress`,'","',
                         `publicKey`,'",',
                         `creditRating`,',',
                         `balance`,',',
-                        `smartContractPrice`,',',
-                        `minSmartContractDeposit`,',',
+                        IF(`smartContractPrice` IS NULL,'NULL',`smartContractPrice`),',',
+                        IF(`minSmartContractDeposit` IS NULL,'NULL',`minSmartContractDeposit`),',',
                         `nonce`,')')
       INTO v_blockCacheStateObject
       FROM blockchain_cache.`state_object`           
@@ -107,11 +129,11 @@ ll:BEGIN
                         IFNULL(`closeTime`,''),'")')
       INTO v_blockCacheTransaction
       FROM blockchain_cache.`transactions`
-     WHERE delete_flag = 0; 
+     WHERE delete_flag = 0;
      
     SET returnMsg_o = 'fail to get transaction_trie info';
     SELECT GROUP_CONCAT('(',id,',"',
-                        `parentHash`,'","',
+                        IFNULL(`parentHash`,''),'","',
                         `hash`,'","',
                         `alias`,'",',
                         `layer`,',"',                                 
@@ -123,6 +145,8 @@ ll:BEGIN
     SELECT v_blockCacheBody AS blockCacheBody,
            v_blockCacheAddress AS blockCacheAddress,
            v_blockCacheHeader AS blockCacheHeader,
+           v_blockCacheReceipt AS blockCacheReceipt,
+           v_blockCacheReceiptTrie AS blockCacheReceiptTrie,
            v_blockCacheStateObject AS blockCacheStateObject,
            v_blockCacheStateTrie AS blockCacheStateTrie,
            v_blockCacheTransaction AS blockCacheTransaction,

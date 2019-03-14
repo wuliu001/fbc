@@ -23,6 +23,8 @@ ll:BEGIN
     DECLARE v_blockCacheBody                LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheAddress             LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheHeader              LONGTEXT DEFAULT NULL;
+    DECLARE v_blockCacheReceipt             LONGTEXT DEFAULT NULL;
+    DECLARE v_blockCacheReceiptTrie         LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheStateObject         LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheStateTrie           LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheTransaction         LONGTEXT DEFAULT NULL;
@@ -54,6 +56,8 @@ ll:BEGIN
     SELECT TRIM(BOTH '"' FROM body_i->"$.blockCacheBody"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheAddress"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheHeader"),
+           TRIM(BOTH '"' FROM body_i->"$.blockCacheReceipt"),
+           TRIM(BOTH '"' FROM body_i->"$.blockCacheTransactionTrie"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheStateObject"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheStateTrie"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheTransaction"),
@@ -61,6 +65,8 @@ ll:BEGIN
 	  INTO v_blockCacheBody,
            v_blockCacheAddress,
            v_blockCacheHeader,
+           v_blockCacheReceipt,
+           v_blockCacheReceiptTrie,
            v_blockCacheStateObject,
            v_blockCacheStateTrie,
            v_blockCacheTransaction,
@@ -92,6 +98,22 @@ ll:BEGIN
                                 ON DUPLICATE KEY UPDATE parentHash = parentHash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
+                                                                        
+    SET returnMsg_o = 'fail to insert into receipt data';
+    IF IFNULL(v_blockCacheReceipt,'') <> '' THEN
+        SET v_sql = CONCAT('INSERT INTO receipt.receipt (address, accountAddress, txAddress, gasCost, creditRating) 
+                            VALUES ',v_blockCacheReceipt ,'
+                                ON DUPLICATE KEY UPDATE accountAddress = accountAddress');
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
+    END IF;
+                                                                      
+    SET returnMsg_o = 'fail to insert into receipt_trie data';
+    IF IFNULL(v_blockCacheReceiptTrie,'') <> '' THEN
+        SET v_sql = CONCAT('INSERT INTO receipt.receipt_trie ( id, parentHash, hash, alias, layer, address) 
+                            VALUES ',v_blockCacheReceiptTrie ,'
+                                ON DUPLICATE KEY UPDATE parentHash = parentHash');
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
+    END IF;
     
     SET returnMsg_o = 'fail to insert into state_object data';
     IF IFNULL(v_blockCacheStateObject,'') <> '' THEN
@@ -111,7 +133,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to insert into transactions data';
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
-        SET v_sql = CONCAT('INSERT INTO transactions.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
+        SET v_sql = CONCAT('INSERT INTO transactions.transactions ( address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
                             VALUES ',v_blockCacheTransaction ,'
                                 ON DUPLICATE KEY UPDATE closeTime = closeTime');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
@@ -122,7 +144,7 @@ ll:BEGIN
         SET v_sql = CONCAT('INSERT INTO transactions.transaction_trie (id, parentHash, hash, alias, layer, address) 
                             VALUES ',v_blockCacheTransactionTrie ,'
                                 ON DUPLICATE KEY UPDATE address = address');
-        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);       
     END IF;
     
     COMMIT;

@@ -33,16 +33,19 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     
     SET returnMsg_o = 'fail to return transaction datas';
-    SELECT GROUP_CONCAT('("',txAddress,'","',
-                        accountAddress, '","',
-                        transactionType, '","',
-                        blockObject, '","',
-                        hashSign, '",',
-                        gasCost, ',',
-                        gasDeposit, ',',
-                        IF(nonce IS NULL,'NULL',nonce), ',',
-                        `timestamp`,',',
-                        comfirmedTimes,')')
+    SELECT GROUP_CONCAT('("',address,'","',
+                        initiator, '",',
+                        nonceForCurrentInitiator, ',',
+                        nonceForOriginInitiator, ',',
+                        IF(nonceForSmartContract IS NULL ,'NULL',nonceForSmartContract), ',"',
+                        receiver, '","',
+                        txType, '","',
+                        detail, '",',
+                        gasCost,',',
+                        gasDeposit,',"',
+                        hashSign,'","',
+                        receiptAddress,'",',
+                        `timestamp`,')')
       INTO v_transactionPackingCache
       FROM tx_cache.transactions
      WHERE delete_flag = 0;
