@@ -6,8 +6,8 @@ DROP TABLE IF EXISTS `state_object`;
 
 CREATE TABLE `state_object` (
   `accountAddress`          VARCHAR(256) NOT NULL,
-  `publicKey`               TEXT NOT NULL,
-  `creditRating`            FLOAT NOT NULL,
+  `publicKey`               TEXT DEFAULT NULL,
+  `creditRating`            FLOAT DEFAULT NULL,
   `balance`                 FLOAT NOT NULL,
   `smartContractPrice`      FLOAT DEFAULT NULL,
   `minSmartContractDeposit` FLOAT DEFAULT NULL,
