@@ -18,12 +18,25 @@ INSERT INTO `queue_workflows`(id, queue_type, sub_queue_type, success_percent, q
 INSERT INTO `queue_workflows`(id, queue_type, sub_queue_type, success_percent, queue_step, special_step, uri, method, repeat_count, is_end_step, dst_queue_type, dst_queue_step, `limit`, double_side, remark) VALUES (10,'deletePurchase',null,null,1,null,'/transactions/purchase/fruit','PUT',0,0,'deletePurchase',1,0,0,'delete cache purchase');
 INSERT INTO `queue_workflows`(id, queue_type, sub_queue_type, success_percent, queue_step, special_step, uri, method, repeat_count, is_end_step, dst_queue_type, dst_queue_step, `limit`, double_side, remark) VALUES (11,'deletePurchase',null,null,2,null,null,null,0,1,null,null,0,0,'end step');
 
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `sub_queue_type`, `success_percent`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `dst_queue_type`, `dst_queue_step`, `limit`, `double_side`) VALUES ('packingCache', 'spreadPackingCache', '100', '0', '{\"0\":1,\"1\":0}', '0', '0', NULL, NULL, '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('packingCache', '1', '{\"0\":2,\"1\":1}', '0', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('packingCache', '2', '0', '1', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `uri`, `method`, `repeat_count`, `is_end_step`, `dst_queue_type`, `dst_queue_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '0', '{\"0\":1,\"1\":0}', '/msg_queues/packing', 'POST', '0', '0', 'spreadPackingCache', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '1', '0', '1', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `sub_queue_type`, `success_percent`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('pack', 'spreadPack', '100', '0', '{\"0\":1,\"1\":0}', '0', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('pack', '1', '{\"0\":2,\"1\":1}', '0', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('pack', '2', '0', '1', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `uri`, `method`, `repeat_count`, `is_end_step`, `dst_queue_type`, `dst_queue_step`, `limit`, `double_side`) VALUES ('spreadPack', '0', '{\"0\":1,\"1\":0}', '/blockchain', 'POST', '0', '0', 'spreadPack', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`) VALUES ('spreadPack', '1', '0', '1', '0');
+
 
 TRUNCATE TABLE service_parameters;
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `body_val_pos`, `parameter_val_pos`) VALUES (1,'test', 0,  1, 3);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `body_val_pos`, `parameter_val_pos`) VALUES (2,'syncBlockCache', 1, 1, null);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `body_val_pos`, `parameter_val_pos`) VALUES (3,'syncPurchase', 1, 1, null);
 INSERT INTO `service_parameters` (`id`, `queue_type`, `queue_step`, `body_val_pos`, `parameter_val_pos`) VALUES (4,'deletePurchase', 1, 1,2);
+INSERT INTO `service_parameters` (`queue_type`, `queue_step`, `body_val_pos`) VALUES ('spreadPackingCache', '0', '1');
+INSERT INTO `service_parameters` (`queue_type`, `queue_step`, `parameter_val_pos`) VALUES ('spreadPack', '0', '1');
 
 
 TRUNCATE TABLE job_config;
