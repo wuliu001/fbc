@@ -2,49 +2,49 @@
 
 ## Fill in config of program here.  
 LOCAL=$(dirname `readlink -f $0`)
-source $LOCAL/syncService.conf
+source $LOCAL/packingService.conf
 
 USER=tao
-CMDP_HOME=/opt/fbc/syncService
-CMDP_TWOPC="$CMDP_HOME/bin/syncService_2pc"
-TWOPC_PROG_NAME=syncService_2pc
+CMDP_HOME=/opt/fbc/packingService
+CMDP_PACKING="$CMDP_HOME/bin/packingService"
+PROG_NAME=packingService
 
 export TZ=UTC
 
-get_TWOPC_PID() {
-    echo "`ps aux|grep $TWOPC_PROG_NAME| grep -v grep|awk '{print $2}'`"
+get_Packing_PID() {
+    echo "`ps aux|grep $PROG_NAME| grep -v grep|awk '{print $2}'`"
 }
 
 start() {
-    # 2pc
-    if [[ $(get_TWOPC_PID) ]]; then
-        echo "2pc already started"
+    # packingService
+    if [[ $(get_Packing_PID) ]]; then
+        echo "packingService already started"
     else
         ## Running the service
-        su $USER -s /bin/bash -c "python $CMDP_TWOPC -l $twoPC_loglevel -p $twoPC_http_retrycnt -k $twoPC_check_retrycnt -t $twoPC_threadnum -f $twoPC_logfile -c $twoPC_configfile > /dev/null &"
-        echo "2pc program started"  
+        su $USER -s /bin/bash -c "python $CMDP_PACKING -l $packing_loglevel -p $packing_http_retrycnt -k $packing_check_retrycnt -t $packing_threadnum -f $packing_logfile -c $center_dns -i $packing_time_diff > /dev/null &"
+        echo "packingService program started"  
     fi  
 }  
 
 stop() { 
-    # 2pc
-    if [[ $(get_TWOPC_PID) ]]; then
+    # packingService
+    if [[ $(get_Packing_PID) ]]; then
         ## Program is running, so stop it  
-        pid="`get_TWOPC_PID`"
+        pid="`get_Packing_PID`"
         kill $pid
-        echo "2pc stopped"  
+        echo "packingService stopped"  
     else  
         ## Program is not running, exit with error.  
-        echo "Error! 2pc program not started!" 1>&2  
+        echo "Error! packingService program not started!" 1>&2  
     fi  
 }
 
 status() {
-    # 2pc
-    if [[ $(get_TWOPC_PID) ]]; then
-        echo "2pc program is processing..."  
+    # packingService
+    if [[ $(get_Packing_PID) ]]; then
+        echo "packingService program is processing..."  
     else
-        echo "2pc program stopped"
+        echo "packingService program stopped"
     fi
 }
 

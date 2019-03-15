@@ -12,27 +12,24 @@ import json
 import time
 import re
 
-centerdb_dns = 'http://127.0.0.1:8080'
-time_diff = 10
-
-
 def usage():
-    print """Usage: syncService_2pc.py [option] [optionValue]
+    print """Usage: packingService_2pc.py [option] [optionValue]
      Options:
-      -l | --loglevel        is the loglevel for record log, for example: D
-                             the loglevel info is: (D:Debug, I:Info, W:Warning, E:Error)
-                             this option is optional, default value is W
-      -f | --logfile         is logfile to record log msg based on loglevel, for example: /var/log/fbc/server/syncService.log
-                             this option is MUST
-      -c | --configfile      is config file to save endpoint info, for example: /opt/fbc/syncService/endpoints.ini
-                             this option is MUST
-      -p | --http_retrycnt   is http request retry count when http fail, for example: 5
-                             this option is optional, default value is 0
-      -k | --check_retrycnt  is queue data check retry count when queue check fail, for example: 1
-                             this option is optional, default value is 0
-      -t | --threadnum       is threads number for multithreading, for example: 5
-                             this option is optional, default value is 1
-      -h | --help            is help info"""
+      -l | --loglevel          is the loglevel for record log, for example: D
+                               the loglevel info is: (D:Debug, I:Info, W:Warning, E:Error)
+                               this option is optional, default value is W
+      -f | --logfile           is logfile to record log msg based on loglevel, for example: /var/log/fbc/server/packingService.log
+                               this option is MUST
+      -c | --center_dns        is centerdb dns, for example: http://127.0.0.1:8080
+                               this option is MUST
+      -p | --http_retrycnt     is http request retry count when http fail, for example: 5
+                               this option is optional, default value is 0
+      -k | --check_retrycnt    is queue data check retry count when queue check fail, for example: 1
+                               this option is optional, default value is 0
+      -t | --threadnum         is threads number for multithreading, for example: 5
+                               this option is optional, default value is 1
+      -i | --packing_time_diff is the packing pending time   , for example: 10                    
+      -h | --help              is help info"""
 
 
 def main():
