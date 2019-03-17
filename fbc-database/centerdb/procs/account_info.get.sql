@@ -50,7 +50,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SELECT registeredCapital,telNum,annualIncome,companyRegisterDate,`owner`,address,corporationName,userAccount,email,register_ip_address
+    SELECT accountAddress,registeredCapital,telNum,annualIncome,companyRegisterDate,`owner`,address,corporationName,userAccount,email,register_ip_address
       FROM centerdb.accounts
      WHERE (CASE WHEN accountAddress_i = '0' THEN 1 = 1 ELSE accountAddress = accountAddress_i END);
     

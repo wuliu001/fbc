@@ -21,7 +21,7 @@ start() {
         echo "packingService already started"
     else
         ## Running the service
-        su $USER -s /bin/bash -c "python $CMDP_PACKING -l $packing_loglevel -p $packing_http_retrycnt -k $packing_check_retrycnt -t $packing_threadnum -f $packing_logfile -c $center_dns -i $packing_time_diff > /dev/null &"
+        su $USER -s /bin/bash -c "python $CMDP_PACKING -l $packing_loglevel -p $packing_http_retrycnt -t $packing_threadnum -f $packing_logfile -c $center_dns -i $packing_time_diff > /dev/null &"
         echo "packingService program started"  
     fi  
 }  

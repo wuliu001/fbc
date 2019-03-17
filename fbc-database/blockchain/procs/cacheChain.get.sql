@@ -2,18 +2,18 @@ USE `blockchain`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
-/*Procedure structure for Procedure `blockchain.get` */;
+/*Procedure structure for Procedure `cacheChain.get` */;
 
-DROP PROCEDURE IF EXISTS `blockchain.get`;
+DROP PROCEDURE IF EXISTS `cacheChain.get`;
 
 DELIMITER $$
 USE `blockchain`$$
-CREATE PROCEDURE `blockchain.get`( 
+CREATE PROCEDURE `cacheChain.get`( 
     OUT returnCode_o            INT,
     OUT returnMsg_o             LONGTEXT
     )
 ll:BEGIN
-    DECLARE v_procname                      VARCHAR(64) DEFAULT 'blockchain.get';
+    DECLARE v_procname                      VARCHAR(64) DEFAULT 'cacheChain.get';
     DECLARE v_modulename                    VARCHAR(50) DEFAULT 'blockchainCache';
     DECLARE v_user                          VARCHAR(50);
     DECLARE v_params_body                   LONGTEXT DEFAULT NULL;

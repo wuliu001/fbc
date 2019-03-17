@@ -79,7 +79,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheBody,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.body (header, hash) 
                             VALUES ',v_blockCacheBody ,'
-                                ON DUPLICATE KEY UPDATE hash = hash');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
     
@@ -87,7 +87,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheAddress,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.body_tx_address (id, hash, tx_address) 
                             VALUES ',v_blockCacheAddress ,'
-                                ON DUPLICATE KEY UPDATE hash = hash');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
     
@@ -95,7 +95,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheHeader,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.header (parentHash, stateRoot, txRoot, receiptRoot, bloom, time, nonce) 
                             VALUES ',v_blockCacheHeader ,'
-                                ON DUPLICATE KEY UPDATE parentHash = parentHash');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                                                         
@@ -103,7 +103,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheReceipt,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.receipt (address, accountAddress, txAddress, gasCost, creditRating) 
                             VALUES ',v_blockCacheReceipt ,'
-                                ON DUPLICATE KEY UPDATE accountAddress = accountAddress');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                                                       
@@ -111,7 +111,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheReceiptTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.receipt_trie ( id, parentHash, hash, alias, layer, address) 
                             VALUES ',v_blockCacheReceiptTrie ,'
-                                ON DUPLICATE KEY UPDATE parentHash = parentHash');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
     
@@ -119,7 +119,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheStateObject,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.state_object (accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce) 
                             VALUES ',v_blockCacheStateObject ,'
-                                ON DUPLICATE KEY UPDATE publicKey = publicKey');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                    
@@ -127,7 +127,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheStateTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.state_trie (id, parentHash, hash, alias, layer, address) 
                             VALUES ',v_blockCacheStateTrie ,'
-                                ON DUPLICATE KEY UPDATE parentHash = parentHash');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
     
@@ -135,7 +135,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.transactions ( address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
                             VALUES ',v_blockCacheTransaction ,'
-                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                                                     
@@ -143,7 +143,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheTransactionTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.transaction_trie (id, parentHash, hash, alias, layer, address) 
                             VALUES ',v_blockCacheTransactionTrie ,'
-                                ON DUPLICATE KEY UPDATE address = address');
+                                ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);       
     END IF;
     

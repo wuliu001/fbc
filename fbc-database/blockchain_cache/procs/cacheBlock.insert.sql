@@ -183,6 +183,8 @@ ll:BEGIN
     SET returnMsg_o = 'generate blockchain body data.';
 
     SET returnMsg_o = 'generate blockchain body_tx_address data.';
+    
+    SET returnMsg_o = 'fail to insert blockchain data into msg_queues'
 
     COMMIT;
 
