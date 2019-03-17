@@ -10,7 +10,6 @@ DELIMITER $$
 USE `blockchain`$$
 CREATE PROCEDURE `blockchain.insert`( 
     body_i                      LONGTEXT,
-    if_spread                   INT,
     OUT returnCode_o            INT,
     OUT returnMsg_o             LONGTEXT
     )
@@ -43,11 +42,11 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
-    SET v_params_body = CONCAT('{"if_spread":"',IFNULL(if_spread,''),'"}');
+    SET v_params_body = CONCAT('{}');
     SET body_i = TRIM(body_i);
     
     SET returnMsg_o = 'check input nnull data';
-    IF IFNULL(body_i,'') = '' OR if_spread IS NULL THEN
+    IF IFNULL(body_i,'') = '' THEN
         SET returnCode_o = 511;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
@@ -154,8 +153,6 @@ ll:BEGIN
                                 ON DUPLICATE KEY UPDATE address = address');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);       
     END IF;
-    
-    SET returnMsg_o = 'fail to insert data into queues';
     
     COMMIT;
 
