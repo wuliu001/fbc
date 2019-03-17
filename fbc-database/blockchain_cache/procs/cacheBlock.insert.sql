@@ -22,6 +22,11 @@ ll:BEGIN
     DECLARE v_state_object      LONGTEXT;
     DECLARE v_transactions      LONGTEXT;
     DECLARE v_sql               LONGTEXT;
+    DECLARE v_curr_block_nonce  INT;
+    DECLARE v_pre_stateRoot     VARCHAR(256);
+    DECLARE v_pre_txRoot        VARCHAR(256);
+    DECLARE v_pre_receiptRoot   VARCHAR(256);
+    DECLARE v_cnt               INT;
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -109,6 +114,15 @@ ll:BEGIN
     START TRANSACTION;
     SET SESSION innodb_lock_wait_timeout = 30;
 
+    SELECT IFNULL(MAX(nonce),0) INTO v_curr_block_nonce FROM blockchain.header;
+    SELECT IFNULL(stateRoot,'') INTO v_pre_stateRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
+    SELECT IFNULL(txRoot,'') INTO v_pre_txRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
+    SELECT IFNULL(receiptRoot,'') INTO v_pre_receiptRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
+
+
+
+
+
     SET returnMsg_o = 'insert temp_cbi_state_object table.';
     IF v_state_object <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_state_object VALUES ',v_state_object);
@@ -132,33 +146,117 @@ ll:BEGIN
     
     SET returnMsg_o = 'generate state_object trie info.';
     # example: accountAddress: 3a95cdadfbe8b62a18f333c38b515085
-    # generate the 2nd layer data in state_trie
-    # alias: 3a
-    REPLACE INTO blockchain_cache.temp_cbi_state_trie(alias,layer)
-          SELECT SUBSTR(accountAddress,1,2),2
-            FROM blockchain_cache.state_object;
+    # generate the 4th layer data in state_trie
+    # alias: 3a95cdadfbe8b62a18f333c38b515085
+    INSERT INTO blockchain_cache.state_trie(hash,alias,layer,address)
+          SELECT MD5(accountAddress),accountAddress,4,accountAddress
+            FROM blockchain_cache.state_object
+           WHERE publicKey IS NULL
+             AND delete_flag = 0;
 
     # generate the 3rd layer data in state_trie
     # alias: 3a_95
-    REPLACE INTO blockchain_cache.temp_cbi_state_trie(previous_alias,alias,layer)
-          SELECT SUBSTR(accountAddress,1,2),CONCAT(SUBSTR(accountAddress,1,2),'_',SUBSTR(accountAddress,3,2)),3
-            FROM blockchain_cache.state_object;
+    INSERT INTO blockchain_cache.state_trie(alias,layer)
+          SELECT CONCAT(SUBSTR(SUBSTR(alias,1,4),1,2),'_',SUBSTR(SUBSTR(alias,1,4),3,2)),3
+            FROM blockchain_cache.state_trie
+           WHERE layer = 4
+           GROUP BY alias;
 
-    # generate the 4th layer data in state_trie
-    # alias: 3a95cdadfbe8b62a18f333c38b515085
-    REPLACE INTO blockchain_cache.temp_cbi_state_trie(hash,previous_alias,alias,layer,address)
-          SELECT MD5(accountAddress),CONCAT(SUBSTR(accountAddress,1,2),'_',SUBSTR(accountAddress,3,2)),accountAddress,4,accountAddress
-            FROM blockchain_cache.state_object;
+    # generate the 2nd layer data in state_trie
+    # alias: 3a
+    INSERT INTO blockchain_cache.state_trie(alias,layer)
+          SELECT SUBSTR(alias,1,2),2
+            FROM blockchain_cache.state_trie
+           WHERE layer = 3
+           GROUP BY alias;
 
-    INSERT INTO blockchain_cache.temp_cbi_state_trie1 SELECT * FROM blockchain_cache.temp_cbi_state_trie;
+    # get 2nd layer data from statedb.state_trie
+    INSERT INTO blockchain_cache.state_trie(hash,alias,layer)
+         SELECT a.hash,a.alias,a.layer
+           FROM statedb.state_trie a
+          WHERE a.parentHash = v_pre_stateRoot
+            AND a.layer = 2
+            AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie b WHERE b.layer = 2 AND b.alias = a.alias);
 
-    INSERT INTO state_trie(hash,alias,layer)
-         SELECT MD5(GROUP_CONCAT(hash)),previous_alias,layer - 1
-           FROM blockchain_cache.temp_cbi_state_trie
-          WHERE previous_alias <> ''
-          GROUP BY previous_alias,layer;
-        
+    # get 3rd layer data from statedb.state_trie
+    INSERT INTO blockchain_cache.state_trie(alias,layer)
+         SELECT b.alias,b.layer
+           FROM statedb.state_trie a,
+                statedb.state_trie b
+          WHERE a.parentHash = v_pre_stateRoot
+            AND a.layer = 2
+            AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie c WHERE c.layer = 2 AND c.alias = a.alias)
+            AND b.parentHash = a.hash
+            AND b.layer = 3
+            AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie d WHERE d.layer = 3 AND d.alias = b.alias);
 
+    # get 4th layer data from statedb.state_trie
+    INSERT INTO blockchain_cache.state_trie(hash,alias,layer,address)
+         SELECT c.hash,c.alias,c.layer,c.address
+           FROM statedb.state_trie a,
+                statedb.state_trie b,
+                statedb.state_trie c
+          WHERE a.parentHash = v_pre_stateRoot
+            AND a.layer = 2
+            AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie d WHERE d.layer = 2 AND d.alias = a.alias)
+            AND b.parentHash = a.hash
+            AND b.layer = 3
+            AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie e WHERE e.layer = 3 AND e.alias = b.alias)
+            AND c.parentHash = b.hash
+            AND c.layer = 4
+            AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie f WHERE f.layer = 4 AND f.alias = c.alias);
+
+    # update the 3 layer hash value in blockchain_cache.state_trie
+    UPDATE blockchain_cache.state_trie a,
+           (SELECT CONCAT(SUBSTR(SUBSTR(alias,1,4),1,2),'_',SUBSTR(SUBSTR(alias,1,4),3,2)) AS pre_alias,
+                   MD5(GROUP_CONCAT(hash)) AS hash
+              FROM blockchain_cache.state_trie
+             WHERE layer = 4
+             GROUP BY CONCAT(SUBSTR(SUBSTR(alias,1,4),1,2),'_',SUBSTR(SUBSTR(alias,1,4),3,2))) b
+       SET a.hash = b.hash
+     WHERE a.alias = b.pre_alias
+       AND a.layer = 3;
+    
+    # update the 4 layer parentHash value in blockchain_cache.state_trie
+    UPDATE blockchain_cache.state_trie a,
+           blockchain_cache.state_trie b
+       SET a.parentHash = b.hash
+     WHERE a.layer = 4
+       AND b.layer = 3
+       AND RELACE(b.alias,'_','') = SUBSTR(a.alias,1,4);
+
+    # update the 2 layer hash value in blockchain_cache.state_trie
+    UPDATE blockchain_cache.state_trie a,
+           (SELECT SUBSTR(alias,1,2) AS pre_alias,
+                   MD5(GROUP_CONCAT(hash)) AS hash
+              FROM blockchain_cache.state_trie
+             WHERE layer = 3
+             GROUP BY SUBSTR(alias,1,2)) b
+       SET a.hash = b.hash
+     WHERE a.alias = b.pre_alias
+       AND a.layer = 2
+       AND a.hash <> '';
+
+    # update the 3 layer parentHash value in blockchain_cache.state_trie
+    UPDATE blockchain_cache.state_trie a,
+           blockchain_cache.state_trie b
+       SET a.parentHash = b.hash
+     WHERE a.layer = 3
+       AND b.layer = 2
+       AND b.alias = SUBSTR(a.alias,1,2);
+
+    # generate stateRoot (1 layer) data
+    INSERT INTO blockchain_cache.state_trie(hash,layer)
+         SELECT MD5(GROUP_CONCAT(hash)),1
+           FROM blockchain_cache.state_trie
+          WHERE layer = 2;
+    
+    # update the 2 layer parentHash value in blockchain_cache.state_trie
+    UPDATE blockchain_cache.state_trie a,
+           blockchain_cache.state_trie b
+       SET a.parentHash = b.hash
+     WHERE a.layer = 2
+       AND b.layer = 1;
 
     SET returnMsg_o = 'insert state_object data from temp_cbi_transactions table.';
     INSERT INTO blockchain_cache.state_object(accountAddress,balance,nonce)
@@ -183,8 +281,6 @@ ll:BEGIN
     SET returnMsg_o = 'generate blockchain body data.';
 
     SET returnMsg_o = 'generate blockchain body_tx_address data.';
-    
-    SET returnMsg_o = 'fail to insert blockchain data into msg_queues'
 
     COMMIT;
 
