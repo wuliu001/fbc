@@ -23,10 +23,11 @@ ll:BEGIN
     DECLARE v_transactions      LONGTEXT;
     DECLARE v_sql               LONGTEXT;
     DECLARE v_curr_block_nonce  INT;
+    DECLARE v_new_block_nonce   INT;
     DECLARE v_pre_stateRoot     VARCHAR(256);
     DECLARE v_pre_txRoot        VARCHAR(256);
     DECLARE v_pre_receiptRoot   VARCHAR(256);
-    DECLARE v_cnt               INT;
+    DECLARE v_header_parenthash VARCHAR(256);
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -34,10 +35,8 @@ ll:BEGIN
         COMMIT;
         TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
         TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
-        TRUNCATE TABLE blockchain_cache.temp_cbi_state_trie;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
-        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_trie;
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -58,22 +57,6 @@ ll:BEGIN
       KEY `key_cbi_addr`        (`accountAddress`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
-
-    SET returnMsg_o = 'create temp_cbi_state_trie table.';
-    CREATE TEMPORARY TABLE IF NOT EXISTS blockchain_cache.temp_cbi_state_trie (
-      `parentHash`              VARCHAR(256) DEFAULT '',
-      `hash`                    VARCHAR(256) DEFAULT '',
-      `previous_alias`          VARCHAR(200) DEFAULT '',
-      `alias`                   VARCHAR(200) DEFAULT '',
-      `layer`                   INT NOT NULL,
-      `address`                 VARCHAR(256) DEFAULT '',
-      UNIQUE KEY `uqe_cbi_idx`  (`alias`,`layer`),
-    ) ENGINE=InnoDB;
-    TRUNCATE TABLE blockchain_cache.temp_cbi_state_trie;
-
-    CREATE TEMPORARY TABLE IF NOT EXISTS blockchain_cache.temp_cbi_state_trie1
-      LIKE blockchain_cache.temp_cbi_state_trie;
-    TRUNCATE TABLE blockchain_cache.temp_cbi_state_trie1;
 
     SET returnMsg_o = 'create temp_cbi_transactions table.';
     CREATE TEMPORARY TABLE IF NOT EXISTS blockchain_cache.temp_cbi_transactions (
@@ -103,10 +86,8 @@ ll:BEGIN
         SET returnMsg_o = 'there is no transaction detail info in body!';
         TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
         TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
-        TRUNCATE TABLE blockchain_cache.temp_cbi_state_trie;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
-        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_trie;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
@@ -115,12 +96,11 @@ ll:BEGIN
     SET SESSION innodb_lock_wait_timeout = 30;
 
     SELECT IFNULL(MAX(nonce),0) INTO v_curr_block_nonce FROM blockchain.header;
+    SET v_new_block_nonce = v_curr_block_nonce + 1;
+    SELECT IFNULL(hash,'') INTO v_header_parenthash FROM blockchain.header WHERE nonce = v_curr_block_nonce;
     SELECT IFNULL(stateRoot,'') INTO v_pre_stateRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
     SELECT IFNULL(txRoot,'') INTO v_pre_txRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
     SELECT IFNULL(receiptRoot,'') INTO v_pre_receiptRoot FROM blockchain.header WHERE nonce = v_curr_block_nonce;
-
-
-
 
 
     SET returnMsg_o = 'insert temp_cbi_state_object table.';
@@ -258,10 +238,20 @@ ll:BEGIN
      WHERE a.layer = 2
        AND b.layer = 1;
 
+    # generate header data
+    INSERT INTO blockchain_cache.header(parentHash,stateRoot,nonce)
+         SELECT v_header_parenthash,hash,v_new_block_nonce
+           FROM blockchain_cache.state_trie
+          WHERE layer = 1;
+
     SET returnMsg_o = 'insert state_object data from temp_cbi_transactions table.';
-    INSERT INTO blockchain_cache.state_object(accountAddress,balance,nonce)
+    INSERT INTO blockchain_cache.state_object(accountAddress,publicKey,creditRating,balance,smartContractPrice,minSmartContractDeposit,nonce)
          SELECT a.accountAddress, 
+                a.publicKey,
+                a.creditRating,
                 a.balance - b.gasCost, 
+                a.smartContractPrice,
+                a.minSmartContractDeposit,
                 b.nonce
            FROM statedb.state_object a,
                 (SELECT initiator,
@@ -286,10 +276,8 @@ ll:BEGIN
 
     TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
     TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
-    TRUNCATE TABLE blockchain_cache.temp_cbi_state_trie;
     DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
     DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
-    DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_trie;
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
