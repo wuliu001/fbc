@@ -90,7 +90,8 @@ ll:BEGIN
                         a.queue_step, ',''', 
                         MD5(CONCAT(b.id,b.queue_id,b.queue_type,b.queue_step,IFNULL(b.dst_endpoint_info,''),b.create_time,b.last_update_time)),''',''', 
                         a.sub_queue_type,''',',
-                        '"(NULL,''',MD5(CONCAT(b.id,b.queue_id,b.queue_type,b.queue_step,IFNULL(b.dst_endpoint_info,''),b.create_time,b.last_update_time)),''',''',commons.`RegExp_SpecialStr.invalid`(b.queues,'(.)|$'),''',',0,')")')
+                        '"(NULL,''', MD5(CONCAT(b.id,b.queue_id,b.queue_type,b.queue_step,IFNULL(b.dst_endpoint_info,''),b.create_time,b.last_update_time)),''',''', 
+                        commons.`RegExp_SpecialStr.invalid`(commons.`RegExp_SpecialStr.invalid`(b.queues,'(.)|$'),'(.)|$') ,''',0)")')
       INTO v_sub_queue_info
       FROM (SELECT DISTINCT queue_type, queue_step, sub_queue_type
               FROM msg_queues.queue_workflows
@@ -104,7 +105,6 @@ ll:BEGIN
     IF IFNULL(v_sub_queue_info,'')<>'' THEN
         SET returnMsg_o = 'input queue_msg, sub_queue_type to temp table.';
         SET v_sql = CONCAT('INSERT INTO msg_queues.`tmp_sub_queue_type`(`id`,`queue_id`,`queue_type`,`queue_step`,`main_queue_info`,`sub_queue_type`,`queue_msg`) VALUES ',v_sub_queue_info);
-        #SET returnMsg_o = v_sql;
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
     END IF;
 
@@ -115,7 +115,7 @@ ll:BEGIN
         IF done THEN
            LEAVE lp;
         END IF;
-        
+
         SET returnMsg_o = CONCAT('get configuration information for sub_queue_type:',v_sub_queue_type);
         SELECT GROUP_CONCAT(CONCAT('http://',endpoint_ip,':',endpoint_port) )
           INTO v_dst_endpoints
