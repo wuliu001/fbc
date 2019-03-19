@@ -45,23 +45,23 @@ ll:BEGIN
     SET v_params_body = CONCAT('{}');
     SET body_i = TRIM(body_i);
     
-    SET returnMsg_o = 'check input body json invalid';
-    IF IFNULL(json_valid(body_i),0) = 0 THEN
+    SET returnMsg_o = 'check input body null data';
+    IF IFNULL(body_i,'') = '' THEN
         SET returnCode_o = 511;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
     
     SET returnMsg_o = 'fail to parase body';
-    SELECT TRIM(BOTH '"' FROM body_i->"$.blockCacheBody"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheAddress"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheHeader"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheReceipt"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheTransactionTrie"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheStateObject"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheStateTrie"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheTransaction"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheTransactionTrie")
+    SELECT commons.`Util.getField2`(body_i,':;',1),
+           commons.`Util.getField2`(body_i,':;',2),
+           commons.`Util.getField2`(body_i,':;',3),
+           commons.`Util.getField2`(body_i,':;',4),
+           commons.`Util.getField2`(body_i,':;',5),
+           commons.`Util.getField2`(body_i,':;',6),
+           commons.`Util.getField2`(body_i,':;',7),
+           commons.`Util.getField2`(body_i,':;',8),
+           commons.`Util.getField2`(body_i,':;',9)
 	  INTO v_blockCacheBody,
            v_blockCacheAddress,
            v_blockCacheHeader,

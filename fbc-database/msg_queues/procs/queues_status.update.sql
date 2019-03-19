@@ -120,9 +120,9 @@ ll:BEGIN
     UPDATE msg_queues.queues a,
            msg_queues.temp_qsu_queues b,
            msg_queues.`temp_qsu_queues_steps` c
-       SET a.queue_step = c.next_queue_step,
+       SET a.cycle_cnt = CASE WHEN a.queue_step = c.next_queue_step THEN a.cycle_cnt + 1 ELSE 0 END,
+           a.queue_step = c.next_queue_step,
            a.last_update_time = UTC_TIMESTAMP(),
-           a.cycle_cnt = CASE WHEN a.queue_step = c.next_queue_step THEN a.cycle_cnt + 1 ELSE 0 END,
            a.`status` = CASE WHEN b.`queue_status` > 0 AND a.queue_step <> c.next_queue_step THEN 1 ELSE a.`status` END
      WHERE a.queue_id = b.queue_id
        AND a.queue_type = source_queue_type_i

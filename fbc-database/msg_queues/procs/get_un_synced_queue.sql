@@ -243,6 +243,7 @@ ll:BEGIN
                                      a.queue_type, ''',',
                                      b.source_queue_step, ',''',
                                      a.queues, ''',',
+                                     #commons.`RegExp_SpecialStr.invalid`(a.queues,'(.)|$'), ''',',
                                      a.`status`, ',''',
                                      a.source_endpoint_info,''',''',
                                      (CASE WHEN a.is_re_assign_endpoint = 1 AND a.cycle_cnt > b.config_repeat_count THEN '' ELSE IFNULL(a.dst_endpoint_info,'') END ), ''',',
@@ -261,8 +262,10 @@ ll:BEGIN
                                      b.method,''',',
                                      b.if_limited,',''',
                                      IFNULL(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.parameter_val_pos),'|$|',-1),''),''',''',
+                                     #IFNULL(commons.`RegExp_SpecialStr.invalid`(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.parameter_val_pos),'|$|',-1),'(.)|$'),''),''',''',
                                      IFNULL(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.body_val_pos),'|$|',-1),''),''')')) END
-          INTO v_sql 
+                                     #IFNULL(commons.`RegExp_SpecialStr.invalid`(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.body_val_pos),'|$|',-1),'(.)|$'),''),''')')) END
+          INTO v_sql                 
           FROM msg_queues.`queues` a
          INNER 
           JOIN msg_queues.`temp_gusq_last_receive_info` b on a.queue_id > b.last_sync_queue_id AND a.queue_type = b.source_queue_type  AND a.dst_endpoint_info = b.dst_endpoint_info  AND a.queue_step >= b.source_queue_step
@@ -286,6 +289,7 @@ ll:BEGIN
                              a.queue_type, ''',',
                              a.queue_step, ',''',
                              a.queues, ''',',
+                             #commons.`RegExp_SpecialStr.invalid`(a.queues,'(.)|$'),''',',
                              a.`status`, ',''',
                              a.source_endpoint_info,''',''',
                              (CASE WHEN a.is_re_assign_endpoint = 1 AND a.cycle_cnt > b.repeat_count THEN '' ELSE IFNULL(a.dst_endpoint_info,'') END ), ''',',
@@ -304,7 +308,9 @@ ll:BEGIN
                              b.method,''',',
                              CASE WHEN b.`limit` = 0 THEN 0 ELSE 1 END,',''',
                              IFNULL(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.parameter_val_pos),'|$|',-1),''),''',''',
-                             IFNULL(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.body_val_pos),'|$|',-1),''),''')')) END 
+                             #IFNULL(commons.`RegExp_SpecialStr.invalid`(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.parameter_val_pos),'|$|',-1),'(.)|$'),''),''',''',
+                             IFNULL(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.body_val_pos),'|$|',-1),''),''')')) END
+                             #IFNULL(commons.`RegExp_SpecialStr.invalid`(SUBSTRING_INDEX(SUBSTRING_INDEX(a.queues,'|$|',e.body_val_pos),'|$|',-1),'(.)|$'),''),''')')) END 
       INTO v_sql
       FROM msg_queues.`queues` a
      INNER JOIN (SELECT DISTINCT queue_type FROM msg_queues.sync_service_config WHERE sync_id = v_sync_id ) c ON a.queue_type = c.queue_type AND a.is_delete = 0

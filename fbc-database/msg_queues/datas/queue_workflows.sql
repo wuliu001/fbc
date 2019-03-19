@@ -20,9 +20,11 @@ INSERT INTO `queue_workflows`(id, queue_type, sub_queue_type, success_percent, q
 
 INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `sub_queue_type`, `success_percent`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `dst_queue_type`, `dst_queue_step`, `limit`, `double_side`) VALUES ('packingCache', 'spreadPackingCache', '100', '0', '{\"0\":1,\"1\":0}', '0', '0', NULL, NULL, '0', '0');
 INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('packingCache', '1', '{\"0\":2,\"1\":1}', '0', '0', '0', '0');
-INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('packingCache', '2', '0', '1', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`,`special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('packingCache', '2',null, '0', '1', '0', '0');
+
 INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `special_step`, `uri`, `method`, `repeat_count`, `is_end_step`, `dst_queue_type`, `dst_queue_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '0', '{\"0\":1,\"1\":0}', '/msg_queues/packing', 'POST', '0', '0', 'spreadPackingCache', '0', '0', '0');
-INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '1', '0', '1', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`,`special_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '1','{\"0\":2,\"1\":1}', '0', '0', '0', '0');
+INSERT INTO `msg_queues`.`queue_workflows` (`queue_type`, `queue_step`, `repeat_count`, `is_end_step`, `limit`, `double_side`) VALUES ('spreadPackingCache', '2', '0', '1', '0', '0');
 
 
 
@@ -35,3 +37,4 @@ INSERT INTO `service_parameters` (`queue_type`, `queue_step`, `body_val_pos`) VA
 
 
 TRUNCATE TABLE job_config;
+INSERT INTO `job_config`(queue_type, queue_step, proc_name, `type`) VALUES('spreadPackingCache', 1, 'blockchain_cache.`spreadPackingCache.confirm`', 'success');
