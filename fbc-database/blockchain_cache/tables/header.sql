@@ -10,7 +10,7 @@ CREATE TABLE `header` (
   `stateRoot`    VARCHAR(256) NOT NULL,
   `txRoot`       VARCHAR(256) DEFAULT '',
   `receiptRoot`  VARCHAR(256) DEFAULT '',
-  `bloom`        LONGTEXT DEFAULT '',
+  `bloom`        LONGTEXT DEFAULT NULL,
   `time`         DATETIME,
   `nonce`        INT(11) NOT NULL,
   `delete_flag`  TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',

@@ -93,7 +93,7 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to insert into header data';
     IF IFNULL(v_blockCacheHeader,'') <> '' THEN
-        SET v_sql = CONCAT('INSERT INTO blockchain_cache.header (parentHash, stateRoot, txRoot, receiptRoot, bloom, time, nonce) 
+        SET v_sql = CONCAT('INSERT INTO blockchain_cache.header (parentHash,hash, stateRoot, txRoot, receiptRoot, bloom, time, nonce) 
                             VALUES ',v_blockCacheHeader ,'
                                 ON DUPLICATE KEY UPDATE delete_flag = 0');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                

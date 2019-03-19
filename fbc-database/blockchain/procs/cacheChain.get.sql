@@ -58,10 +58,11 @@ ll:BEGIN
 
     SET returnMsg_o = 'fail to get header info';
     SELECT GROUP_CONCAT('("',`parentHash`,'","',
+                        `hash`,'","',
                         `stateRoot`,'","',
                         `txRoot`,'","',
-                        `receiptRoot`,'",',
-                        `bloom`,',"',
+                        `receiptRoot`,'","',
+                        IFNULL(`bloom`,''),'","',
                         IFNULL(`time`,''),'",',
                         `nonce`,')')
       INTO v_blockCacheHeader
