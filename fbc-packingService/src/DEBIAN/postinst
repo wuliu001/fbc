@@ -12,7 +12,7 @@ if [ ! -d "/opt/fbc/packingService/bin" ]; then
     mkdir -p /opt/fbc/packingService/bin
 fi
 
-ln -fs /opt/fbc/packingService/lib/packingService-0.0.1/blockchain_packing.py /opt/fbc/syncService/bin/blockchain_packing
+ln -fs /opt/fbc/packingService/lib/packingService-0.0.1/packingBlockCache.py /opt/fbc/packingService/bin/packingBlockCache
 
 if [ ! -d "/var/log/fbc/server" ]; then
     mkdir -p /var/log/fbc/server

@@ -6,8 +6,8 @@ source $LOCAL/packingService.conf
 
 USER=tao
 CMDP_HOME=/opt/fbc/packingService
-CMDP_PACKING="$CMDP_HOME/bin/packingService"
-PROG_NAME=packingService
+CMDP_PACKING="$CMDP_HOME/bin/packingBlockCache"
+PROG_NAME=packingBlockCache
 
 export TZ=UTC
 
