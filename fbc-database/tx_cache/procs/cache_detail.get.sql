@@ -149,8 +149,9 @@ ll:BEGIN
       INTO v_stateObjectCache                     
       FROM tx_cache.state_object 
      WHERE delete_flag = 0;
-     
-    SELECT v_transactionCache AS transactionCache,v_stateObjectCache AS stateObjectCache;
+
+    SELECT REPLACE(to_base64(IFNULL(v_transactionCache,'')),'\n','') AS transactionCache,
+           REPLACE(to_base64(IFNULL(v_stateObjectCache,'')),'\n','') AS stateObjectCache;
     
     SET returnMsg_o = 'fail to update keystore nonce';
     UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,0) WHERE accountAddress = accountAddress_i;

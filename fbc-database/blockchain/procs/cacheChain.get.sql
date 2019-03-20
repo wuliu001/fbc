@@ -143,15 +143,15 @@ ll:BEGIN
       FROM blockchain_cache.`transaction_trie`
      WHERE delete_flag = 0;
     
-    SELECT IFNULL(v_blockCacheBody,'') AS blockCacheBody,
-           IFNULL(v_blockCacheAddress,'') AS blockCacheAddress,
-           IFNULL(v_blockCacheHeader,'') AS blockCacheHeader,
-           IFNULL(v_blockCacheReceipt,'') AS blockCacheReceipt,
-           IFNULL(v_blockCacheReceiptTrie,'') AS blockCacheReceiptTrie,
-           IFNULL(v_blockCacheStateObject,'') AS blockCacheStateObject,
-           IFNULL(v_blockCacheStateTrie,'') AS blockCacheStateTrie,
-           IFNULL(v_blockCacheTransaction,'') AS blockCacheTransaction,
-           IFNULL(v_blockCacheTransactionTrie,'') blockCacheTransactionTrie;
+    SELECT REPLACE(to_base64(IFNULL(v_blockCacheBody,'')),'\n','') AS blockCacheBody,
+           REPLACE(to_base64(IFNULL(v_blockCacheAddress,'')),'\n','') AS blockCacheAddress,
+           REPLACE(to_base64(IFNULL(v_blockCacheHeader,'')),'\n','') AS blockCacheHeader,
+           REPLACE(to_base64(IFNULL(v_blockCacheReceipt,'')),'\n','') AS blockCacheReceipt,
+           REPLACE(to_base64(IFNULL(v_blockCacheReceiptTrie,'')),'\n','') AS blockCacheReceiptTrie,
+           REPLACE(to_base64(IFNULL(v_blockCacheStateObject,'')),'\n','') AS blockCacheStateObject,
+           REPLACE(to_base64(IFNULL(v_blockCacheStateTrie,'')),'\n','') AS blockCacheStateTrie,
+           REPLACE(to_base64(IFNULL(v_blockCacheTransaction,'')),'\n','') AS blockCacheTransaction,
+           REPLACE(to_base64(IFNULL(v_blockCacheTransactionTrie,'')),'\n','') blockCacheTransactionTrie;
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';

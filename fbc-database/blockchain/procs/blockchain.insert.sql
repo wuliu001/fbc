@@ -85,7 +85,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into body data';
     IF IFNULL(v_blockCacheBody,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain.body (header, hash) 
-                            VALUES ',v_blockCacheBody ,'
+                            VALUES ',from_base64(v_blockCacheBody) ,'
                                 ON DUPLICATE KEY UPDATE hash = hash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -93,7 +93,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into body_tx_address data';
     IF IFNULL(v_blockCacheAddress,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain.body_tx_address (id, hash, tx_address) 
-                            VALUES ',v_blockCacheAddress ,'
+                            VALUES ',from_base64(v_blockCacheAddress) ,'
                                 ON DUPLICATE KEY UPDATE hash = hash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -101,7 +101,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into header data';
     IF IFNULL(v_blockCacheHeader,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO blockchain.header (parentHash,hash, stateRoot, txRoot, receiptRoot, bloom, time, nonce) 
-                            VALUES ',v_blockCacheHeader ,'
+                            VALUES ',from_base64(v_blockCacheHeader) ,'
                                 ON DUPLICATE KEY UPDATE parentHash = parentHash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -109,7 +109,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into receipt data';
     IF IFNULL(v_blockCacheReceipt,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO receipt.receipt (address, accountAddress, txAddress, gasCost, creditRating) 
-                            VALUES ',v_blockCacheReceipt ,'
+                            VALUES ',from_base64(v_blockCacheReceipt) ,'
                                 ON DUPLICATE KEY UPDATE accountAddress = accountAddress');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -117,7 +117,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into receipt_trie data';
     IF IFNULL(v_blockCacheReceiptTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO receipt.receipt_trie ( id, parentHash, hash, alias, layer, address) 
-                            VALUES ',v_blockCacheReceiptTrie ,'
+                            VALUES ',from_base64(v_blockCacheReceiptTrie) ,'
                                 ON DUPLICATE KEY UPDATE parentHash = parentHash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -125,7 +125,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into state_object data';
     IF IFNULL(v_blockCacheStateObject,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO statedb.state_object (accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce) 
-                            VALUES ',v_blockCacheStateObject ,'
+                            VALUES ',from_base64(v_blockCacheStateObject) ,'
                                 ON DUPLICATE KEY UPDATE publicKey = publicKey');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -133,7 +133,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into state_trie data';
     IF IFNULL(v_blockCacheStateTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO statedb.state_trie (id, parentHash, hash, alias, layer, address) 
-                            VALUES ',v_blockCacheStateTrie ,'
+                            VALUES ',from_base64(v_blockCacheStateTrie) ,'
                                 ON DUPLICATE KEY UPDATE parentHash = parentHash');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
@@ -141,15 +141,15 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into transactions data';
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO transactions.transactions ( address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
-                            VALUES ',v_blockCacheTransaction ,'
-                                ON DUPLICATE KEY UPDATE closeTime = closeTime');select v_sql;
+                            VALUES ',from_base64(v_blockCacheTransaction) ,'
+                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                                                     
     SET returnMsg_o = 'fail to insert into transaction_trie data';
     IF IFNULL(v_blockCacheTransactionTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO transactions.transaction_trie (id, parentHash, hash, alias, layer, address) 
-                            VALUES ',v_blockCacheTransactionTrie ,'
+                            VALUES ',from_base64(v_blockCacheTransactionTrie) ,'
                                 ON DUPLICATE KEY UPDATE address = address');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);       
     END IF;

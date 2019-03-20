@@ -62,7 +62,8 @@ ll:BEGIN
       FROM tx_cache.state_object 
      WHERE delete_flag = 0;
     
-    SELECT IFNULL(v_transactionPackingCache,'') AS transactionPackingCache,IFNULL(v_stateObjectPackingCache,'') AS stateObjectPackingCache;
+    SELECT REPLACE(to_base64(IFNULL(v_transactionPackingCache,'')),'\n','') AS transactionPackingCache,
+           REPLACE(to_base64(IFNULL(v_stateObjectPackingCache,'')),'\n','') AS stateObjectPackingCache;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

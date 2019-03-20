@@ -61,7 +61,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into stateCache data';
     IF IFNULL(v_statecache,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO tx_cache.state_object (accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce) 
-                            VALUES ',v_statecache ,'
+                            VALUES ',from_base64(v_statecache),'
                                 ON DUPLICATE KEY UPDATE nonce = nonce');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;                  
@@ -69,7 +69,7 @@ ll:BEGIN
     SET returnMsg_o = 'fail to insert into txCache data';
     IF IFNULL(v_trancache,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO tx_cache.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, timestamp) 
-                            VALUES ',v_trancache ,'
+                            VALUES ',from_base64(v_trancache),'
                                 ON DUPLICATE KEY UPDATE nonceForCurrentInitiator = nonceForCurrentInitiator');
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
     END IF;

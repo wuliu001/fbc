@@ -132,7 +132,6 @@ def sync_cache_chain_data(users_data,packingnode_ip):
                 return api_return_code,return_msg
 
             body = json.dumps(return_msg["data"][0])
-            print 'body2',body
             utils_packing.logD('[sync_cache_chain_data] deal with url:[%s],body:[%s]'% (server_url,body))
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
             if http_code != 200 or api_return_code != 200:
@@ -175,7 +174,6 @@ def main():
                 utils_packing.logI('[main] end to get all packing_node.tx_cache data.')
                 if http_code == 200 and api_return_code == 200:
                     body = json.dumps(return_msg["data"][0])
-                    print 'body1',body
                     server_url = packingnode_ip + '/packing'
                     utils_packing.logD('[main] post all packing_node.tx_cache data to packing_node body: [%s]'% (body)) 
                     utils_packing.logI('[main] begin to post all packing_node.tx_cache data to packing_node.block_cache.service_url: [%s]'% (server_url))
