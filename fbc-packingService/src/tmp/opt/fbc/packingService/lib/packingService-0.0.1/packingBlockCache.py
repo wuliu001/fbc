@@ -76,7 +76,7 @@ def parseOptions():
         print '[parseOptions] set http request retry count fail: %s' % e
         utils_packing.doExit(1)
 
-def sync_tx_cache_data(user_data,packingnode_ip):
+def sync_tx_cache_data(users_data,packingnode_ip):
     try:
         for user_info in users_data:
             accountAddress = user_info["accountAddress"]
@@ -85,36 +85,36 @@ def sync_tx_cache_data(user_data,packingnode_ip):
             # get accountAddress's current nonce
             server_url = 'http://'+register_ip_address + '/stateNonce?accountAddress=' + accountAddress
             utils_packing.logD('[sync_tx_cache_data] deal with url:[%s]'% (server_url))
-            http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
-            if http_code != 200 or api_code != 200:
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+            if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to deal with url:[%s]'% (accountAddress,server_url))
-                return api_code,return_msg
+                return api_return_code,return_msg
             current_account_nonce = return_msg["data"][0]["current_user_nonce"]
             utils_packing.logD('[sync_tx_cache_data] deal with url:[%s],current_user_nonce:[%s]'% (server_url,current_user_nonce))
 
             # get user node tx_cache data
             server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + current_account_nonce + '&time_diff=' + g_packing_time_diff
-            http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
-            if http_code != 200 or api_code != 200:
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+            if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to get tx_cache detail. url:[%s]'% (server_url))
-                return api_code,return_msg
+                return api_return_code,return_msg
 
             # POST tx detail data to packing node tx_cache
             server_url = packingnode_ip + '/pendingTX'
             body = return_msg["data"][0]
             utils_packing.logD('[sync_tx_cache_data] send data to packing node.url:[%s],body:[%s]'% (server_url,body))
-            http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
-            if http_code != 200 or api_code != 200:
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
+            if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to  send data to packing node.url:[%s],body:[%s]'% (server_url,body))
-                return api_code,return_msg
+                return api_return_code,return_msg
 
         return 200,'OK'    
             
     except Exception, e:
-        utils_packing.logE('[sync_tx_cache_data] sync tx_cache data fail.' % (e))
+        utils_packing.logE('[sync_tx_cache_data] sync tx_cache data fail.e:[%s]' % (e))
         return 400,e
 
-def sync_cache_chain_data(user_data,packingnode_ip):  
+def sync_cache_chain_data(users_data,packingnode_ip):  
     try:
         user_ip_set = set()
         all_ip_list = [packingnode_ip]
@@ -126,22 +126,23 @@ def sync_cache_chain_data(user_data,packingnode_ip):
         for ip_detail in all_ip_list:
             server_url = ip_detail + '/blockchain'
             utils_packing.logD('[sync_cache_chain_data] deal with url:[%s]'% (server_url))
-            http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
-            if http_code != 200 or api_code != 200:
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+            if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_cache_chain_data] fail to get data from  node.url:[%s]'% (server_url))
-                return api_code,return_msg
+                return api_return_code,return_msg
 
-            body = return_msg["data"][0]
+            body = json.dumps(return_msg["data"][0])
+            print 'body2',body
             utils_packing.logD('[sync_cache_chain_data] deal with url:[%s],body:[%s]'% (server_url,body))
-            http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
-            if http_code != 200 or api_code != 200:
-                utils_packing.logE('[sync_cache_chain_data] fail to get data from  node.url:[%s]'% (server_url))
-                return api_code,return_msg
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
+            if http_code != 200 or api_return_code != 200:
+                utils_packing.logE('[sync_cache_chain_data] fail to get data from  node.url:[%s],body:[%s]'% (server_url,body))
+                return api_return_code,return_msg
 
         return 200,'OK'
     except Exception, e:
-    utils_packing.logE('[sync_cache_chain_data] sync cache chain data fail.' % (e))
-    return 400,e      
+        utils_packing.logE('[sync_cache_chain_data] sync cache chain data fail.e:[%s]' % (e))
+        return 400,e      
 
 def main():
     packingnode_ip = 'http://127.0.0.1:8080'
@@ -157,42 +158,44 @@ def main():
         ############## get all the accountAddress & register_ip_address from centerdb###############
         server_url = g_center_dns + '/users/0'
         utils_packing.logI('[main] begin to get data from centerdb.centerdb url: [%s]'% (server_url)) 
-        http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+        http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
         utils_packing.logI('[main] end to get data from centerdb.')
         if http_code == 200 and api_return_code == 200:
-            utils_packing.logD('[main] user details. list: [%s]'% (return_msg["data"])) 
+            user_datas = return_msg["data"]
+            utils_packing.logD('[main] user details. list: [%s]'% (user_datas)) 
             ########################sync user node data to packing_node.tx_cache one by one ##########################################
             utils_packing.logI('[main] begin to sync user node data to packing_node.tx_cache one by one.')
-            code, msg = sync_tx_cache_data(return_msg["data"],packingnode_ip)
+            code, msg = sync_tx_cache_data(user_datas,packingnode_ip)
             utils_packing.logI('[main] end to sync user node data to packing_node.tx_cache one by one.')
             if code == 200:
                 ########################sync all packing_node.tx_cache data to packing_node.block_cache############################
                 server_url = packingnode_ip + '/packing'
                 utils_packing.logI('[main] begin to get all packing_node.tx_cache data.service_url: [%s]'% (server_url))
-                http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+                http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
                 utils_packing.logI('[main] end to get all packing_node.tx_cache data.')
                 if http_code == 200 and api_return_code == 200:
-                    body = return_msg["data"][0]
+                    body = json.dumps(return_msg["data"][0])
+                    print 'body1',body
                     server_url = packingnode_ip + '/packing'
                     utils_packing.logD('[main] post all packing_node.tx_cache data to packing_node body: [%s]'% (body)) 
                     utils_packing.logI('[main] begin to post all packing_node.tx_cache data to packing_node.block_cache.service_url: [%s]'% (server_url))
-                    http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
+                    http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
                     utils_packing.logI('[main] end to post all packing_node.tx_cache data to packing_node.block_cache.')
                     if http_code == 200 and api_return_code == 200:
                         #########sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain#####
                         utils_packing.logI('[main] begin to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
-                        code, msg = sync_cache_chain_data(return_msg["data"],packingnode_ip)
+                        code, msg = sync_cache_chain_data(user_datas,packingnode_ip)
                         utils_packing.logI('[main] end to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
                         if code != 200:
-                            utils_packing.logE('[main] fail to sync packing_node&user_node data to blockchain. packing_node: [%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,return_msg["data"],code,msg))
+                            utils_packing.logE('[main] fail to sync packing_node&user_node data to blockchain. packing_node: [%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,user_datas,code,msg))
                     else:
-                        utils_packing.logE('[main] fail to sync packing_node.tx_cache data to packing_node.block_cache.packing_node: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (packingnode_ip,http_code, api_code, return_msg))  
+                        utils_packing.logE('[main] fail to sync packing_node.tx_cache data to packing_node.block_cache.server_url: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s],body:[%s]'% (server_url,http_code, api_return_code, return_msg,body))  
                 else:
-                    utils_packing.logE('[main] fail to get packing_node.tx_cache data.packing_node: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (packingnode_ip,http_code, api_code, return_msg))    
+                    utils_packing.logE('[main] fail to get packing_node.tx_cache data.packing_node: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (packingnode_ip,http_code, api_return_code, return_msg))    
             else:    
-                utils_packing.logE('[main] fail to sync user node data to packing_node.tx_cache.packing_node:[%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,return_msg["data"],code,msg))    
+                utils_packing.logE('[main] fail to sync user node data to packing_node.tx_cache.packing_node:[%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,user_datas,code,msg))    
         else:
-            utils_packing.logE('[main] fail to get user detail from centerdb:[%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (g_center_dns,http_code, api_code, return_msg))
+            utils_packing.logE('[main] fail to get user detail from centerdb:[%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (g_center_dns,http_code, api_return_code, return_msg))
                         
         # sleep 5 seconds then do next round        
         time.sleep(5)                

@@ -44,6 +44,20 @@ ll:BEGIN
     
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
+    
+    IF IFNULL(body_i,'') = '' THEN
+        SET returnCode_o = 511;
+        SET returnMsg_o = 'check input body null data error';
+        CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;
+    
+    IF IFNULL(json_valid(body_i),0) = 0 THEN
+        SET returnCode_o = 512;
+        SET returnMsg_o = 'check input body json invalid';
+        CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;
 
     SET returnMsg_o = 'create temp_cbi_state_object table.';
     CREATE TEMPORARY TABLE IF NOT EXISTS blockchain_cache.temp_cbi_state_object (
@@ -78,9 +92,10 @@ ll:BEGIN
     TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
 
     SET returnMsg_o = 'extract state_object & transactions info from body.';
-    SET v_state_object = IFNULL(JSON_EXTRACT(body_i,'$.state_object'),'');
-    SET v_transactions = IFNULL(JSON_EXTRACT(body_i,'$.transactions'),'');
-
+    SET v_state_object = IFNULL(TRIM(BOTH '"' FROM body_i->"$.stateObjectPackingCache"),'');
+    SET v_transactions = IFNULL(TRIM(BOTH '"' FROM body_i->"$.transactionPackingCache"),'');
+    
+    /*
     IF v_transactions = '' THEN
         SET returnCode_o = 511;
         SET returnMsg_o = 'there is no transaction detail info in body!';
@@ -89,6 +104,17 @@ ll:BEGIN
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;
+    */
+    IF v_transactions = '' AND v_state_object = '' THEN
+        SET returnCode_o = 200;
+        SET returnMsg_o = 'OK';
+        TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
+        TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
+        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
+        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
+        CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
 

@@ -78,7 +78,7 @@ ll:BEGIN
            v_blockCacheStateTrie,
            v_blockCacheTransaction,
            v_blockCacheTransactionTrie;
-    
+           
     START TRANSACTION;
     SET SESSION innodb_lock_wait_timeout = 30;
     
@@ -142,7 +142,7 @@ ll:BEGIN
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO transactions.transactions ( address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
                             VALUES ',v_blockCacheTransaction ,'
-                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
+                                ON DUPLICATE KEY UPDATE closeTime = closeTime');select v_sql;
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
     END IF;
                                                                     

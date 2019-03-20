@@ -143,15 +143,15 @@ ll:BEGIN
       FROM blockchain_cache.`transaction_trie`
      WHERE delete_flag = 0;
     
-    SELECT v_blockCacheBody AS blockCacheBody,
-           v_blockCacheAddress AS blockCacheAddress,
-           v_blockCacheHeader AS blockCacheHeader,
-           v_blockCacheReceipt AS blockCacheReceipt,
-           v_blockCacheReceiptTrie AS blockCacheReceiptTrie,
-           v_blockCacheStateObject AS blockCacheStateObject,
-           v_blockCacheStateTrie AS blockCacheStateTrie,
-           v_blockCacheTransaction AS blockCacheTransaction,
-           v_blockCacheTransactionTrie blockCacheTransactionTrie;
+    SELECT IFNULL(v_blockCacheBody,'') AS blockCacheBody,
+           IFNULL(v_blockCacheAddress,'') AS blockCacheAddress,
+           IFNULL(v_blockCacheHeader,'') AS blockCacheHeader,
+           IFNULL(v_blockCacheReceipt,'') AS blockCacheReceipt,
+           IFNULL(v_blockCacheReceiptTrie,'') AS blockCacheReceiptTrie,
+           IFNULL(v_blockCacheStateObject,'') AS blockCacheStateObject,
+           IFNULL(v_blockCacheStateTrie,'') AS blockCacheStateTrie,
+           IFNULL(v_blockCacheTransaction,'') AS blockCacheTransaction,
+           IFNULL(v_blockCacheTransactionTrie,'') blockCacheTransactionTrie;
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
