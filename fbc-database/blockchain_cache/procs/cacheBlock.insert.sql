@@ -28,6 +28,7 @@ ll:BEGIN
     DECLARE v_pre_txRoot        VARCHAR(256);
     DECLARE v_pre_receiptRoot   VARCHAR(256);
     DECLARE v_header_parenthash VARCHAR(256);
+    DECLARE v_all_trans_hash    VARCHAR(256);
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -260,15 +261,15 @@ ll:BEGIN
            AND b.delete_flag = 0;
 
         # generate header data
-        INSERT INTO blockchain_cache.header(parentHash,stateRoot,nonce,time)
-             SELECT v_header_parenthash,hash,v_new_block_nonce,UTC_TIMESTAMP()
+        INSERT INTO blockchain_cache.header(parentHash,stateRoot,receiptRoot,nonce,time)
+             SELECT v_header_parenthash,hash,v_pre_receiptRoot,v_new_block_nonce,UTC_TIMESTAMP()
                FROM blockchain_cache.state_trie
               WHERE layer = 1
                 AND delete_flag = 0;
     ELSE
         # generate header data
-        INSERT INTO blockchain_cache.header(parentHash,stateRoot,nonce,time)
-             VALUES (v_header_parenthash,v_pre_stateRoot,v_new_block_nonce,UTC_TIMESTAMP());
+        INSERT INTO blockchain_cache.header(parentHash,stateRoot,receiptRoot,nonce,time)
+             VALUES (v_header_parenthash,v_pre_stateRoot,v_pre_receiptRoot,v_new_block_nonce,UTC_TIMESTAMP());
     END IF;
 
 
@@ -494,27 +495,166 @@ ll:BEGIN
 
         # update the 7 layer parentHash value in blockchain_cache.transaction_trie
         UPDATE blockchain_cache.transaction_trie a,
-               blockchain_cache.transaction_trie b,
-               (SELECT address,
-                       CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d')) as pre_alias
-                  FROM blockchain_cache.transactions c)
-           SET a.parentHash = b.hash
+               (SELECT c.address,b.hash
+                  FROM blockchain_cache.transaction_trie b,
+                       blockchain_cache.transactions c
+                 WHERE b.alias = CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d'))
+                   AND b.layer = 6
+                   AND b.delete_flag = 0
+                   AND c.delete_flag = 0) d
+           SET a.parentHash = d.hash
          WHERE a.layer = 7
            AND a.delete_flag = 0
-           AND b.layer = 6
+           AND b.address = d.address;
+
+        # update the 5 layer hash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               (SELECT SUBSTR(alias,1,LENGTH(alias)-3) AS pre_alias,
+                       MD5(GROUP_CONCAT(hash)) AS hash
+                  FROM blockchain_cache.transaction_trie
+                 WHERE layer = 6
+                   AND delete_flag = 0
+                 GROUP BY SUBSTR(alias,1,LENGTH(alias)-3)) b
+           SET a.hash = b.hash
+         WHERE a.alias = b.pre_alias
+           AND a.layer = 5
+           AND a.delete_flag = 0;
+      
+      # update the 6 layer parentHash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               blockchain_cache.transaction_trie b
+           SET a.parentHash = b.hash
+         WHERE a.layer = 6
+           AND a.delete_flag = 0
+           AND b.layer = 5
            AND b.delete_flag = 0
-           AND c.delete_flag = 0
-           AND b.alias = ;
+           AND b.alias = SUBSTR(a.alias,1,LENGTH(a.alias)-3);
+      
+      # update the 4 layer hash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               (SELECT SUBSTR(alias,1,LENGTH(alias)-7) AS pre_alias,
+                       MD5(GROUP_CONCAT(hash)) AS hash
+                  FROM blockchain_cache.transaction_trie
+                 WHERE layer = 5
+                   AND delete_flag = 0
+                 GROUP BY SUBSTR(alias,1,LENGTH(alias)-7)) b
+           SET a.hash = b.hash
+         WHERE a.alias = b.pre_alias
+           AND a.layer = 4
+           AND a.delete_flag = 0;
+    
+      # update the 5 layer parentHash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               blockchain_cache.transaction_trie b
+           SET a.parentHash = b.hash
+         WHERE a.layer = 5
+           AND a.delete_flag = 0
+           AND b.layer = 4
+           AND b.delete_flag = 0
+           AND b.alias = SUBSTR(a.alias,1,LENGTH(a.alias)-7);
 
+      # update the 3 layer hash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               (SELECT SUBSTR(alias,1,5) AS pre_alias,
+                       MD5(GROUP_CONCAT(hash)) AS hash
+                  FROM blockchain_cache.transaction_trie
+                 WHERE layer = 4
+                   AND delete_flag = 0
+                 GROUP BY SUBSTR(alias,1,5)) b
+           SET a.hash = b.hash
+         WHERE a.alias = b.pre_alias
+           AND a.layer = 3
+           AND a.delete_flag = 0;
+      
+      # update the 4 layer parentHash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               blockchain_cache.transaction_trie b
+           SET a.parentHash = b.hash
+         WHERE a.layer = 4
+           AND a.delete_flag = 0
+           AND b.layer = 3
+           AND b.delete_flag = 0
+           AND b.alias = SUBSTR(a.alias,1,5);
 
+      # update the 2 layer hash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               (SELECT SUBSTR(alias,1,2) AS pre_alias,
+                       MD5(GROUP_CONCAT(hash)) AS hash
+                  FROM blockchain_cache.transaction_trie
+                 WHERE layer = 3
+                   AND delete_flag = 0
+                 GROUP BY SUBSTR(alias,1,2)) b
+           SET a.hash = b.hash
+         WHERE a.alias = b.pre_alias
+           AND a.layer = 2
+           AND a.delete_flag = 0
+           AND a.hash <> '';
+      
+      # update the 3 layer parentHash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               blockchain_cache.transaction_trie b
+           SET a.parentHash = b.hash
+         WHERE a.layer = 3
+           AND a.delete_flag = 0
+           AND b.layer = 2
+           AND b.delete_flag = 0
+           AND b.alias = SUBSTR(a.alias,1,2);
+      
+      # generate txRoot (1 layer) data
+        INSERT INTO blockchain_cache.transaction_trie(hash,layer)
+             SELECT MD5(GROUP_CONCAT(hash)),1
+               FROM blockchain_cache.transaction_trie
+              WHERE layer = 2
+                AND delete_flag = 0;
+    
+        # update the 2 layer parentHash value in blockchain_cache.transaction_trie
+        UPDATE blockchain_cache.transaction_trie a,
+               blockchain_cache.transaction_trie b
+           SET a.parentHash = b.hash
+         WHERE a.layer = 2
+           AND a.delete_flag = 0
+           AND b.layer = 1
+           AND b.delete_flag = 0;
+
+        # update txRoot in header data
+        UPDATE blockchain_cache.header a,
+               blockchain_cache.transaction_trie b
+           SET a.txRoot = b.hash
+         WHERE a.parentHash = v_header_parenthash
+           AND a.delete_flag = 0
+           AND b.layer = 1
+           AND b.delete_flag = 0;
+
+    ELSE
+        # update txRoot in header data
+        UPDATE blockchain_cache.header
+           SET txRoot = v_pre_txRoot
+         WHERE parentHash = v_header_parenthash
+           AND delete_flag = 0;
 
     END IF;
 
-    SET returnMsg_o = 'update blockchain header data.';
+    SET returnMsg_o = 'update hash value in blockchain_cache header data.';
+    UPDATE blockchain_cache.header
+       SET hash = MD5(CONCAT(stateRoot,',',txRoot,',',receiptRoot))
+     WHERE parentHash = v_header_parenthash
+       AND delete_flag = 0;
 
     SET returnMsg_o = 'generate blockchain body data.';
+    SELECT MD5(GROUP_CONCAT(address))
+      INTO v_all_trans_hash
+      FROM blockchain_cache.transaction_trie
+     WHERE layer = 7
+       AND delete_flag = 0;
+
+    INSERT INTO blockchain_cache.header(header,hash) VALUES (v_new_block_nonce,v_all_trans_hash);
 
     SET returnMsg_o = 'generate blockchain body_tx_address data.';
+    INSERT INTO blockchain_cache.body_tx_address(hash,tx_address)
+         SELECT v_all_trans_hash,address
+           FROM blockchain_cache.transaction_trie
+          WHERE layer = 7
+            AND delete_flag = 0;
 
     COMMIT;
 
