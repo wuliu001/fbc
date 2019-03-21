@@ -57,7 +57,7 @@ ll:BEGIN
            v_trancache;
     START TRANSACTION;
     SET SESSION innodb_lock_wait_timeout = 30;
-    
+
     SET returnMsg_o = 'fail to insert into stateCache data';
     IF IFNULL(v_statecache,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO tx_cache.state_object (accountAddress, publicKey, creditRating, balance, smartContractPrice, minSmartContractDeposit, nonce) 

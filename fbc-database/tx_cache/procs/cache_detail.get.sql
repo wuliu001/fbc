@@ -25,6 +25,7 @@ ll:BEGIN
     DECLARE v_acutal_max_nonce       BIGINT(20);
     DECLARE v_transactionCache       LONGTEXT;
     DECLARE v_stateObjectCache       LONGTEXT;
+    DECLARE v_newaddStateObject      LONGTEXT;
     
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
@@ -39,7 +40,7 @@ ll:BEGIN
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
     END;
 
-    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'"current_user_nonce_i":"',IFNULL(current_user_nonce_i,''),'"time_diff_i":"',IFNULL(time_diff_i,''),'"}');
+    SET v_params_body = CONCAT('{"accountAddress_i":"',IFNULL(accountAddress_i,''),'","current_user_nonce_i":"',IFNULL(current_user_nonce_i,''),'","time_diff_i":"',IFNULL(time_diff_i,''),'"}');
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET accountAddress_i = TRIM(accountAddress_i);
@@ -145,13 +146,15 @@ ll:BEGIN
                              balance, ',', 
                              IF(smartContractPrice IS NULL,'NULL',smartContractPrice), ',',
                              IF(minSmartContractDeposit IS NULL,'NULL',minSmartContractDeposit), ',',
-                             nonce ,')')
-      INTO v_stateObjectCache                     
+                             nonce ,')'),
+           GROUP_CONCAT('"',accountAddress,'"')                
+      INTO v_stateObjectCache,v_newaddStateObject                     
       FROM tx_cache.state_object 
      WHERE delete_flag = 0;
 
     SELECT REPLACE(to_base64(IFNULL(v_transactionCache,'')),'\n','') AS transactionCache,
-           REPLACE(to_base64(IFNULL(v_stateObjectCache,'')),'\n','') AS stateObjectCache;
+           REPLACE(to_base64(IFNULL(v_stateObjectCache,'')),'\n','') AS stateObjectCache,
+           REPLACE(to_base64(IFNULL(v_newaddStateObject,'')),'\n','') AS newaddStateObject;
     
     SET returnMsg_o = 'fail to update keystore nonce';
     UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,0) WHERE accountAddress = accountAddress_i;

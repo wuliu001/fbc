@@ -82,36 +82,73 @@ def sync_tx_cache_data(users_data,packingnode_ip):
             accountAddress = user_info["accountAddress"]
             register_ip_address = user_info["register_ip_address"]
             
-            # get accountAddress's current nonce
-            server_url = 'http://'+register_ip_address + '/stateNonce?accountAddress=' + accountAddress
+            # get accountAddress's current nonce from packing_node
+            server_url = packingnode_ip + '/stateNonce?accountAddress=' + accountAddress
             utils_packing.logD('[sync_tx_cache_data] deal with url:[%s]'% (server_url))
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to deal with url:[%s]'% (accountAddress,server_url))
                 return api_return_code,return_msg
-            current_account_nonce = return_msg["data"][0]["current_user_nonce"]
-            utils_packing.logD('[sync_tx_cache_data] deal with url:[%s],current_user_nonce:[%s]'% (server_url,current_user_nonce))
+            current_account_nonce = int(return_msg["data"][0]["current_user_nonce"])
+            utils_packing.logD('[sync_tx_cache_data] deal with url:[%s],current_user_nonce:[%s]'% (server_url,current_account_nonce))
 
             # get user node tx_cache data
-            server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + current_account_nonce + '&time_diff=' + g_packing_time_diff
+            server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + str(current_account_nonce) + '&time_diff=' + str(g_packing_time_diff)
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to get tx_cache detail. url:[%s]'% (server_url))
                 return api_return_code,return_msg
 
             # POST tx detail data to packing node tx_cache
-            server_url = packingnode_ip + '/pendingTX'
-            body = return_msg["data"][0]
+            server_url = packingnode_ip + '/pendingTX/0'
+            body = json.dumps(return_msg["data"][0])
+            newaddStateObject = return_msg["data"][0]["newaddStateObject"]
             utils_packing.logD('[sync_tx_cache_data] send data to packing node.url:[%s],body:[%s]'% (server_url,body))
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
             if http_code != 200 or api_return_code != 200:
                 utils_packing.logE('[sync_tx_cache_data] fail to  send data to packing node.url:[%s],body:[%s]'% (server_url,body))
                 return api_return_code,return_msg
 
+            #DELETE tx detail
+            server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + str(current_account_nonce)
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'PUT', None, newaddStateObject)
+            if http_code != 200 or api_return_code != 200:
+                utils_packing.logE('[sync_tx_cache_data] fail to delete tx_cache detail. url:[%s]'% (server_url))
+                return api_return_code,return_msg
+
         return 200,'OK'    
             
     except Exception, e:
         utils_packing.logE('[sync_tx_cache_data] sync tx_cache data fail.e:[%s]' % (e))
+        return 400,e
+
+
+def sync_blockcache_tx_cache_data(packingnode_ip):  
+    try:
+        #get to be packing datas for tx_cache   
+        server_url = packingnode_ip + '/packing'
+        http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
+        if http_code != 200 or api_return_code != 200: 
+            utils_packing.logE('[sync_blockcache_tx_cache_data] fail to get data from  node.server_url:[%s]'% (server_url))
+            return api_return_code,return_msg  
+
+        #POST to be packing datas for tx_cache
+        body = json.dumps(return_msg["data"][0])
+        utils_packing.logD('[sync_blockcache_tx_cache_data] body: [%s]'% (body)) 
+        http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
+        if http_code != 200 or api_return_code != 200: 
+            utils_packing.logE('[sync_blockcache_tx_cache_data] fail to post data from  node.server_url:[%s],body:[%s]'% (server_url,body))
+            return api_return_code,return_msg 
+
+        #delete to be packing datas for tx_cache    
+        http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'DELETE', None, '')
+        if http_code != 200 or api_return_code != 200: 
+            utils_packing.logE('[sync_blockcache_tx_cache_data] fail to delete data from  node.server_url:[%s]'% (server_url))
+            return api_return_code,return_msg            
+            
+        return 200,'OK'
+    except Exception, e:
+        utils_packing.logE('[sync_blockcache_tx_cache_data] sync cache chain data fail.e:[%s]' % (e))
         return 400,e
 
 def sync_cache_chain_data(users_data,packingnode_ip):  
@@ -135,8 +172,13 @@ def sync_cache_chain_data(users_data,packingnode_ip):
             utils_packing.logD('[sync_cache_chain_data] deal with url:[%s],body:[%s]'% (server_url,body))
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
             if http_code != 200 or api_return_code != 200:
-                utils_packing.logE('[sync_cache_chain_data] fail to get data from  node.url:[%s],body:[%s]'% (server_url,body))
+                utils_packing.logE('[sync_cache_chain_data] fail to post data to  node.url:[%s],body:[%s]'% (server_url,body))
                 return api_return_code,return_msg
+
+            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'DELETE', None, '')
+            if http_code != 200 or api_return_code != 200: 
+                utils_packing.logE('[sync_cache_chain_data] fail to delete data from  node.server_url:[%s]'% (server_url))
+                return api_return_code,return_msg     
 
         return 200,'OK'
     except Exception, e:
@@ -168,28 +210,20 @@ def main():
             utils_packing.logI('[main] end to sync user node data to packing_node.tx_cache one by one.')
             if code == 200:
                 ########################sync all packing_node.tx_cache data to packing_node.block_cache############################
-                server_url = packingnode_ip + '/packing'
-                utils_packing.logI('[main] begin to get all packing_node.tx_cache data.service_url: [%s]'% (server_url))
-                http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
-                utils_packing.logI('[main] end to get all packing_node.tx_cache data.')
-                if http_code == 200 and api_return_code == 200:
-                    body = json.dumps(return_msg["data"][0])
-                    server_url = packingnode_ip + '/packing'
-                    utils_packing.logD('[main] post all packing_node.tx_cache data to packing_node body: [%s]'% (body)) 
-                    utils_packing.logI('[main] begin to post all packing_node.tx_cache data to packing_node.block_cache.service_url: [%s]'% (server_url))
-                    http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'POST', None, body)
-                    utils_packing.logI('[main] end to post all packing_node.tx_cache data to packing_node.block_cache.')
-                    if http_code == 200 and api_return_code == 200:
-                        #########sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain#####
-                        utils_packing.logI('[main] begin to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
-                        code, msg = sync_cache_chain_data(user_datas,packingnode_ip)
-                        utils_packing.logI('[main] end to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
-                        if code != 200:
-                            utils_packing.logE('[main] fail to sync packing_node&user_node data to blockchain. packing_node: [%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,user_datas,code,msg))
+                utils_packing.logI('[main] begin to sync all packing_node.tx_cache data to packing_node.block_cache.')
+                code ,msg = sync_blockcache_tx_cache_data(packingnode_ip)
+                utils_packing.logI('[main] end to sync all packing_node.tx_cache data to packing_node.block_cache.')
+                if code == 200 :
+                    #########sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain#####
+                    utils_packing.logI('[main] begin to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
+                    code, msg = sync_cache_chain_data(user_datas,packingnode_ip)
+                    utils_packing.logI('[main] end to sync all packing_node.block_cache data to packing_node.blockchain and user_node.block_cache data to user_node.blockchain.')
+                    if code == 200:
+                        utils_packing.logD('[main] success to sync packing_node&user_node data to blockchain. packing_node: [%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,user_datas,code,msg))
                     else:
-                        utils_packing.logE('[main] fail to sync packing_node.tx_cache data to packing_node.block_cache.server_url: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s],body:[%s]'% (server_url,http_code, api_return_code, return_msg,body))  
+                        utils_packing.logE('[main] fail to sync packing_node.tx_cache data to packing_node.block_cache.server_url: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (server_url,http_code, api_return_code, return_msg))  
                 else:
-                    utils_packing.logE('[main] fail to get packing_node.tx_cache data.packing_node: [%s],http_code:[%s],api_return_code:[%s],return_msg:[%s]'% (packingnode_ip,http_code, api_return_code, return_msg))    
+                    utils_packing.logE('[main] fail to sync all packing_node.tx_cache data to packing_node.block_cache.packing_node: [%s],code:[%s],msg:[%s]'% (packingnode_ip,code,msg))    
             else:    
                 utils_packing.logE('[main] fail to sync user node data to packing_node.tx_cache.packing_node:[%s],user_detail:[%s],code:[%s],msg:[%s]'% (packingnode_ip,user_datas,code,msg))    
         else:

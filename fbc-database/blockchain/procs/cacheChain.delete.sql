@@ -1,17 +1,17 @@
-USE `blockchain_cache`;
+USE `blockchain`;
 /*!50003 SET @saved_sql_mode = @@sql_mode */;
 /*!50003 SET sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */;
 
-/*Procedure structure for Procedure `cachePacking.delete` */;
+/*Procedure structure for Procedure `cacheChain.delete` */;
 
-DROP PROCEDURE IF EXISTS `cachePacking.delete`;
+DROP PROCEDURE IF EXISTS `cacheChain.delete`;
 
 DELIMITER $$
-CREATE PROCEDURE `cachePacking.delete`(
+CREATE PROCEDURE `cacheChain.delete`(
     OUT returnCode_o         INT,
     OUT returnMsg_o          LONGTEXT)
 ll:BEGIN
-    DECLARE v_procname                      VARCHAR(64) DEFAULT 'cachePacking.delete';
+    DECLARE v_procname                      VARCHAR(64) DEFAULT 'cacheChain.delete';
     DECLARE v_modulename                    VARCHAR(50) DEFAULT 'blockchainCache';
     DECLARE v_user                          VARCHAR(50);
     DECLARE v_params_body                   LONGTEXT DEFAULT NULL;
@@ -30,8 +30,15 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{}');
     
-    UPDATE tx_cache.state_object SET delete_flag = 1 WHERE delete_flag = 0;                          
-    UPDATE tx_cache.transactions SET delete_flag = 1 WHERE delete_flag = 0;
+    UPDATE blockchain_cache.body SET delete_flag = 1 WHERE delete_flag = 0;                          
+    UPDATE blockchain_cache.body_tx_address SET delete_flag = 1 WHERE delete_flag = 0;
+    UPDATE blockchain_cache.header SET delete_flag = 1 WHERE delete_flag = 0;
+    UPDATE blockchain_cache.receipt SET delete_flag = 1 WHERE delete_flag = 0;                    
+    UPDATE blockchain_cache.receipt_trie SET delete_flag = 1 WHERE delete_flag = 0;                        
+    UPDATE blockchain_cache.state_object SET delete_flag = 1 WHERE delete_flag = 0;                   
+    UPDATE blockchain_cache.state_trie SET delete_flag = 1 WHERE delete_flag = 0;                  
+    UPDATE blockchain_cache.transactions SET delete_flag = 1 WHERE delete_flag = 0;
+    UPDATE blockchain_cache.transaction_trie SET delete_flag = 1 WHERE delete_flag = 0;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
