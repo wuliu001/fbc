@@ -647,7 +647,7 @@ ll:BEGIN
      WHERE layer = 7
        AND delete_flag = 0;
 
-    INSERT INTO blockchain_cache.header(header,hash) VALUES (v_new_block_nonce,v_all_trans_hash);
+    INSERT INTO blockchain_cache.body(header,hash) VALUES (v_new_block_nonce,v_all_trans_hash);
 
     SET returnMsg_o = 'generate blockchain body_tx_address data.';
     INSERT INTO blockchain_cache.body_tx_address(hash,tx_address)
