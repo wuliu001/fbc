@@ -157,7 +157,7 @@ ll:BEGIN
            REPLACE(to_base64(IFNULL(v_newaddStateObject,'')),'\n','') AS newaddStateObject;
     
     SET returnMsg_o = 'fail to update keystore nonce';
-    UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,0) WHERE accountAddress = accountAddress_i;
+    UPDATE keystore.accounts SET current_packing_nonce = IFNULL(v_acutal_max_nonce,current_packing_nonce) WHERE accountAddress = accountAddress_i;
     
     COMMIT;
     
