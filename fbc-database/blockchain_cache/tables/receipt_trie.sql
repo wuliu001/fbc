@@ -11,6 +11,6 @@ CREATE TABLE `receipt_trie` (
   `alias`           VARCHAR(200) NOT NULL,
   `layer`           INT NOT NULL,
   `address`         VARCHAR(256) DEFAULT NULL,
-  `delete_flag` TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
+  `delete_flag`     TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:not delete; 1:delete',
   PRIMARY KEY   (`id`)
 ) ENGINE=InnoDB;

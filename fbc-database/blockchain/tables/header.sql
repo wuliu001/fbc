@@ -10,7 +10,7 @@ CREATE TABLE `header` (
   `stateRoot`    VARCHAR(256) NOT NULL,
   `txRoot`       VARCHAR(256) DEFAULT '',
   `receiptRoot`  VARCHAR(256) DEFAULT '',
-  `bloom`        LONGTEXT NOT NULL,
+  `bloom`        LONGTEXT DEFAULT NULL,
   `time`         DATETIME,
   `nonce`        INT(11) NOT NULL,
   PRIMARY KEY    (`nonce`)

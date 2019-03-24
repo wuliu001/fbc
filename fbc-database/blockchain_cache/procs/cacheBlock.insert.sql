@@ -33,7 +33,7 @@ ll:BEGIN
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
-        COMMIT;
+        ROLLBACK;
         TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
         TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
         DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
@@ -87,14 +87,14 @@ ll:BEGIN
       `gasDeposit`                FLOAT NOT NULL,
       `hashSign`                  VARCHAR(256) NOT NULL,
       `receiptAddress`            VARCHAR(256) NOT NULL,
-      `timestamp`                 BIGINT(20) NOT NULL,
+      `timestamp`                 DATETIME NOT NULL,
       KEY `key_cbi_addr`          (`address`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
 
     SET returnMsg_o = 'extract state_object & transactions info from body.';
     SET v_state_object = IFNULL(TRIM(BOTH '"' FROM body_i->"$.stateObjectPackingCache"),'');
-	  SET v_transactions = IFNULL(TRIM(BOTH '"' FROM body_i->"$.transactionPackingCache"),'');
+    SET v_transactions = IFNULL(TRIM(BOTH '"' FROM body_i->"$.transactionPackingCache"),'');
 
     IF v_transactions = '' AND v_state_object = '' THEN
         SET returnCode_o = 200;
@@ -170,13 +170,13 @@ ll:BEGIN
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie b WHERE b.layer = 2 AND b.alias = a.alias AND b.delete_flag = 0);
 
         # get 3rd layer data from statedb.state_trie
-        INSERT INTO blockchain_cache.state_trie(alias,layer)
-             SELECT b.alias,b.layer
+        INSERT INTO blockchain_cache.state_trie(hash,alias,layer)
+             SELECT b.hash,b.alias,b.layer
                FROM statedb.state_trie a,
                     statedb.state_trie b
               WHERE a.parentHash = v_pre_stateRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie c WHERE c.layer = 2 AND c.alias = a.alias AND c.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie c WHERE c.layer = 2 AND c.alias = a.alias AND c.hash = '' AND c.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie d WHERE d.layer = 3 AND d.alias = b.alias AND d.delete_flag = 0);
@@ -189,10 +189,10 @@ ll:BEGIN
                     statedb.state_trie c
               WHERE a.parentHash = v_pre_stateRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie d WHERE d.layer = 2 AND d.alias = a.alias AND d.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie d WHERE d.layer = 2 AND d.alias = a.alias AND d.hash = '' AND d.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
-                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie e WHERE e.layer = 3 AND e.alias = b.alias AND e.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.state_trie e WHERE e.layer = 3 AND e.alias = b.alias AND e.hash = '' AND e.delete_flag = 0)
                 AND c.parentHash = b.hash
                 AND c.layer = 4
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.state_trie f WHERE f.layer = 4 AND f.alias = c.alias AND f.delete_flag = 0);
@@ -268,8 +268,8 @@ ll:BEGIN
                 AND delete_flag = 0;
     ELSE
         # generate header data
-        INSERT INTO blockchain_cache.header(parentHash,stateRoot,receiptRoot,nonce,time)
-             VALUES (v_header_parenthash,v_pre_stateRoot,v_pre_receiptRoot,v_new_block_nonce,UTC_TIMESTAMP());
+        INSERT INTO blockchain_cache.header(hash,parentHash,stateRoot,receiptRoot,nonce,time)
+             VALUES ('',v_header_parenthash,v_pre_stateRoot,v_pre_receiptRoot,v_new_block_nonce,UTC_TIMESTAMP());
     END IF;
 
 
@@ -317,21 +317,21 @@ ll:BEGIN
         # generate the 7th layer data in state_trie
         # alias: 3a95cdadfbe8b62a18f333c38b515085
         INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer,address)
-             SELECT MD5(address),receiver,7,address
+             SELECT MD5(address),address,7,address
                FROM blockchain_cache.transactions
               WHERE delete_flag = 0;
         
         # generate the 6th layer data in state_trie
         # alias: 3b_78_3b78cdadfbe8b62a18f333c38b515085_201703_19
         INSERT INTO blockchain_cache.transaction_trie(alias,layer)
-             SELECT CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d')),6
+             SELECT CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.receiver,'_',DATE_FORMAT(b.createTime,'%Y%m_%d')),6
                FROM blockchain_cache.transaction_trie a,
                     blockchain_cache.transactions b
               WHERE a.layer = 7
                 AND a.delete_flag = 0
                 AND a.address = b.address
                 AND b.delete_flag = 0
-              GROUP BY CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d'));
+              GROUP BY CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.receiver,'_',DATE_FORMAT(b.createTime,'%Y%m_%d'));
         
         # generate the 5th layer data in state_trie
         # alias: 3b_78_3b78cdadfbe8b62a18f333c38b515085_201703
@@ -378,56 +378,56 @@ ll:BEGIN
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie b WHERE b.layer = 2 AND b.alias = a.alias AND b.delete_flag = 0);
         
         # get 3rd layer data from transactions.transaction_trie
-        INSERT INTO blockchain_cache.transaction_trie(alias,layer)
-             SELECT b.alias,b.layer
+        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer)
+             SELECT b.hash,b.alias,b.layer
                FROM transactions.transaction_trie a,
                     transactions.transaction_trie b
               WHERE a.parentHash = v_pre_txRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie c WHERE c.layer = 2 AND c.alias = a.alias AND c.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie c WHERE c.layer = 2 AND c.alias = a.alias AND c.hash = '' AND c.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie d WHERE d.layer = 3 AND d.alias = b.alias AND d.delete_flag = 0);
         
         # get 4th layer data from transactions.transaction_trie
-        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer,address)
-             SELECT c.hash,c.alias,c.layer,c.address
+        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer)
+             SELECT c.hash,c.alias,c.layer
                FROM transactions.transaction_trie a,
                     transactions.transaction_trie b,
                     transactions.transaction_trie c
               WHERE a.parentHash = v_pre_txRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie d WHERE d.layer = 2 AND d.alias = a.alias AND d.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie d WHERE d.layer = 2 AND d.alias = a.alias AND d.hash = '' AND d.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie e WHERE e.layer = 3 AND e.alias = b.alias AND e.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie e WHERE e.layer = 3 AND e.alias = b.alias AND e.hash = '' AND e.delete_flag = 0)
                 AND c.parentHash = b.hash
                 AND c.layer = 4
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie f WHERE f.layer = 4 AND f.alias = c.alias AND f.delete_flag = 0);
         
         # get 5th layer data from transactions.transaction_trie
-        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer,address)
-             SELECT c.hash,c.alias,c.layer,c.address
+        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer)
+             SELECT d.hash,d.alias,d.layer
                FROM transactions.transaction_trie a,
                     transactions.transaction_trie b,
                     transactions.transaction_trie c,
                     transactions.transaction_trie d
               WHERE a.parentHash = v_pre_txRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie e WHERE e.layer = 2 AND e.alias = a.alias AND e.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie e WHERE e.layer = 2 AND e.alias = a.alias AND e.hash = '' AND e.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie f WHERE f.layer = 3 AND f.alias = b.alias AND f.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie f WHERE f.layer = 3 AND f.alias = b.alias AND f.hash = '' AND f.delete_flag = 0)
                 AND c.parentHash = b.hash
                 AND c.layer = 4
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 4 AND g.alias = c.alias AND g.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 4 AND g.alias = c.alias AND g.hash = '' AND g.delete_flag = 0)
                 AND d.parentHash = c.hash
                 AND d.layer = 5
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie h WHERE h.layer = 5 AND h.alias = d.alias AND h.delete_flag = 0);
 
         # get 6th layer data from transactions.transaction_trie
-        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer,address)
-             SELECT c.hash,c.alias,c.layer,c.address
+        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer)
+             SELECT e.hash,e.alias,e.layer
                FROM transactions.transaction_trie a,
                     transactions.transaction_trie b,
                     transactions.transaction_trie c,
@@ -435,23 +435,23 @@ ll:BEGIN
                     transactions.transaction_trie e
               WHERE a.parentHash = v_pre_txRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie f WHERE f.layer = 2 AND f.alias = a.alias AND f.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie f WHERE f.layer = 2 AND f.hash = '' AND f.alias = a.alias AND f.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 3 AND g.alias = b.alias AND g.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 3 AND g.hash = '' AND g.alias = b.alias AND g.delete_flag = 0)
                 AND c.parentHash = b.hash
                 AND c.layer = 4
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie h WHERE h.layer = 4 AND h.alias = c.alias AND h.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie h WHERE h.layer = 4 AND h.hash = '' AND h.alias = c.alias AND h.delete_flag = 0)
                 AND d.parentHash = c.hash
                 AND d.layer = 5
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie i WHERE i.layer = 5 AND i.alias = d.alias AND i.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie i WHERE i.layer = 5 AND i.hash = '' AND i.alias = d.alias AND i.delete_flag = 0)
                 AND e.parentHash = d.hash
                 AND e.layer = 6
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie j WHERE j.layer = 6 AND j.alias = e.alias AND j.delete_flag = 0);
 
         # get 7th layer data from transactions.transaction_trie
-        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer,address)
-             SELECT c.hash,c.alias,c.layer,c.address
+        INSERT INTO blockchain_cache.transaction_trie(hash,alias,layer)
+             SELECT f.hash,f.alias,f.layer
                FROM transactions.transaction_trie a,
                     transactions.transaction_trie b,
                     transactions.transaction_trie c,
@@ -460,26 +460,26 @@ ll:BEGIN
                     transactions.transaction_trie f
               WHERE a.parentHash = v_pre_txRoot
                 AND a.layer = 2
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 2 AND g.alias = a.alias AND g.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie g WHERE g.layer = 2 AND g.alias = a.alias AND g.hash = '' AND g.delete_flag = 0)
                 AND b.parentHash = a.hash
                 AND b.layer = 3
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie h WHERE h.layer = 3 AND h.alias = b.alias AND h.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie h WHERE h.layer = 3 AND h.alias = b.alias AND h.hash = '' AND h.delete_flag = 0)
                 AND c.parentHash = b.hash
                 AND c.layer = 4
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie i WHERE i.layer = 4 AND i.alias = c.alias AND i.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie i WHERE i.layer = 4 AND i.alias = c.alias AND i.hash = '' AND i.delete_flag = 0)
                 AND d.parentHash = c.hash
                 AND d.layer = 5
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie j WHERE j.layer = 5 AND j.alias = d.alias AND j.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie j WHERE j.layer = 5 AND j.alias = d.alias AND j.hash = '' AND j.delete_flag = 0)
                 AND e.parentHash = d.hash
                 AND e.layer = 6
-                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie k WHERE k.layer = 6 AND k.alias = e.alias AND k.delete_flag = 0)
+                AND EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie k WHERE k.layer = 6 AND k.alias = e.alias AND k.hash = '' AND k.delete_flag = 0)
                 AND f.parentHash = e.hash
                 AND f.layer = 7
                 AND NOT EXISTS (SELECT 1 FROM blockchain_cache.transaction_trie l WHERE l.layer = 7 AND l.alias = f.alias AND l.delete_flag = 0);
 
         # update the 6 layer hash value in blockchain_cache.transaction_trie
         UPDATE blockchain_cache.transaction_trie a,
-               (SELECT CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d')) AS pre_alias,
+               (SELECT CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(c.createTime,'%Y%m_%d')) AS pre_alias,
                        MD5(GROUP_CONCAT(b.hash)) AS hash
                   FROM blockchain_cache.transaction_trie b,
                        blockchain_cache.transactions c
@@ -487,7 +487,7 @@ ll:BEGIN
                    AND b.delete_flag = 0
                    AND b.address = c.address
                    AND c.delete_flag = 0
-                 GROUP BY CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d'))) d
+                 GROUP BY CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(c.createTime,'%Y%m_%d'))) d
            SET a.hash = d.hash
          WHERE a.alias = d.pre_alias
            AND a.layer = 6
@@ -498,14 +498,14 @@ ll:BEGIN
                (SELECT c.address,b.hash
                   FROM blockchain_cache.transaction_trie b,
                        blockchain_cache.transactions c
-                 WHERE b.alias = CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(timestamp,'%Y%m_%d'))
+                 WHERE b.alias = CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.receiver,'_',DATE_FORMAT(c.createTime,'%Y%m_%d'))
                    AND b.layer = 6
                    AND b.delete_flag = 0
                    AND c.delete_flag = 0) d
            SET a.parentHash = d.hash
          WHERE a.layer = 7
            AND a.delete_flag = 0
-           AND b.address = d.address;
+           AND a.address = d.address;
 
         # update the 5 layer hash value in blockchain_cache.transaction_trie
         UPDATE blockchain_cache.transaction_trie a,
