@@ -7,7 +7,7 @@ USE `blockchain_cache`;
 DROP PROCEDURE IF EXISTS `cacheBlock.insert`;
 
 DELIMITER $$
-USE `blockchain_cache`$$
+
 CREATE PROCEDURE `cacheBlock.insert`( 
     body_i                      LONGTEXT,
     OUT returnCode_o            INT,
@@ -254,7 +254,20 @@ ll:BEGIN
        SET hash = MD5(CONCAT(stateRoot,',',txRoot,',',receiptRoot))
      WHERE parentHash = v_header_parenthash
        AND delete_flag = 0;
-
+    
+    # insert into queue
+    CALL blockchain_cache.`cacheBlockQueue.insert`(v_returnCode,v_returnMsg);
+    IF v_returnCode <> 200 THEN
+        ROLLBACK;
+        SET returnMsg_o = v_returnMsg;
+        TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;
+        TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
+        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_state_object; 
+        DROP TABLE IF EXISTS blockchain_cache.temp_cbi_transactions;
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF; 
+    
     COMMIT;
 
     TRUNCATE TABLE blockchain_cache.temp_cbi_state_object;

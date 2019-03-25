@@ -110,11 +110,12 @@ def sync_tx_cache_data(users_data,packingnode_ip):
                 return api_return_code,return_msg
 
             #DELETE tx detail
-            server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + str(current_account_nonce)
-            http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'PUT', None, newaddStateObject)
-            if http_code != 200 or api_return_code != 200:
-                utils_packing.logE('[sync_tx_cache_data] fail to delete tx_cache detail. url:%s'% (server_url))
-                return api_return_code,return_msg
+            if packingnode_ip != 'http://'+register_ip_address:
+                server_url = 'http://'+register_ip_address + '/pendingTX/' + accountAddress + '?current_account_nonce=' + str(current_account_nonce)
+                http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'PUT', None, newaddStateObject)
+                if http_code != 200 or api_return_code != 200:
+                    utils_packing.logE('[sync_tx_cache_data] fail to delete tx_cache detail. url:%s'% (server_url))
+                    return api_return_code,return_msg
         return 200,'OK'    
             
     except Exception, e:
