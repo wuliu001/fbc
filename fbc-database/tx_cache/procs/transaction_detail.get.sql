@@ -44,7 +44,8 @@ ll:BEGIN
     SELECT COUNT(1) 
       INTO v_cnt 
       FROM tx_cache.transactions
-     WHERE txAddress = tx_address_i;
+     WHERE address = tx_address_i
+       AND delete_flag = 0;
 
     IF v_cnt = 0 THEN
         SET returnCode_o = 651;
@@ -53,9 +54,10 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT blockObject,nonce
+    SELECT blockObject,nonceForCurrentInitiator
       FROM tx_cache.transactions 
-     WHERE txAddress = tx_address_i;
+     WHERE address = tx_address_i
+       AND delete_flag = 0;
 
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

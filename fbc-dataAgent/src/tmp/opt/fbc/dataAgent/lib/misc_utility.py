@@ -63,16 +63,19 @@ def get_account_basicInfo(data_service_host,account_address):
 
 
 # get account's gasRequest (include normal account in pending handle transactions & smartcontract)
-def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0):
+def get_account_gasRequest(data_service_host,account_address,is_smartcontract=0,is_packingnode=0):
     flag = True
     gasCost = 0
     gasDeposit = 0
     return_msg = 'OK'
 
-    if is_smartcontract == 0:
-        server_url = data_service_host + '/tx_cache/' + account_address + '/gas_request'
-    else:
+    if is_smartcontract == 1:
         server_url = data_service_host + '/statedb/' + account_address + '/gas_request'
+    elif is_packingnode == 1:
+        server_url = data_service_host + '/packing/' + account_address + '/gas_request'
+    else:
+        server_url = data_service_host + '/tx_cache/' + account_address + '/gas_request'
+
 
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
@@ -108,10 +111,11 @@ def get_pending_handle_account_maxNonce(data_service_host,account_address):
     max_pending_nonce = ''
     return_msg = 'OK'
 
-    server_url = data_service_host + '/tx_cache/' + account_address + '/nonce'
+    #server_url = data_service_host + '/tx_cache/' + account_address + '/nonce'
+    server_url = data_service_host + '/stateNonce?accountAddress=' + account_address
     http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'GET', None, '')
     if http_code == 200 and api_code == 200:
-        max_pending_nonce = api_result["data"][0]["maxNonce"]
+        max_pending_nonce = api_result["data"][0]["current_user_nonce"]
     else:
         flag = False
         return_msg = api_result

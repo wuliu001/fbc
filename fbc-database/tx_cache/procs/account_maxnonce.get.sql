@@ -41,7 +41,8 @@ ll:BEGIN
 
     SELECT IFNULL(MAX(nonce),0) AS maxNonce
       FROM tx_cache.transactions 
-     WHERE accountAddress = account_addr_i;
+     WHERE initiator = account_addr_i
+       AND delete_flag = 0;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

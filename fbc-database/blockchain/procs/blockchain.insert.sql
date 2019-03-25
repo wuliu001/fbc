@@ -64,7 +64,7 @@ ll:BEGIN
            TRIM(BOTH '"' FROM body_i->"$.blockCacheAddress"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheHeader"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheReceipt"),
-           TRIM(BOTH '"' FROM body_i->"$.blockCacheTransactionTrie"),
+           TRIM(BOTH '"' FROM body_i->"$.blockCacheReceiptTrie"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheStateObject"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheStateTrie"),
            TRIM(BOTH '"' FROM body_i->"$.blockCacheTransaction"),
@@ -140,12 +140,16 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to insert into transactions data';
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
-        SET v_sql = CONCAT('INSERT INTO transactions.transactions ( address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
+        SET v_sql = CONCAT('INSERT INTO transactions.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
                             VALUES ',from_base64(v_blockCacheTransaction) ,'
                                 ON DUPLICATE KEY UPDATE closeTime = closeTime');
-        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);                
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
+        SET v_sql = CONCAT('INSERT INTO contract_match.pending_match_transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
+                            VALUES ',from_base64(v_blockCacheTransaction) ,'
+                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
+        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);               
     END IF;
-                                                                    
+
     SET returnMsg_o = 'fail to insert into transaction_trie data';
     IF IFNULL(v_blockCacheTransactionTrie,'') <> '' THEN
         SET v_sql = CONCAT('INSERT INTO transactions.transaction_trie (id, parentHash, hash, alias, layer, address) 

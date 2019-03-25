@@ -13,7 +13,9 @@ CREATE PROCEDURE `transaction.insert`(
     hashsign_i                  VARCHAR(256),
     gascost_i                   FLOAT,
     gasdeposit_i                FLOAT,
-    nonce_i                     TINYINT(4),
+    receiver_i                  VARCHAR(256),
+    original_nonce_i            TINYINT(4),
+    current_nonce_i             TINYINT(4),
     is_broadcast_i              TINYINT(4),
     old_txAddress_i             VARCHAR(256),
     body_i                      LONGTEXT,
@@ -41,12 +43,13 @@ ll:BEGIN
     SET returnCode_o = 400;
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{"account_addr_i":"',IFNULL(account_addr_i,''),'","type_i":"',IFNULL(type_i,''),'","hashsign_i":"',IFNULL(hashsign_i,'')
-                                 ,'","gascost_i":"',IFNULL(gascost_i,''),'","gasdeposit_i":"',IFNULL(gasdeposit_i,''),'","nonce_i":"',IFNULL(nonce_i,'')
-                                 ,'","is_broadcast_i":"',IFNULL(is_broadcast_i,''),'","old_txAddress_i":"',IFNULL(old_txAddress_i,''),'"}');
+                                 ,'","gascost_i":"',IFNULL(gascost_i,''),'","gasdeposit_i":"',IFNULL(gasdeposit_i,''),'","receiver_i":"',IFNULL(receiver_i,''),'","original_nonce_i":"',IFNULL(original_nonce_i,'')
+                                 ,'","current_nonce_i":"',IFNULL(current_nonce_i,''),'","is_broadcast_i":"',IFNULL(is_broadcast_i,''),'","old_txAddress_i":"',IFNULL(old_txAddress_i,''),'"}');
 
     SET account_addr_i = TRIM(account_addr_i);
     SET type_i = TRIM(type_i);
     SET hashsign_i = TRIM(hashsign_i);
+    SET receiver_i = TRIM(receiver_i);
     SET old_txAddress_i = TRIM(old_txAddress_i);
     SET body_i = TRIM(body_i);
 
@@ -75,6 +78,14 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
+    # check receiver_i parameter
+    IF IFNULL(receiver_i,'') = '' THEN
+        SET returnCode_o = 600;
+        SET returnMsg_o = 'check receiver fail.';
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        LEAVE ll;
+    END IF;
+
     # check body_i parameter
     IF IFNULL(body_i,'') = '' OR JSON_VALID(body_i) = 0 THEN
         SET returnCode_o = 600;
@@ -84,7 +95,7 @@ ll:BEGIN
     END IF;
 
     # check nonce parameter
-    IF IFNULL(old_txAddress_i,'') = '' AND nonce_i = 0 THEN
+    IF IFNULL(old_txAddress_i,'') = '' AND current_nonce_i = 0 THEN
         SET returnCode_o = 600;
         SET returnMsg_o = 'check nonce fail.';
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -106,9 +117,9 @@ ll:BEGIN
         SELECT COUNT(1) 
           INTO v_cnt 
           FROM tx_cache.transactions
-         WHERE txAddress = old_txAddress_i
-           AND accountAddress = account_addr_i
-           AND transactionType = type_i;
+         WHERE address = old_txAddress_i
+           AND initiator = account_addr_i
+           AND txType = type_i;
 
         IF v_cnt = 0 THEN
             SET returnCode_o = 651;
@@ -118,17 +129,17 @@ ll:BEGIN
         END IF;
 
         UPDATE tx_cache.transactions
-           SET txAddress = v_newtxAddress,
-               blockObject = body_i,
+           SET address = v_newtxAddress,
+               detail = body_i,
                hashSign = hashsign_i,
                `timestamp` = v_timestamp
-         WHERE txAddress = old_txAddress_i
-           AND accountAddress = account_addr_i
-           AND transactionType = type_i;
+         WHERE address = old_txAddress_i
+           AND initiator = account_addr_i
+           AND txType = type_i;
     ELSE
         # insert data into transactions table
-        INSERT INTO tx_cache.transactions (txAddress,accountAddress,transactionType,blockObject,hashSign,gasCost,gasDeposit,nonce,`timestamp`)
-             VALUES (v_newtxAddress,account_addr_i,type_i,body_i,hashsign_i,gascost_i,gascost_i,nonce_i,v_timestamp);
+        INSERT INTO tx_cache.transactions (address,initiator,nonceForCurrentInitiator,nonceForOriginInitiator,receiver,txType,detail,gasCost,gasDeposit,hashSign,receiptAddress,`timestamp`)
+             VALUES (v_newtxAddress,account_addr_i,current_nonce_i,original_nonce_i,receiver_i,type_i,body_i,gascost_i,gascost_i,hashsign_i,'',v_timestamp);
     END IF;
 
     SELECT v_newtxAddress AS txAddress;  
