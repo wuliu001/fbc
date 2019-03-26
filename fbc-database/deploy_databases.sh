@@ -80,14 +80,14 @@ fi
 cd $LOCAL/blockchain/datas
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >msg_queues_datas.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >blockchain_datas.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
         cat $FN >> blockchain_datas.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> msg_queues_datas.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> blockchain_datas.sql
     mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT blockchain < blockchain_datas.sql
     returnCode=$[ $returnCode+$? ]
     rm blockchain_datas.sql
@@ -151,14 +151,14 @@ fi
 cd $LOCAL/blockchain_cache/datas
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >msg_queues_datas.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >blockchain_cache_datas.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
         cat $FN >> blockchain_cache_datas.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> msg_queues_datas.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> blockchain_cache_datas.sql
     mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT blockchain_cache < blockchain_cache_datas.sql
     returnCode=$[ $returnCode+$? ]
     rm blockchain_cache_datas.sql
@@ -222,14 +222,14 @@ fi
 cd $LOCAL/commons/datas
 if [ $? -eq 0 ]
 then
-    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >msg_queues_datas.sql
+    echo "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" >commons_datas.sql
 
     for FN in `ls`
     do
         echo "  Compile $FN"
         cat $FN >> commons_datas.sql
     done
-    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> msg_queues_datas.sql
+    echo "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;" >> commons_datas.sql
     mysql -h$HOSTNAME -u$LOGIN -p$PASSW0RD -P$PORT commons < commons_datas.sql
     returnCode=$[ $returnCode+$? ]
     rm commons_datas.sql
