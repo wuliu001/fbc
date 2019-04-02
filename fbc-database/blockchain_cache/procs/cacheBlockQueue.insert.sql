@@ -33,7 +33,7 @@ ll:BEGIN
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
-        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+        CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,'',returnMsg_o,v_returnCode,v_returnMsg);
     END;
     
     SET returnCode_o = 400;
@@ -165,7 +165,7 @@ ll:BEGIN
 
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
-    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
+    CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,'',returnMsg_o,v_returnCode,v_returnMsg);
     
 END $$
 DELIMITER ;

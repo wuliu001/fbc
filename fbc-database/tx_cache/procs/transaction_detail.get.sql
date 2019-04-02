@@ -54,7 +54,7 @@ ll:BEGIN
         LEAVE ll;
     END IF;
 
-    SELECT blockObject,nonceForCurrentInitiator
+    SELECT detail,nonceForCurrentInitiator
       FROM tx_cache.transactions 
      WHERE address = tx_address_i
        AND delete_flag = 0;

@@ -84,7 +84,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
                 server_url = data_service_host + '/users/' + normal_account_address + '/nonce'
                 http_code, api_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
                 if http_code == 200 and api_code == 200:
-                    current_packing_nonce = api_result["data"][0]["current_packing_nonce"]
+                    current_packing_nonce = return_msg["data"][0]["current_packing_nonce"]
                     if current_packing_nonce > current_nonce:
                         err_msg = 'nonce check failed, cannot modify this transaction.'
                         api_result = '{"data": [], "moreResults": [], "ops": {"code": 400, "message": "%s"}}' % err_msg
@@ -154,7 +154,7 @@ def transaction_register(tx_type, data_service_host, query_string, body):
         # record into pending transaction
         server_url = data_service_host + '/tx_cache/' + normal_account_address + '/transaction' + '?type=' + tx_type + \
                      '&hashSign=' + hashSign + '&gasCost=' + str(smartcontract_gasCost) + '&gasDeposit=' + str(smartcontract_gasDeposit) + \
-                     '&receiver=' + smart_contract_address + '&original_nonce=' + original_nonce + '&current_nonce=' + str(nonce) + \
+                     '&receiver=' + smart_contract_address + '&original_nonce=' + str(original_nonce) + '&current_nonce=' + str(nonce) + \
                      '&is_broadcast=' + str(is_broadcast) + '&old_txAddress=' + txAddress
         http_code, api_code, api_result = restful_utility.restful_runner(server_url, 'POST', None, tx_detail_str)
         return '200 OK', [('Content-Type', 'text/html')], [json.dumps(api_result) + '\n']

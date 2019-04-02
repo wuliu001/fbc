@@ -24,7 +24,7 @@ CREATE PROCEDURE `transaction.insert`(
 ll:BEGIN
     DECLARE v_procname          VARCHAR(64) DEFAULT 'transaction.insert';
     DECLARE v_modulename        VARCHAR(50) DEFAULT 'tx_cache';
-    DECLARE v_timestamp         BIGINT(20);
+    DECLARE v_timestamp         DATETIME;
     DECLARE v_cnt               INT;
     DECLARE v_newtxAddress      VARCHAR(256);
     DECLARE v_params_body       LONGTEXT DEFAULT NULL;

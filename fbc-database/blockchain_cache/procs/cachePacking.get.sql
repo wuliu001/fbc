@@ -40,12 +40,12 @@ ll:BEGIN
                         IF(nonceForSmartContract IS NULL ,'NULL',nonceForSmartContract), ',"',
                         receiver, '","',
                         txType, '","',
-                        detail, '",',
+                        REPLACE(detail,'"',''''), '",',
                         gasCost,',',
                         gasDeposit,',"',
                         hashSign,'","',
-                        receiptAddress,'",',
-                        `timestamp`,')')
+                        receiptAddress,'","',
+                        `timestamp`,'")')
       INTO v_transactionPackingCache
       FROM tx_cache.transactions
      WHERE delete_flag = 0;

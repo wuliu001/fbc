@@ -123,7 +123,7 @@ ll:BEGIN
     # handle state_object data
     IF v_state_object <> '' THEN
         SET returnMsg_o = 'insert temp_cbi_state_object table.';
-        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_state_object VALUES ',v_state_object);
+        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_state_object VALUES ',from_base64(v_state_object));
         CALL commons.dynamic_sql_execute(v_sql,v_returnCode,v_returnMsg);
 
         SET returnMsg_o = 'insert state_object data from temp_cbi_state_object table.';
@@ -165,7 +165,7 @@ ll:BEGIN
     # handle transactions data
     IF v_transactions <> '' THEN
         SET returnMsg_o = 'insert temp_cbi_transactions table.';
-        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_transactions VALUES ',v_transactions);
+        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_transactions VALUES ',from_base64(v_transactions);
         CALL commons.dynamic_sql_execute(v_sql,v_returnCode,v_returnMsg);
 
         SET returnMsg_o = 'insert state_object data from temp_cbi_transactions table.';
