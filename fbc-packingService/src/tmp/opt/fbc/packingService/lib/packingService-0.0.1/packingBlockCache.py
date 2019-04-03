@@ -87,7 +87,7 @@ def sync_tx_cache_data(users_data,packingnode_ip):
             utils_packing.logD('[sync_tx_cache_data] deal with url:%s'% (server_url))
             http_code, api_return_code, return_msg = restful_utility.restful_runner(server_url, 'GET', None, '')
             if http_code != 200 or api_return_code != 200:
-                utils_packing.logE('[sync_tx_cache_data] fail to deal with url:%s'% (accountAddress,server_url))
+                utils_packing.logE('[sync_tx_cache_data] fail to deal with accountAddress:%s, url:%s'% (accountAddress,server_url))
                 return api_return_code,return_msg
             current_account_nonce = int(return_msg["data"][0]["current_user_nonce"])
             utils_packing.logD('[sync_tx_cache_data] deal with url:%s,current_user_nonce:%s'% (server_url,current_account_nonce))

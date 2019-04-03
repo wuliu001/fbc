@@ -68,7 +68,6 @@ ll:BEGIN
     
     
     SELECT IFNULL(v_state_nonce,v_tx_trans_nonce) AS  current_user_nonce;
-    
     */
     
     SET returnCode_o = 200;
