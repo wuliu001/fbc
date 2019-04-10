@@ -38,38 +38,38 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     */
-    SELECT '成都'        AS `producing_area`,
-           10.00        AS `price`,
-           -0.5         AS `rise_fall`,
-           '120,259'    AS `volume`,
-           0.67         AS `volume_change`,
-           '125,459'    AS `purchase_cnt`,
-           -6.54        AS `purchase_change`,
-           '115,986.00' AS `sale_cnt`,
-           8.76         AS `sale_change`,
-           4            AS `logistics_time`
+    SELECT '成都'          AS `producing_area`,
+           '10.00'        AS `price`,
+           '-0.5'         AS `rise_fall`,
+           '120,259'      AS `volume`,
+           '0.67'         AS `volume_change`,
+           '125,459'      AS `purchase_cnt`,
+           '-6.54'        AS `purchase_change`,
+           '115,986.00'   AS `sale_cnt`,
+           '8.76'         AS `sale_change`,
+           4              AS `logistics_time`
      UNION
-    SELECT '广州'        AS `producing_area`,
-           10.00        AS `price`,
-           -0.5         AS `rise_fall`,
-           '120,259'    AS `volume`,
-           0.67         AS `volume_change`,
-           '125,459'    AS `purchase_cnt`,
-           -6.54        AS `purchase_change`,
-           '115,986.00' AS `sale_cnt`,
-           8.76         AS `sale_change`,
-           4            AS `logistics_time`
+    SELECT '广州'          AS `producing_area`,
+           '10.00'        AS `price`,
+           '-0.5'         AS `rise_fall`,
+           '120,259'      AS `volume`,
+           '0.67'         AS `volume_change`,
+           '125,459'      AS `purchase_cnt`,
+           '-6.54'        AS `purchase_change`,
+           '115,986.00'   AS `sale_cnt`,
+           '8.76'         AS `sale_change`,
+           4              AS `logistics_time`
      UNION 
-    SELECT '云南'        AS `producing_area`,
-           10.00        AS `price`,
-           -0.5         AS `rise_fall`,
-           '120,259'    AS `volume`,
-           0.67         AS `volume_change`,
-           NULL         AS `purchase_cnt`,
-           NULL         AS `purchase_change`,
-           NULL         AS `sale_cnt`,
-           NULL         AS `sale_change`,
-           4            AS `logistics_time`;
+    SELECT '云南'          AS `producing_area`,
+           '10.00'        AS `price`,
+           '-0.5'         AS `rise_fall`,
+           '120,259'      AS `volume`,
+           '0.67'         AS `volume_change`,
+           NULL           AS `purchase_cnt`,
+           NULL           AS `purchase_change`,
+           NULL           AS `sale_cnt`,
+           NULL           AS `sale_change`,
+           4              AS `logistics_time`;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

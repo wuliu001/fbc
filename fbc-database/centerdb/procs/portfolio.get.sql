@@ -36,13 +36,13 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     */
-    SELECT '苹果'                       AS `goods_type`,
-           'APL'                       AS `symbol`,
-           '85'                        AS `level`,
-           '云南'                       AS `purchase_area`,
-           10.00                       AS `purchase_price`,
-           5001.78                     AS `purchase_cnt`,
-           '顺丰'                       AS `logistics`,
+    SELECT '苹果'                        AS `goods_type`,
+           'APL'                        AS `symbol`,
+           '85'                         AS `level`,
+           '云南'                        AS `purchase_area`,
+           '10.00'                      AS `purchase_price`,
+           '5001.78'                    AS `purchase_cnt`,
+           '顺丰'                        AS `logistics`,
            '运输中'                      AS `logistics_status`,
            '2001-04-10 04:52:10'        AS `logistics_start_time`,
            '2001-04-10 04:52:10'        AS `logistics_end_time`,
@@ -50,16 +50,16 @@ ll:BEGIN
            0                            AS `is_logistics_delay`;
     
     SELECT '苹果'    AS `goods_type`,
-           2250     AS `daily_purchase_cnt`,
-           2.5      AS `inventory_period`,
+           '2250'   AS `daily_purchase_cnt`,
+           '2.5'    AS `inventory_period`,
            0        AS `inventory_gap_period`;
 
-    SELECT '苹果'                       AS `goods_type`,
-           'APL'                       AS `symbol`,
-           '85'                        AS `level`,
-           '云南'                       AS `sale_area`,
-           10.00                        AS `sale_price`,
-           5001.78                      AS `sale_cnt`,
+    SELECT '苹果'                        AS `goods_type`,
+           'APL'                        AS `symbol`,
+           '85'                         AS `level`,
+           '云南'                        AS `sale_area`,
+           '10.00'                      AS `sale_price`,
+           '5001.78'                    AS `sale_cnt`,
            '顺丰'                        AS `logistics`,
            '运输中'                      AS `logistics_status`,
            '2001-04-10 04:52:10'        AS `logistics_start_time`,
@@ -67,10 +67,10 @@ ll:BEGIN
            4                            AS `waiting_logistics_time`,
            0                            AS `is_logistics_delay`;
 
-    SELECT '苹果'      AS `goods_type`,
-           2250       AS `daily_sale_cnt`,
-           17003.98   AS `daily_sale_total_price`,
-           2.5        AS `average_repayment_period`;    
+    SELECT '苹果'        AS `goods_type`,
+           '2250'       AS `daily_sale_cnt`,
+           '17003.98'   AS `daily_sale_total_price`,
+           '2.5'        AS `average_repayment_period`;    
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

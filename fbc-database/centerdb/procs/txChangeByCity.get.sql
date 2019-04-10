@@ -43,31 +43,31 @@ ll:BEGIN
     END IF;
     */
     SELECT '张三'                  AS `sale_account`,
-           10                     AS `sale_cnt`,
-           0.67                   AS `sale_change`,
+           '10'                   AS `sale_cnt`,
+           '0.67'                 AS `sale_change`,
            '2001-04-10 04:52:10'  AS `latest_sale_time`,
            '李四'                  AS `purchase_account`,
            8                      AS `purchase_cnt`,
-           -0.14                  AS `purchase_change`,
+           '-0.14'                AS `purchase_change`,
            '2001-04-11 04:52:10'  AS `purchase_sale_time`
      UNION 
     SELECT '张七'                  AS `sale_account`,
-           10                     AS `sale_cnt`,
-           0.67                   AS `sale_change`,
+           '10'                   AS `sale_cnt`,
+           '0.67'                 AS `sale_change`,
            '2001-04-10 04:52:10'  AS `latest_sale_time`,
            NULL                   AS `purchase_account`,
            NULL                   AS `purchase_cnt`,
            NULL                   AS `purchase_change`,
            NULL                   AS `purchase_sale_time`
      UNION 
-    SELECT NULL                   AS `sale_account`,
-           NULL                   AS `sale_cnt`,
-           NULL                   AS `sale_change`,
-           NULL                   AS `latest_sale_time`,
-           '李五'                  AS `purchase_account`,
-           8                      AS `purchase_cnt`,
-           -0.14                  AS `purchase_change`,
-           '2001-04-11 04:52:10'  AS `purchase_sale_time`;
+    SELECT NULL                     AS `sale_account`,
+           NULL                     AS `sale_cnt`,
+           NULL                     AS `sale_change`,
+           NULL                     AS `latest_sale_time`,
+           '李五'                    AS `purchase_account`,
+           8                        AS `purchase_cnt`,
+           '-0.14'                  AS `purchase_change`,
+           '2001-04-11 04:52:10'    AS `purchase_sale_time`;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';

@@ -27,18 +27,17 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{}');
     
-    SELECT '苹果'        AS `goods_type`,
-           'APL'        AS `symbol`,
-           '85'         AS `level`,
-           10.00        AS `price`,
-           -0.5         AS `rise_fall`,
-           '120,259'    AS `volume`,
-           0.67         AS `volume_change`,
-           '125,459'    AS `purchase_cnt`,
-           -6.54        AS `purchase_change`,
-           '115,986.00' AS `sale_cnt`,
-           8.76         AS `sale_change`;
-              
+    SELECT '苹果'          AS `goods_type`,
+           'APL'          AS `symbol`,
+           '85'           AS `level`,
+           '10.00'        AS `price`,
+           '-0.5'         AS `rise_fall`,
+           '120,259'      AS `volume`,
+           '0.67'         AS `volume_change`,
+           '125,459'      AS `purchase_cnt`,
+           '-6.54'        AS `purchase_change`,
+           '115,986.00'   AS `sale_cnt`,
+           '8.76'         AS `sale_change`;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
