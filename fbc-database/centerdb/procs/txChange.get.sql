@@ -38,7 +38,8 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     */
-    SELECT '成都'          AS `producing_area`,
+    SELECT #'成都'         AS `producing_area`,
+           'ChengDu'      AS `producing_area`,
            '10.00'        AS `price`,
            '-0.5'         AS `rise_fall`,
            '120,259'      AS `volume`,
@@ -49,7 +50,7 @@ ll:BEGIN
            '8.76'         AS `sale_change`,
            4              AS `logistics_time`
      UNION
-    SELECT '广州'          AS `producing_area`,
+    SELECT 'GuangZhou'    AS `producing_area`,
            '10.00'        AS `price`,
            '-0.5'         AS `rise_fall`,
            '120,259'      AS `volume`,
@@ -60,7 +61,8 @@ ll:BEGIN
            '8.76'         AS `sale_change`,
            4              AS `logistics_time`
      UNION 
-    SELECT '云南'          AS `producing_area`,
+    SELECT #'云南'         AS `producing_area`,
+           'YunNan'       AS `producing_area`,
            '10.00'        AS `price`,
            '-0.5'         AS `rise_fall`,
            '120,259'      AS `volume`,

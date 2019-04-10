@@ -27,7 +27,8 @@ ll:BEGIN
     SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error');
     SET v_params_body = CONCAT('{}');
     
-    SELECT '苹果'          AS `goods_type`,
+    SELECT #'苹果'         AS `goods_type`,
+           'APPLE'        AS `goods_type`,
            'APL'          AS `symbol`,
            '85'           AS `level`,
            '10.00'        AS `price`,
