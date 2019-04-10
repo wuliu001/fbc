@@ -51,7 +51,7 @@ ll:BEGIN
            'LS'                   AS `purchase_account`,
            8                      AS `purchase_cnt`,
            '-0.14'                AS `purchase_change`,
-           '2001-04-11 04:52:10'  AS `purchase_sale_time`
+           '2001-04-11 04:52:10'  AS `latest_purchase_time`
      UNION 
     SELECT #'张七'                 AS `sale_account`,
            'ZQ'                   AS `sale_account`,
@@ -61,7 +61,7 @@ ll:BEGIN
            NULL                   AS `purchase_account`,
            NULL                   AS `purchase_cnt`,
            NULL                   AS `purchase_change`,
-           NULL                   AS `purchase_sale_time`
+           NULL                   AS `latest_purchase_time`
      UNION 
     SELECT NULL                     AS `sale_account`,
            NULL                     AS `sale_cnt`,
@@ -71,7 +71,7 @@ ll:BEGIN
            'LW'                     AS `purchase_account`,
            8                        AS `purchase_cnt`,
            '-0.14'                  AS `purchase_change`,
-           '2001-04-11 04:52:10'    AS `purchase_sale_time`;
+           '2001-04-11 04:52:10'    AS `latest_purchase_time`;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
