@@ -90,7 +90,7 @@ ll:BEGIN
            status, 
            logisticNo,
            0 AS is_can_modify,
-           1 AS has_matched,
+           CASE status WHEN 0 THEN 0 WHEN 1 THEN 1 END AS has_matched,
            CASE WHEN logisticNo IS NOT NULL THEN 1 ELSE 0 END AS has_track
       FROM contract_match.transactions
      WHERE initiator = account_addr_i;

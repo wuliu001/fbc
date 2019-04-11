@@ -91,6 +91,7 @@ ll:BEGIN
       FROM tx_cache.transactions 
      WHERE initiator=accountAddress_i
        AND delete_flag = 0
+       AND status = 0
        AND (v_cur_timestamp - createTime)/1000000/60 >= time_diff_i;
     INSERT INTO tx_cache.temp_cdg_nonce(nonce) SELECT nonceForCurrentInitiator FROM tx_cache.temp_cdg_transactions;
     

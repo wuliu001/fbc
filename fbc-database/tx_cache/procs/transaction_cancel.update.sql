@@ -57,7 +57,8 @@ ll:BEGIN
     UPDATE tx_cache.transactions
        SET status = 3,
            last_update_time = UTC_TIMESTAMP()
-     WHERE address = txAddr_i;
+     WHERE address = txAddr_i
+       AND delete_flag = 0;
     
     SET returnCode_o = 200;
 	SET returnMsg_o = 'OK';
