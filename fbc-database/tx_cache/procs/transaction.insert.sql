@@ -102,11 +102,11 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    # extract request_timestemp from body
-    SET v_timestamp = TRIM(BOTH '"' FROM body_i->"$.request_timestemp");
+    # extract request_timestamp from body
+    SET v_timestamp = TRIM(BOTH '"' FROM body_i->"$.request_timestamp");
     IF v_timestamp IS NULL THEN   
         SET returnCode_o = 651;
-        SET returnMsg_o = 'check request_timestemp in body fail.';
+        SET returnMsg_o = 'check request_timestamp in body fail.';
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
     END IF;
@@ -132,14 +132,15 @@ ll:BEGIN
            SET address = v_newtxAddress,
                detail = body_i,
                hashSign = hashsign_i,
-               `timestamp` = v_timestamp
+               request_timestamp = v_timestamp,
+               last_update_time = UTC_TIMESTAMP()
          WHERE address = old_txAddress_i
            AND initiator = account_addr_i
            AND txType = type_i;
     ELSE
         # insert data into transactions table
-        INSERT INTO tx_cache.transactions (address,initiator,nonceForCurrentInitiator,nonceForOriginInitiator,receiver,txType,detail,gasCost,gasDeposit,hashSign,receiptAddress,`timestamp`)
-             VALUES (v_newtxAddress,account_addr_i,current_nonce_i,original_nonce_i,receiver_i,type_i,body_i,gascost_i,gascost_i,hashsign_i,'',v_timestamp);
+        INSERT INTO tx_cache.transactions (address,initiator,nonceForCurrentInitiator,nonceForOriginInitiator,receiver,txType,detail,gasCost,gasDeposit,hashSign,receiptAddress,request_timestamp,createTime,last_update_time)
+             VALUES (v_newtxAddress,account_addr_i,current_nonce_i,original_nonce_i,receiver_i,type_i,body_i,gascost_i,gascost_i,hashsign_i,'',v_timestamp,UTC_TIMESTAMP(),UTC_TIMESTAMP());
     END IF;
 
     SELECT v_newtxAddress AS txAddress;  

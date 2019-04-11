@@ -51,9 +51,9 @@ ll:BEGIN
 
     SELECT IFNULL(SUM(gasCost),0),IFNULL(SUM(gasDeposit),0)
       INTO v_unmatchgasCost,v_unmatchgasDeposit
-      FROM contract_match.pending_match_transactions 
+      FROM contract_match.transactions 
      WHERE initiator = account_addr_i
-       AND match_flag = 0;
+       AND status = 0;
     
     SELECT (v_packinggasCost + v_unmatchgasCost) AS gasCost,
            (v_packinggasDeposit + v_unmatchgasDeposit) AS gasDeposit;

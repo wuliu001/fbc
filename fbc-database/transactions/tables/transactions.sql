@@ -17,7 +17,8 @@ CREATE TABLE `transactions` (
   `gasDeposit`                FLOAT NOT NULL,
   `hashSign`                  VARCHAR(256) NOT NULL,
   `receiptAddress`            VARCHAR(256) NOT NULL,
+  `request_timestamp`         DATETIME NOT NULL,
   `createTime`                DATETIME NOT NULL,
-  `closeTime`                 DATETIME DEFAULT NULL,
+  `last_update_time`          DATETIME NOT NULL,
   PRIMARY KEY                 (`address`)
 ) ENGINE=InnoDB;

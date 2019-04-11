@@ -30,11 +30,14 @@ ll:BEGIN
     DECLARE v_blockCacheTransaction         LONGTEXT DEFAULT NULL;
     DECLARE v_blockCacheTransactionTrie     LONGTEXT DEFAULT NULL;
     DECLARE v_sql                           LONGTEXT;
+    DECLARE v_txAddress_id                  VARCHAR(256);
     
     DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN
         SHOW WARNINGS;
         GET DIAGNOSTICS CONDITION 1 v_returnCode = MYSQL_ERRNO, v_returnMsg = MESSAGE_TEXT;
-        ROLLBACK;      
+        ROLLBACK;
+        TRUNCATE TABLE blockchain.temp_transactions;
+        DROP TABLE IF EXISTS blockchain.temp_transactions;      
         SET returnCode_o = 400;
         SET returnMsg_o = CONCAT(v_modulename, ' ', v_procname, ' command Error: ', IFNULL(returnMsg_o,'') , ' | ' ,v_returnMsg);
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
@@ -78,7 +81,10 @@ ll:BEGIN
            v_blockCacheStateTrie,
            v_blockCacheTransaction,
            v_blockCacheTransactionTrie;
-           
+    
+    CREATE TEMPORARY TABLE IF NOT EXISTS blockchain.temp_transactions LIKE transactions.transactions;
+    TRUNCATE TABLE blockchain.temp_transactions;
+
     START TRANSACTION;
     SET SESSION innodb_lock_wait_timeout = 30;
     
@@ -140,14 +146,55 @@ ll:BEGIN
     
     SET returnMsg_o = 'fail to insert into transactions data';
     IF IFNULL(v_blockCacheTransaction,'') <> '' THEN
-        SET v_sql = CONCAT('INSERT INTO transactions.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
-                            VALUES ',from_base64(v_blockCacheTransaction) ,'
-                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
+        SET v_sql = CONCAT('INSERT INTO blockchain.temp_transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, request_timestamp, createTime, last_update_time) 
+                            VALUES ',from_base64(v_blockCacheTransaction));
         CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);
-        SET v_sql = CONCAT('INSERT INTO contract_match.pending_match_transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, createTime, closeTime) 
-                            VALUES ',from_base64(v_blockCacheTransaction) ,'
-                                ON DUPLICATE KEY UPDATE closeTime = closeTime');
-        CALL commons.`dynamic_sql_execute`(v_sql,v_returnCode,v_returnMsg);               
+        
+        UPDATE blockchain.temp_transactions SET detail = REPLACE(detail,'''','"');
+
+        INSERT INTO transactions.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, request_timestamp, createTime, last_update_time)
+             SELECT a.address,a.initiator,a.nonceForCurrentInitiator,a.nonceForOriginInitiator,a.nonceForSmartContract,a.receiver,a.txType,
+                    a.detail,a.gasCost,a.gasDeposit,a.hashSign,a.receiptAddress,a.request_timestamp,a.createTime,a.last_update_time
+               FROM blockchain.temp_transactions a
+                 ON DUPLICATE KEY UPDATE last_update_time = a.last_update_time;
+
+        INSERT INTO contract_match.transactions (address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, variety, placeOfProduction, dateOfMature, dateOfProduction, appearanceRating, sizeRating, sweetnessRating, minQuantity, maxQuantity, price, countryOfLocation, provinceOfLocation, cityOfLocation, zoneOfLocation, addressOfLocation, request_begin_time, request_end_time, gasCost, gasDeposit, request_timestamp, createTime, last_update_time) 
+             SELECT a.address, 
+                    a.initiator, 
+					a.nonceForCurrentInitiator,
+                    a.nonceForOriginInitiator,
+                    a.nonceForSmartContract,
+                    a.receiver,
+                    a.txType,
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.Varieties"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.placeOfProduction"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.dateOfMature"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.dateOfProduction"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.appearanceRating"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.sizeRating"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.sweetnessRating"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.minQuantity"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.maxQuantity"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.Price"),''),
+					CASE WHEN a.txType = 'purchase' THEN IFNULL(TRIM(BOTH '"' FROM a.detail->"$.countryOfDeliveryLocation"),'')
+                         ELSE IFNULL(TRIM(BOTH '"' FROM a.detail->"$.countryOfIssuingLocation"),'') END,
+                    CASE WHEN a.txType = 'purchase' THEN IFNULL(TRIM(BOTH '"' FROM a.detail->"$.provinceOfDeliveryLocation"),'')
+                         ELSE IFNULL(TRIM(BOTH '"' FROM a.detail->"$.provinceOfIssuingLocation"),'') END,
+                    CASE WHEN a.txType = 'purchase' THEN IFNULL(TRIM(BOTH '"' FROM a.detail->"$.cityOfDeliveryLocation"),'')
+                         ELSE IFNULL(TRIM(BOTH '"' FROM a.detail->"$.cityOfIssuingLocation"),'') END,
+                    CASE WHEN a.txType = 'purchase' THEN IFNULL(TRIM(BOTH '"' FROM a.detail->"$.zoneOfDeliveryLocation"),'')
+                         ELSE IFNULL(TRIM(BOTH '"' FROM a.detail->"$.zoneOfIssuingLocation"),'') END,
+                    CASE WHEN a.txType = 'purchase' THEN IFNULL(TRIM(BOTH '"' FROM a.detail->"$.addressOfDeliveryLocation"),'')
+                         ELSE IFNULL(TRIM(BOTH '"' FROM a.detail->"$.addressOfIssuingLocation"),'') END,
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.dateOfReqBegin"),''),
+                    IFNULL(TRIM(BOTH '"' FROM a.detail->"$.dateOfReqEnd"),''),
+                    a.gasCost,
+                    a.gasDeposit,
+                    a.request_timestamp,
+                    a.createTime,
+                    a.last_update_time
+               FROM blockchain.temp_transactions a
+                 ON DUPLICATE KEY UPDATE last_update_time = a.last_update_time;
     END IF;
 
     SET returnMsg_o = 'fail to insert into transaction_trie data';
@@ -160,8 +207,11 @@ ll:BEGIN
     
     COMMIT;
 
+    TRUNCATE TABLE blockchain.temp_transactions;
+    DROP TABLE IF EXISTS blockchain.temp_transactions;
     SET returnCode_o = 200;
     SET returnMsg_o = 'OK';
+
     CALL `commons`.`log_module.i`(0,v_modulename,v_procname,v_params_body,body_i,returnMsg_o,v_returnCode,v_returnMsg);
     
 END $$
