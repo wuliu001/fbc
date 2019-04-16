@@ -42,13 +42,13 @@ ll:BEGIN
         LEAVE ll;
     END IF;
     
-    SET returnMsg_o = 'check account_addr_i not exists.';
+    /*SET returnMsg_o = 'check account_addr_i not exists.';
     SELECT COUNT(1) INTO v_cnt FROM statedb.state_object  WHERE accountAddress = account_addr_i;
     IF v_cnt = 0 THEN
         SET returnCode_o = 512;
         CALL `commons`.`log_module.e`(0,v_modulename,v_procname,v_params_body,NULL,returnMsg_o,v_returnCode,v_returnMsg);
         LEAVE ll;
-    END IF;    
+    END IF; */
     
     SELECT IFNULL(MAX(GREATEST(a.nonce,IFNULL(b.nonceForCurrentInitiator,0))),0) AS current_user_nonce
       FROM statedb.state_object a

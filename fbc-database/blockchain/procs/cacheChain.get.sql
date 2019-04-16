@@ -126,8 +126,9 @@ ll:BEGIN
                         `gasDeposit`,',"',
                         `hashSign`,'","',
                         `receiptAddress`,'","',
+                        `request_timestamp`,'","',
                         `createTime`,'","',
-                        IFNULL(`closeTime`,''),'")')
+                        `last_update_time`,'")')
       INTO v_blockCacheTransaction
       FROM blockchain_cache.`transactions`
      WHERE delete_flag = 0;

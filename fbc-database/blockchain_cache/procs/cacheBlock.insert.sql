@@ -89,7 +89,10 @@ ll:BEGIN
       `gasDeposit`                FLOAT NOT NULL,
       `hashSign`                  VARCHAR(256) NOT NULL,
       `receiptAddress`            VARCHAR(256) NOT NULL,
-      `timestamp`                 DATETIME NOT NULL,
+      `request_timestamp`         DATETIME NOT NULL,
+      `createTime`                DATETIME NOT NULL,
+      `last_update_time`          DATETIME NOT NULL,
+      `status`                    TINYINT(4),
       KEY `key_cbi_addr`          (`address`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE blockchain_cache.temp_cbi_transactions;
@@ -165,7 +168,7 @@ ll:BEGIN
     # handle transactions data
     IF v_transactions <> '' THEN
         SET returnMsg_o = 'insert temp_cbi_transactions table.';
-        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_transactions VALUES ',from_base64(v_transactions);
+        SET v_sql = CONCAT('INSERT INTO blockchain_cache.temp_cbi_transactions VALUES ',from_base64(v_transactions));
         CALL commons.dynamic_sql_execute(v_sql,v_returnCode,v_returnMsg);
 
         SET returnMsg_o = 'insert state_object data from temp_cbi_transactions table.';
@@ -185,7 +188,7 @@ ll:BEGIN
                WHERE a.accountAddress = b.initiator;
 
         SET returnMsg_o = 'insert transactions data into blockchain_cache.transactions.';
-        INSERT INTO blockchain_cache.transactions(address,initiator,nonceForCurrentInitiator,nonceForOriginInitiator,nonceForSmartContract,receiver,txType,detail,gasCost,gasDeposit,hashSign,receiptAddress,createTime,closeTime)
+        INSERT INTO blockchain_cache.transactions(address,initiator,nonceForCurrentInitiator,nonceForOriginInitiator,nonceForSmartContract,receiver,txType,detail,gasCost,gasDeposit,hashSign,receiptAddress,request_timestamp,createTime,last_update_time,status)
              SELECT address,
                     initiator,
                     nonceForCurrentInitiator,
@@ -198,8 +201,10 @@ ll:BEGIN
                     gasDeposit,
                     hashSign,
                     receiptAddress,
-                    timestamp,
-                    UTC_TIMESTAMP()
+                    request_timestamp,
+                    createTime,
+                    last_update_time,
+                    status
                FROM blockchain_cache.temp_cbi_transactions;
 
         # generate transaction trie info

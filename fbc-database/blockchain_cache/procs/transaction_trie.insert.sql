@@ -49,14 +49,14 @@ ll:BEGIN
     # alias: 3a_43_9ab5cdadfbe8b62a18f333c38b515085_201703_19
     SET returnMsg_o = 'generate the 6th layer data in transaction_trie.';
     INSERT INTO blockchain_cache.transaction_trie(alias,layer)
-         SELECT CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.initiator,'_',DATE_FORMAT(b.createTime,'%Y%m_%d')),6
+         SELECT CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.initiator,'_',DATE_FORMAT(b.request_timestamp,'%Y%m_%d')),6
            FROM blockchain_cache.transaction_trie a,
                 blockchain_cache.transactions b
           WHERE a.layer = 7
             AND a.delete_flag = 0
             AND a.address = b.address
             AND b.delete_flag = 0
-          GROUP BY CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.initiator,'_',DATE_FORMAT(b.createTime,'%Y%m_%d'));
+          GROUP BY CONCAT(SUBSTR(b.receiver,1,2),'_',SUBSTR(b.receiver,3,2),'_',b.initiator,'_',DATE_FORMAT(b.request_timestamp,'%Y%m_%d'));
     
     # alias: 3a_43_9ab5cdadfbe8b62a18f333c38b515085_201703
     SET returnMsg_o = 'generate the 5th layer data in transaction_trie.';
@@ -204,7 +204,7 @@ ll:BEGIN
 
     SET returnMsg_o = 'update the 6th layer hash value in blockchain_cache.transaction_trie.';
     UPDATE blockchain_cache.transaction_trie a,
-           (SELECT CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.createTime,'%Y%m_%d')) AS pre_alias,
+           (SELECT CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.request_timestamp,'%Y%m_%d')) AS pre_alias,
                    MD5(GROUP_CONCAT(b.hash)) AS hash
               FROM blockchain_cache.transaction_trie b,
                    blockchain_cache.transactions c
@@ -212,7 +212,7 @@ ll:BEGIN
                AND b.delete_flag = 0
                AND b.address = c.address
                AND c.delete_flag = 0
-             GROUP BY CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.createTime,'%Y%m_%d'))) d
+             GROUP BY CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.request_timestamp,'%Y%m_%d'))) d
        SET a.hash = d.hash
      WHERE a.alias = d.pre_alias
        AND a.layer = 6
@@ -223,7 +223,7 @@ ll:BEGIN
            (SELECT c.address,b.hash
               FROM blockchain_cache.transaction_trie b,
                    blockchain_cache.transactions c
-             WHERE b.alias = CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.createTime,'%Y%m_%d'))
+             WHERE b.alias = CONCAT(SUBSTR(c.receiver,1,2),'_',SUBSTR(c.receiver,3,2),'_',c.initiator,'_',DATE_FORMAT(c.request_timestamp,'%Y%m_%d'))
                AND b.layer = 6
                AND b.delete_flag = 0
                AND c.delete_flag = 0) d

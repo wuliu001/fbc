@@ -45,7 +45,10 @@ ll:BEGIN
                         gasDeposit,',"',
                         hashSign,'","',
                         receiptAddress,'","',
-                        `timestamp`,'")')
+                        request_timestamp,'","',
+                        createTime,'","',
+                        last_update_time,'",',
+                        `status`,')')
       INTO v_transactionPackingCache
       FROM tx_cache.transactions
      WHERE delete_flag = 0;

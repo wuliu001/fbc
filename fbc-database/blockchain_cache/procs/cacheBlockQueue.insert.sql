@@ -119,13 +119,14 @@ ll:BEGIN
                         IF(`nonceForSmartContract` IS NULL ,'NULL',`nonceForSmartContract`),',"',                                 
                         `receiver`,'","', 
                         `txType`,'","', 
-                        `detail`,'",', 
+                        REPLACE(`detail`,'''','"'), '",',
                         `gasCost`,',',
                         `gasDeposit`,',"',
                         `hashSign`,'","',
                         `receiptAddress`,'","',
+                        `request_timestamp`,'","',
                         `createTime`,'","',
-                        IFNULL(`closeTime`,''),'")'),
+                        `last_update_time`,'")'),
            GROUP_CONCAT('("',address,'")')             
       INTO v_blockCacheTransaction,v_blockCache
       FROM blockchain_cache.`transactions`

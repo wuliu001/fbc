@@ -68,7 +68,10 @@ ll:BEGIN
       `gasDeposit`                FLOAT NOT NULL,
       `hashSign`                  VARCHAR(256) NOT NULL,
       `receiptAddress`            VARCHAR(256) NOT NULL,
-      `timestamp`                 BIGINT(20) NOT NULL,
+      `request_timestamp`         DATETIME NOT NULL,
+      `createTime`                DATETIME NOT NULL,
+      `last_update_time`          DATETIME NOT NULL,
+      `status`                    TINYINT(4) NOT NULL DEFAULT 0 COMMENT '0:waiting match; 1:matched; 2:logstic confirmed; 3:closed',
       KEY `idx_nonce`             (`nonceForCurrentInitiator`)
     ) ENGINE=InnoDB;
     TRUNCATE TABLE tx_cache.temp_cdg_transactions;
@@ -83,12 +86,13 @@ ll:BEGIN
     SET SESSION innodb_lock_wait_timeout = 30;
     
     SET returnMsg_o = 'fail to insert data into temp tables';
-    INSERT INTO tx_cache.temp_cdg_transactions(address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, `timestamp`)
-    SELECT address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, `timestamp`
+    INSERT INTO tx_cache.temp_cdg_transactions(address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, request_timestamp, createTime, last_update_time, status)
+    SELECT address, initiator, nonceForCurrentInitiator, nonceForOriginInitiator, nonceForSmartContract, receiver, txType, detail, gasCost, gasDeposit, hashSign, receiptAddress, request_timestamp, createTime, last_update_time, status
       FROM tx_cache.transactions 
      WHERE initiator=accountAddress_i
        AND delete_flag = 0
-       AND (v_cur_timestamp - `timestamp`)/1000000/60 >= time_diff_i;
+       AND status = 0
+       AND (v_cur_timestamp - createTime)/1000000/60 >= time_diff_i;
     INSERT INTO tx_cache.temp_cdg_nonce(nonce) SELECT nonceForCurrentInitiator FROM tx_cache.temp_cdg_transactions;
     
     SET returnMsg_o = 'fail to check nonce continuity with current_user_nonce';
@@ -129,12 +133,15 @@ ll:BEGIN
                         IF(nonceForSmartContract IS NULL ,'NULL',nonceForSmartContract), ',"',
                         receiver, '","',
                         txType, '","',
-                        detail, '",',
+                        REPLACE(detail,'"',''''), '",',
                         gasCost,',',
                         gasDeposit,',"',
                         hashSign,'","',
-                        receiptAddress,'",',
-                        `timestamp`,')')
+                        receiptAddress,'","',
+                        request_timestamp,'","',
+                        createTime,'","',
+                        last_update_time,'",',
+                        `status`,')')
       INTO v_transactionCache
       FROM tx_cache.temp_cdg_transactions
      WHERE nonceForCurrentInitiator > current_user_nonce_i;
