@@ -33,7 +33,6 @@ ll:BEGIN
     DECLARE v_price                  FLOAT;
     DECLARE v_cityOfLocation         VARCHAR(100);
     DECLARE v_addresslist            VARCHAR(256);
-    DECLARE v_cnt                    INT;
     DECLARE v_start                  INT;
     DECLARE v_vend_address           VARCHAR(256);
     DECLARE v_sum_maxQuantity        FLOAT;
@@ -133,7 +132,7 @@ ll:BEGIN
            FROM contract_match.transactions
           WHERE `status` = 0
             AND txType = 'vendition';
-    
+
     #begin match
     OPEN curl;
     REPEAT
@@ -175,11 +174,10 @@ ll:BEGIN
                                `matchedQuantity` = IFNULL(matchedQuantity,0) + v_vend_maxQuantity
                          WHERE address = v_vend_address;
                         
-                        SET v_maxQuantity = v_maxQuantity - v_vend_maxQuantity;
-                        SET v_minQuantity = 0;
                         SET v_matchedQuantity = IFNULL(v_matchedQuantity,0) + v_vend_maxQuantity;
                         SET v_totalPrice = IFNULL(v_totalPrice,0) + v_vend_maxQuantity * v_vend_price;
-                        
+                        SET v_maxQuantity = v_maxQuantity - v_vend_maxQuantity;
+                        SET v_minQuantity = 0;
                     ELSEIF v_vend_maxQuantity >= v_minQuantity AND v_vend_maxQuantity > v_maxQuantity THEN
                         IF v_maxQuantity >= v_vend_minQuantity THEN
                             UPDATE contract_match.`temp_cmu_vendition` 
@@ -188,12 +186,11 @@ ll:BEGIN
                                    `minQuantity` = 0,
                                    `matchedQuantity` = IFNULL(matchedQuantity,0) + v_maxQuantity
                              WHERE address = v_vend_address;
-                            
-                            SET v_maxQuantity = 0;
-                            SET v_minQuantity = 0; 
+                             
                             SET v_matchedQuantity = IFNULL(v_matchedQuantity,0) + v_maxQuantity;
                             SET v_totalPrice = IFNULL(v_totalPrice,0) + v_maxQuantity * v_vend_price;
-                        
+                            SET v_maxQuantity = 0;
+                            SET v_minQuantity = 0; 
                         END IF;
                     END IF;
                     SET v_start = v_start + 1;
@@ -208,7 +205,7 @@ ll:BEGIN
             
         END IF;
     UNTIL v_done END REPEAT;
-    CLOSE cur_trans;
+    CLOSE curl;
     
     #update purchase final result
     UPDATE contract_match.transactions a,
